@@ -1,0 +1,28 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: supply-chain-mvp
+
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/supplychain_local}
+    username: ${SPRING_DATASOURCE_USERNAME:supplychain_admin}
+    password: ${SPRING_DATASOURCE_PASSWORD:supplychain_password}
+
+  jpa:
+    # "validate": Hibernate verifica que las entidades @Entity coincidan con el
+    # esquema que Flyway ya aplicó, pero NUNCA modifica el esquema por su cuenta.
+    # El esquema es responsabilidad exclusiva de las migraciones versionadas en
+    # src/main/resources/db/migration/.
+    hibernate:
+      ddl-auto: ${SPRING_JPA_HIBERNATE_DDL_AUTO:validate}
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: true
+
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: false
