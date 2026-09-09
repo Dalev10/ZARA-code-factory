@@ -45,11 +45,16 @@ través de los puertos de aplicación (`application/port/*`).
    ```
    mvn -N io.takari:maven:wrapper -Dmaven=3.9.9
    ```
-2. Levantar el stack completo:
+2. Crear tu archivo de variables de entorno local a partir de la plantilla:
+   ```
+   cp .env.example .env
+   ```
+   Luego completa los valores reales en `.env` (nunca se commitea).
+3. Levantar el stack completo:
    ```
    docker compose up --build
    ```
-3. La API queda disponible en `http://localhost:8080`.
+4. La API queda disponible en `http://localhost:8080`.
 
 ## Esquema de base de datos
 
