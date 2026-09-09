@@ -5,17 +5,17 @@ services:
     container_name: supplychain_db
     restart: always
     environment:
-      - POSTGRES_USER=supplychain_admin
-      - POSTGRES_PASSWORD=supplychain_password
-      - POSTGRES_DB=supplychain_local
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
     ports:
-      - "5432:5432"
+      - "${POSTGRES_PORT:-5432}:5432"
     volumes:
       - pg_data:/var/lib/postgresql/data
     networks:
       - supplychain_network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U supplychain_admin -d supplychain_local"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -27,12 +27,13 @@ services:
     container_name: supplychain_api
     restart: on-failure
     ports:
-      - "8080:8080"
+      - "${API_PORT:-8080}:${API_PORT:-8080}"
     environment:
-      - SPRING_DATASOURCE_URL=jdbc:postgresql://db:5432/supplychain_local
-      - SPRING_DATASOURCE_USERNAME=supplychain_admin
-      - SPRING_DATASOURCE_PASSWORD=supplychain_password
-      - SPRING_JPA_HIBERNATE_DDL_AUTO=validate
+      - SERVER_PORT=${API_PORT:-8080}
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://db:5432/${POSTGRES_DB}
+      - SPRING_DATASOURCE_USERNAME=${POSTGRES_USER}
+      - SPRING_DATASOURCE_PASSWORD=${POSTGRES_PASSWORD}
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=${SPRING_JPA_HIBERNATE_DDL_AUTO:-validate}
     depends_on:
       db:
         condition: service_healthy
