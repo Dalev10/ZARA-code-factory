@@ -1,0 +1,44 @@
+name: CI
+
+# Se ejecuta en cada Pull Request hacia main o develop 
+# y también en cada push directo a esas ramas como
+# confirmación adicional.
+on:
+  pull_request:
+    branches:
+      - main
+      - develop
+  push:
+    branches:
+      - main
+      - develop
+
+jobs:
+  build:
+    name: Build y verificación (JDK 21)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Descargar el código
+        uses: actions/checkout@v4
+
+      - name: Configurar JDK 21 (Temurin)
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+          cache: maven
+
+      - name: Dar permisos de ejecución al Maven Wrapper
+        run: chmod +x mvnw
+
+      # NOTA / deuda técnica aceptada por ahora: este pipeline NO levanta
+      # un servicio de PostgreSQL. Mientras no existan pruebas que
+      # arranquen el contexto de Spring (las cuales dispararían Flyway y
+      # necesitarían una base real), "clean verify" solo compila y
+      # empaqueta. El día que se agregue la primera prueba de integración
+      # real, este workflow debe extenderse con un "services: postgres:"
+      # (imagen postgres:16-alpine) antes de que esa prueba pueda pasar
+      # en CI.
+      - name: Compilar y verificar
+        run: ./mvnw -B clean verify
