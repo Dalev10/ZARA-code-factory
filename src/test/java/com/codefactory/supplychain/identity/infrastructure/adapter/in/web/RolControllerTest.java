@@ -38,9 +38,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
- * Prueba de extremo a extremo del CRUD de Roles (HU-09), incluyendo el chequeo
- * provisorio de "solo ADMIN" (AutorizacionAdmin) mientras no existe el guard
- * genérico de HU-11.
+ * Prueba de extremo a extremo del CRUD de Roles (HU-09), incluyendo el guard de
+ * autorización por scope de HU-11 (requiere "roles:administrar").
  *
  * @ActiveProfiles("test") carga application-test.yml (secreto JWT fijo de test).
  */

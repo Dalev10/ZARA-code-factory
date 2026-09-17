@@ -30,13 +30,6 @@ public class UsuarioRolRepositoryAdapter implements UsuarioRolRepositoryPort {
     }
 
     @Override
-    public boolean usuarioTieneRolNombrado(UUID usuarioId, String nombreRol) {
-        return rolJpaRepository.findByNombre(nombreRol)
-                .map(rol -> usuarioRolJpaRepository.existsById(new UsuarioRolId(usuarioId, rol.getId())))
-                .orElse(false);
-    }
-
-    @Override
     public void asignar(UUID usuarioId, UUID rolId) {
         usuarioRolJpaRepository.save(new UsuarioRolEntity(new UsuarioRolId(usuarioId, rolId)));
     }

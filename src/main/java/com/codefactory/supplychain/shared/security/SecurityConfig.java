@@ -3,7 +3,6 @@ package com.codefactory.supplychain.shared.security;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -19,11 +18,11 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
  * autenticación, MFA y tokens vive en identity/application/service, no acoplada
  * a este framework.
  *
- * Desde HU-07: los endpoints de auth (login/refresh/logout), el registro (HU-02,
- * deliberadamente sin proteger todavía) y Swagger quedan públicos; CUALQUIER OTRO
- * endpoint exige un JWT válido (autenticación). Esto es distinto de autorización
- * por scope — "qué puede hacer" un usuario ya autenticado sigue siendo HU-11, que
- * debe reemplazar el bloque de reglas de abajo por chequeos reales de scope.
+ * Los endpoints de auth (login/refresh/logout) y Swagger quedan públicos;
+ * CUALQUIER OTRO endpoint exige un JWT válido (autenticación). "Qué puede hacer"
+ * un usuario ya autenticado (autorización) es responsabilidad de cada controller
+ * vía @PreAuthorize("hasAuthority('scope:codigo')") — ver JwtAuthenticationFilter,
+ * que resuelve esas autoridades desde los scopes reales del usuario (HU-11).
  *
  * Componentes transversales de tipo 'security', compartidos por todos los módulos.
  */
@@ -49,9 +48,6 @@ public class SecurityConfig {
                 .httpBasic(basic -> basic.disable())
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
                 .authorizeHttpRequests(auth -> auth
-                        // TODO(HU-11): sigue abierto porque el guard de autorización por
-                        // scope todavía no existe — ver decisión registrada en HU-02.
-                        .requestMatchers(HttpMethod.POST, "/api/v1/usuarios").permitAll()
                         .requestMatchers("/api/v1/auth/login", "/api/v1/auth/login/mfa",
                                 "/api/v1/auth/refresh", "/api/v1/auth/logout")
                         .permitAll()

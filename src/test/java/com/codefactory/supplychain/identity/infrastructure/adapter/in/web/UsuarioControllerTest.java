@@ -122,8 +122,30 @@ class UsuarioControllerTest {
     }
 
     @Test
-    void registraUnUsuarioNuevoYDevuelve201ConSusDatos() throws Exception {
+    void registrarSinAutenticacionSeRechaza() throws Exception {
         mockMvc.perform(post("/api/v1/usuarios")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(registrarUsuarioJson("sin-auth@ejemplo.com", "Sin Auth", "contraseñaSegura123")))
+                .andExpect(status().is4xxClientError());
+    }
+
+    @Test
+    void registrarComoUsuarioComunSeRechazaCon403() throws Exception {
+        String token = loguearComoUsuarioComun("no-admin-registra@ejemplo.com");
+
+        mockMvc.perform(post("/api/v1/usuarios")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(registrarUsuarioJson("victima-registro@ejemplo.com", "Alguien", "contraseñaSegura123")))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void registraUnUsuarioNuevoYDevuelve201ConSusDatos() throws Exception {
+        String token = loguearComoAdmin("admin-registra@ejemplo.com");
+
+        mockMvc.perform(post("/api/v1/usuarios")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(registrarUsuarioJson("nuevo@ejemplo.com", "Nuevo Usuario", "contraseñaSegura123")))
                 .andExpect(status().isCreated())
@@ -135,7 +157,10 @@ class UsuarioControllerTest {
 
     @Test
     void rechazaPasswordMasCortaQueLaPoliticaCon400() throws Exception {
+        String token = loguearComoAdmin("admin-rechaza-password@ejemplo.com");
+
         mockMvc.perform(post("/api/v1/usuarios")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(registrarUsuarioJson("otro@ejemplo.com", "Otro Usuario", "corta123")))
                 .andExpect(status().isBadRequest());
@@ -143,7 +168,10 @@ class UsuarioControllerTest {
 
     @Test
     void rechazaEmailConFormatoInvalidoCon400() throws Exception {
+        String token = loguearComoAdmin("admin-rechaza-email@ejemplo.com");
+
         mockMvc.perform(post("/api/v1/usuarios")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(registrarUsuarioJson("no-es-un-email", "Alguien", "contraseñaSegura123")))
                 .andExpect(status().isBadRequest());
@@ -151,14 +179,17 @@ class UsuarioControllerTest {
 
     @Test
     void rechazaEmailDuplicadoCon409() throws Exception {
+        String token = loguearComoAdmin("admin-rechaza-duplicado@ejemplo.com");
         String cuerpo = registrarUsuarioJson("duplicado@ejemplo.com", "Persona Uno", "contraseñaSegura123");
 
         mockMvc.perform(post("/api/v1/usuarios")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(cuerpo))
                 .andExpect(status().isCreated());
 
         mockMvc.perform(post("/api/v1/usuarios")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(cuerpo))
                 .andExpect(status().isConflict());

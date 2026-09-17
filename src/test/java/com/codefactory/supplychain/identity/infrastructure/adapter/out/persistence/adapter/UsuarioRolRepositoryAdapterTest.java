@@ -80,32 +80,6 @@ class UsuarioRolRepositoryAdapterTest {
     }
 
     @Test
-    void usuarioTieneRolNombradoEsFalseSiElRolNoExiste() {
-        Usuario usuario = usuarioRepository.guardar(Usuario.crear(Email.de("sin-rol@ejemplo.com"), "Sin Rol",
-                PasswordHash.de("$2a$10$abcdefghijklmnopqrstuv")));
-        entityManager.flush();
-
-        assertThat(usuarioRolRepository.usuarioTieneRolNombrado(usuario.getId(), "NO_EXISTE")).isFalse();
-    }
-
-    @Test
-    void usuarioTieneRolNombradoEsTrueSoloParaElUsuarioAsignado() {
-        Usuario conRol = usuarioRepository.guardar(Usuario.crear(Email.de("admin-de-prueba@ejemplo.com"),
-                "Admin de Prueba", PasswordHash.de("$2a$10$abcdefghijklmnopqrstuv")));
-        Usuario sinRol = usuarioRepository.guardar(Usuario.crear(Email.de("no-admin@ejemplo.com"), "No Admin",
-                PasswordHash.de("$2a$10$abcdefghijklmnopqrstuv")));
-        Rol rolAdmin = rolRepository.guardar(Rol.crear("ADMIN_DE_PRUEBA", null));
-        entityManager.flush();
-
-        asignarRol(conRol.getId(), rolAdmin.getId());
-        entityManager.flush();
-        entityManager.clear();
-
-        assertThat(usuarioRolRepository.usuarioTieneRolNombrado(conRol.getId(), "ADMIN_DE_PRUEBA")).isTrue();
-        assertThat(usuarioRolRepository.usuarioTieneRolNombrado(sinRol.getId(), "ADMIN_DE_PRUEBA")).isFalse();
-    }
-
-    @Test
     void asignaYListaLosRolesDeUnUsuario() {
         Usuario usuario = usuarioRepository.guardar(Usuario.crear(Email.de("con-roles@ejemplo.com"), "Con Roles",
                 PasswordHash.de("$2a$10$abcdefghijklmnopqrstuv")));

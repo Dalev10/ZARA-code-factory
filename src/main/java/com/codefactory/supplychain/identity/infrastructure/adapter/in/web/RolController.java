@@ -34,15 +34,12 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- * Restringido a ADMIN vía un chequeo provisorio (ver AutorizacionAdmin en 'shared')
- * hasta que exista el guard genérico de autorización por scope de HU-11.
- *
  * Módulo: identity — Gestión de usuarios y autenticación (transversal, no forma parte del ERD de negocio)
  */
 @RestController
 @RequestMapping("/api/v1/roles")
 @RequiredArgsConstructor
-@PreAuthorize("@autorizacionAdmin.esAdmin(authentication)")
+@PreAuthorize("hasAuthority('roles:administrar')")
 public class RolController {
 
     private final CrearRolUseCase crearRolUseCase;
