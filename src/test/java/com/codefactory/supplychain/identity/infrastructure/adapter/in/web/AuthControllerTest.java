@@ -124,6 +124,44 @@ class AuthControllerTest {
                 .andExpect(jsonPath("$.mensaje").value("Credenciales inválidas"));
     }
 
+    @Test
+    void alTercerIntentoFallidoQuedaBloqueadaYRechazaAunConLaPasswordCorrecta() throws Exception {
+        crearUsuario("fuerza-bruta@ejemplo.com", "contraseñaSegura123", EstadoUsuario.ACTIVO);
+
+        for (int intento = 1; intento <= 3; intento++) {
+            mockMvc.perform(post("/api/v1/auth/login")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(loginJson("fuerza-bruta@ejemplo.com", "incorrecta")))
+                    .andExpect(status().isUnauthorized());
+        }
+
+        // Al 3er fallo ya debería estar bloqueada temporalmente (curva: 3 -> 1 minuto),
+        // así que ni siquiera la contraseña correcta debería dejarla entrar ahora.
+        mockMvc.perform(post("/api/v1/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(loginJson("fuerza-bruta@ejemplo.com", "contraseñaSegura123")))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.mensaje").value("Credenciales inválidas"));
+    }
+
+    @Test
+    void unLoginExitosoReseteaElContadorTrasIntentosFallidosPreviosSinLlegarAlUmbral() throws Exception {
+        crearUsuario("recupera@ejemplo.com", "contraseñaSegura123", EstadoUsuario.ACTIVO);
+
+        // 2 fallos consecutivos: todavía por debajo del umbral de bloqueo (3).
+        for (int intento = 1; intento <= 2; intento++) {
+            mockMvc.perform(post("/api/v1/auth/login")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(loginJson("recupera@ejemplo.com", "incorrecta")))
+                    .andExpect(status().isUnauthorized());
+        }
+
+        mockMvc.perform(post("/api/v1/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(loginJson("recupera@ejemplo.com", "contraseñaSegura123")))
+                .andExpect(status().isOk());
+    }
+
     private static String loginJson(String email, String password) {
         return """
                 {

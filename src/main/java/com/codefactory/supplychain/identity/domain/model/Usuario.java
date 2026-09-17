@@ -2,6 +2,7 @@ package com.codefactory.supplychain.identity.domain.model;
 
 import com.codefactory.supplychain.identity.domain.exception.NombreCompletoInvalidoException;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.util.Objects;
 import java.util.UUID;
@@ -12,15 +13,30 @@ import java.util.UUID;
  * se resuelve mediante un puerto de consulta aparte (ver HU de autorización), para no
  * acoplar cada carga de Usuario al grafo completo de autorización.
  *
- * Los atributos de MFA y bloqueo por intentos fallidos existen en el modelo desde ya
- * porque son parte del esquema (V2), pero el comportamiento que los muta (bloquear,
- * habilitar MFA, etc.) se agrega incrementalmente en las HU que lo necesitan.
+ * Los atributos de MFA existen en el modelo desde HU-01 porque son parte del esquema
+ * (V2), pero el comportamiento que los muta se agrega incrementalmente en las HU que
+ * lo necesitan (ver {@link #registrarIntentoFallido} y {@link #registrarLoginExitoso}
+ * para el bloqueo progresivo).
  *
  * Módulo: identity — Gestión de usuarios y autenticación (transversal, no forma parte del ERD de negocio)
  */
 public final class Usuario {
 
     private static final int NOMBRE_COMPLETO_MAX_LENGTH = 150;
+
+    // Curva de bloqueo progresivo: a partir de N intentos fallidos CONSECUTIVOS
+    // (el contador solo se resetea con un login exitoso, nunca con el simple paso
+    // del tiempo), se bloquea la cuenta por la duración asociada. El bloqueo nunca
+    // es permanente — el techo es 1 hora, no sigue escalando después del 4to nivel.
+    private static final int UMBRAL_NIVEL_1 = 3;
+    private static final int UMBRAL_NIVEL_2 = 5;
+    private static final int UMBRAL_NIVEL_3 = 7;
+    private static final int UMBRAL_NIVEL_4 = 10;
+
+    private static final Duration BLOQUEO_NIVEL_1 = Duration.ofMinutes(1);
+    private static final Duration BLOQUEO_NIVEL_2 = Duration.ofMinutes(5);
+    private static final Duration BLOQUEO_NIVEL_3 = Duration.ofMinutes(15);
+    private static final Duration BLOQUEO_NIVEL_4 = Duration.ofHours(1);
 
     private final UUID id;
     private final Email email;
@@ -73,6 +89,54 @@ public final class Usuario {
                                        Instant creadoEn, Instant actualizadoEn) {
         return new Usuario(id, email, nombreCompleto, passwordHash, estado, intentosFallidos, bloqueadoHasta,
                 mfaHabilitado, mfaSecretEncrypted, proveedorExterno, creadoEn, actualizadoEn);
+    }
+
+    /**
+     * Registra un intento de login fallido: incrementa el contador y, si se cruza
+     * alguno de los umbrales de la curva de bloqueo progresivo, fija bloqueadoHasta.
+     * El contador NUNCA se resetea por el simple paso del tiempo — solo con un login
+     * exitoso ({@link #registrarLoginExitoso}) — así que si se sigue fallando después
+     * de que un bloqueo expira, el siguiente fallo salta directo al próximo escalón.
+     */
+    public Usuario registrarIntentoFallido(Instant ahora) {
+        int nuevosIntentos = this.intentosFallidos + 1;
+        Instant nuevoBloqueoHasta = calcularBloqueoHasta(nuevosIntentos, ahora);
+        return new Usuario(id, email, nombreCompleto, passwordHash, estado, nuevosIntentos, nuevoBloqueoHasta,
+                mfaHabilitado, mfaSecretEncrypted, proveedorExterno, creadoEn, ahora);
+    }
+
+    /**
+     * Registra un login exitoso: es el único evento que resetea el contador de
+     * intentos fallidos y limpia cualquier bloqueo vigente.
+     */
+    public Usuario registrarLoginExitoso(Instant ahora) {
+        return new Usuario(id, email, nombreCompleto, passwordHash, estado, 0, null,
+                mfaHabilitado, mfaSecretEncrypted, proveedorExterno, creadoEn, ahora);
+    }
+
+    /**
+     * true si hay un bloqueo por intentos fallidos vigente en este momento. No debe
+     * confundirse con {@code estado == BLOQUEADO} (bloqueo administrativo/permanente,
+     * sin mecanismo de auto-expiración) — este es siempre temporal.
+     */
+    public boolean estaBloqueadoTemporalmente(Instant ahora) {
+        return bloqueadoHasta != null && bloqueadoHasta.isAfter(ahora);
+    }
+
+    private static Instant calcularBloqueoHasta(int intentosFallidosConsecutivos, Instant ahora) {
+        if (intentosFallidosConsecutivos >= UMBRAL_NIVEL_4) {
+            return ahora.plus(BLOQUEO_NIVEL_4);
+        }
+        if (intentosFallidosConsecutivos >= UMBRAL_NIVEL_3) {
+            return ahora.plus(BLOQUEO_NIVEL_3);
+        }
+        if (intentosFallidosConsecutivos >= UMBRAL_NIVEL_2) {
+            return ahora.plus(BLOQUEO_NIVEL_2);
+        }
+        if (intentosFallidosConsecutivos >= UMBRAL_NIVEL_1) {
+            return ahora.plus(BLOQUEO_NIVEL_1);
+        }
+        return null;
     }
 
     private static String validarNombreCompleto(String nombreCompleto) {

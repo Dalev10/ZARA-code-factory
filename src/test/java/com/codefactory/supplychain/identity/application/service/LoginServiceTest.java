@@ -13,6 +13,7 @@ import com.codefactory.supplychain.identity.domain.model.RefreshToken;
 import com.codefactory.supplychain.identity.domain.model.Usuario;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 
 import java.time.Instant;
 import java.util.Optional;
@@ -58,7 +59,8 @@ class LoginServiceTest {
         Usuario usuario = usuarioActivo("ana@ejemplo.com");
         when(usuarioRepositoryPort.buscarPorEmail(Email.de("ana@ejemplo.com"))).thenReturn(Optional.of(usuario));
         when(passwordHasherPort.coincide(eq("contraseñaCorrecta123"), eq(HASH))).thenReturn(true);
-        when(accessTokenGeneratorPort.generar(usuario)).thenReturn("access-token-de-prueba");
+        when(usuarioRepositoryPort.guardar(any())).thenAnswer(inv -> inv.getArgument(0));
+        when(accessTokenGeneratorPort.generar(any())).thenReturn("access-token-de-prueba");
         when(refreshTokenRepositoryPort.guardar(any())).thenAnswer(inv -> inv.getArgument(0));
 
         var resultado = servicio.login(new LoginComando("ana@ejemplo.com", "contraseñaCorrecta123"));
@@ -82,6 +84,74 @@ class LoginServiceTest {
 
         verify(accessTokenGeneratorPort, never()).generar(any());
         verify(refreshTokenRepositoryPort, never()).guardar(any());
+    }
+
+    @Test
+    void unIntentoFallidoIncrementaElContadorYSePersiste() {
+        Usuario usuario = usuarioActivo("ana@ejemplo.com");
+        when(usuarioRepositoryPort.buscarPorEmail(Email.de("ana@ejemplo.com"))).thenReturn(Optional.of(usuario));
+        when(passwordHasherPort.coincide(anyString(), any())).thenReturn(false);
+
+        assertThatThrownBy(() -> servicio.login(new LoginComando("ana@ejemplo.com", "incorrecta")))
+                .isInstanceOf(CredencialesInvalidasException.class);
+
+        ArgumentCaptor<Usuario> captor = ArgumentCaptor.forClass(Usuario.class);
+        verify(usuarioRepositoryPort).guardar(captor.capture());
+        assertThat(captor.getValue().getIntentosFallidos()).isEqualTo(1);
+        assertThat(captor.getValue().getBloqueadoHasta()).isNull();
+    }
+
+    @Test
+    void alTercerIntentoFallidoConsecutivoQuedaBloqueadaTemporalmente() {
+        Usuario usuarioConDosFallos = Usuario.reconstruir(UUID.randomUUID(), Email.de("ana@ejemplo.com"),
+                "Usuario de Prueba", HASH, EstadoUsuario.ACTIVO, 2, null, false, null, null,
+                Instant.now(), Instant.now());
+        when(usuarioRepositoryPort.buscarPorEmail(Email.de("ana@ejemplo.com")))
+                .thenReturn(Optional.of(usuarioConDosFallos));
+        when(passwordHasherPort.coincide(anyString(), any())).thenReturn(false);
+
+        assertThatThrownBy(() -> servicio.login(new LoginComando("ana@ejemplo.com", "incorrecta")))
+                .isInstanceOf(CredencialesInvalidasException.class);
+
+        ArgumentCaptor<Usuario> captor = ArgumentCaptor.forClass(Usuario.class);
+        verify(usuarioRepositoryPort).guardar(captor.capture());
+        assertThat(captor.getValue().getIntentosFallidos()).isEqualTo(3);
+        assertThat(captor.getValue().getBloqueadoHasta()).isNotNull();
+    }
+
+    @Test
+    void unaCuentaBloqueadaTemporalmenteRechazaSinSumarMasIntentosNiConsultarElHasher() {
+        Usuario usuarioBloqueado = Usuario.reconstruir(UUID.randomUUID(), Email.de("ana@ejemplo.com"),
+                "Usuario de Prueba", HASH, EstadoUsuario.ACTIVO, 3, Instant.now().plusSeconds(60), false,
+                null, null, Instant.now(), Instant.now());
+        when(usuarioRepositoryPort.buscarPorEmail(Email.de("ana@ejemplo.com")))
+                .thenReturn(Optional.of(usuarioBloqueado));
+
+        assertThatThrownBy(() -> servicio.login(new LoginComando("ana@ejemplo.com", "contraseñaCorrecta123")))
+                .isInstanceOf(CredencialesInvalidasException.class);
+
+        verify(passwordHasherPort, never()).coincide(anyString(), any());
+        verify(usuarioRepositoryPort, never()).guardar(any());
+    }
+
+    @Test
+    void loginExitosoReseteaElContadorDeIntentosFallidosAlPersistir() {
+        Usuario usuarioConFallosPrevios = Usuario.reconstruir(UUID.randomUUID(), Email.de("ana@ejemplo.com"),
+                "Usuario de Prueba", HASH, EstadoUsuario.ACTIVO, 2, null, false, null, null,
+                Instant.now(), Instant.now());
+        when(usuarioRepositoryPort.buscarPorEmail(Email.de("ana@ejemplo.com")))
+                .thenReturn(Optional.of(usuarioConFallosPrevios));
+        when(passwordHasherPort.coincide(eq("contraseñaCorrecta123"), any())).thenReturn(true);
+        when(usuarioRepositoryPort.guardar(any())).thenAnswer(inv -> inv.getArgument(0));
+        when(accessTokenGeneratorPort.generar(any())).thenReturn("access-token-de-prueba");
+        when(refreshTokenRepositoryPort.guardar(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        servicio.login(new LoginComando("ana@ejemplo.com", "contraseñaCorrecta123"));
+
+        ArgumentCaptor<Usuario> captor = ArgumentCaptor.forClass(Usuario.class);
+        verify(usuarioRepositoryPort).guardar(captor.capture());
+        assertThat(captor.getValue().getIntentosFallidos()).isZero();
+        assertThat(captor.getValue().getBloqueadoHasta()).isNull();
     }
 
     @Test

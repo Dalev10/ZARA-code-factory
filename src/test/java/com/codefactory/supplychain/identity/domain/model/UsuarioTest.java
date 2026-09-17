@@ -3,6 +3,7 @@ package com.codefactory.supplychain.identity.domain.model;
 import com.codefactory.supplychain.identity.domain.exception.NombreCompletoInvalidoException;
 import org.junit.jupiter.api.Test;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.util.UUID;
 
@@ -68,5 +69,90 @@ class UsuarioTest {
         assertThat(usuario.isMfaHabilitado()).isTrue();
         assertThat(usuario.getMfaSecretEncrypted()).isEqualTo("secreto-cifrado");
         assertThat(usuario.getProveedorExterno()).isEqualTo("GOOGLE");
+    }
+
+    @Test
+    void losPrimerosDosIntentosFallidosNoBloquean() {
+        Usuario usuario = Usuario.crear(EMAIL, "Ana Pérez", HASH);
+        Instant ahora = Instant.now();
+
+        Usuario tras1 = usuario.registrarIntentoFallido(ahora);
+        assertThat(tras1.getIntentosFallidos()).isEqualTo(1);
+        assertThat(tras1.getBloqueadoHasta()).isNull();
+
+        Usuario tras2 = tras1.registrarIntentoFallido(ahora);
+        assertThat(tras2.getIntentosFallidos()).isEqualTo(2);
+        assertThat(tras2.getBloqueadoHasta()).isNull();
+    }
+
+    @Test
+    void alTercerIntentoFallidoBloqueaUnMinuto() {
+        Usuario usuario = usuarioConIntentosFallidos(2);
+        Instant ahora = Instant.now();
+
+        Usuario tras3 = usuario.registrarIntentoFallido(ahora);
+
+        assertThat(tras3.getIntentosFallidos()).isEqualTo(3);
+        assertThat(tras3.getBloqueadoHasta()).isEqualTo(ahora.plus(Duration.ofMinutes(1)));
+        assertThat(tras3.estaBloqueadoTemporalmente(ahora)).isTrue();
+    }
+
+    @Test
+    void alQuintoIntentoFallidoBloqueaCincoMinutos() {
+        Usuario usuario = usuarioConIntentosFallidos(4);
+        Instant ahora = Instant.now();
+
+        Usuario tras5 = usuario.registrarIntentoFallido(ahora);
+
+        assertThat(tras5.getBloqueadoHasta()).isEqualTo(ahora.plus(Duration.ofMinutes(5)));
+    }
+
+    @Test
+    void alSeptimoIntentoFallidoBloqueaQuinceMinutos() {
+        Usuario usuario = usuarioConIntentosFallidos(6);
+        Instant ahora = Instant.now();
+
+        Usuario tras7 = usuario.registrarIntentoFallido(ahora);
+
+        assertThat(tras7.getBloqueadoHasta()).isEqualTo(ahora.plus(Duration.ofMinutes(15)));
+    }
+
+    @Test
+    void desdeElDecimoIntentoFallidoElBloqueoEsDeUnaHoraYNoSigueEscalando() {
+        Usuario usuario = usuarioConIntentosFallidos(9);
+        Instant ahora = Instant.now();
+
+        Usuario tras10 = usuario.registrarIntentoFallido(ahora);
+        assertThat(tras10.getBloqueadoHasta()).isEqualTo(ahora.plus(Duration.ofHours(1)));
+
+        Usuario tras20 = usuarioConIntentosFallidos(19).registrarIntentoFallido(ahora);
+        assertThat(tras20.getBloqueadoHasta()).isEqualTo(ahora.plus(Duration.ofHours(1)));
+    }
+
+    @Test
+    void loginExitosoReseteaIntentosFallidosYLimpiaElBloqueo() {
+        Usuario usuario = usuarioConIntentosFallidos(9).registrarIntentoFallido(Instant.now());
+        Instant ahora = Instant.now();
+
+        Usuario tras = usuario.registrarLoginExitoso(ahora);
+
+        assertThat(tras.getIntentosFallidos()).isZero();
+        assertThat(tras.getBloqueadoHasta()).isNull();
+        assertThat(tras.estaBloqueadoTemporalmente(ahora)).isFalse();
+    }
+
+    @Test
+    void estaBloqueadoTemporalmenteEsFalsoUnaVezPasadaLaFechaDeBloqueo() {
+        Instant ahora = Instant.now();
+        Usuario usuario = Usuario.reconstruir(UUID.randomUUID(), EMAIL, "Ana Pérez", HASH, EstadoUsuario.ACTIVO,
+                3, ahora.minusSeconds(1), false, null, null, ahora, ahora);
+
+        assertThat(usuario.estaBloqueadoTemporalmente(ahora)).isFalse();
+    }
+
+    private static Usuario usuarioConIntentosFallidos(int intentos) {
+        Instant ahora = Instant.now();
+        return Usuario.reconstruir(UUID.randomUUID(), EMAIL, "Ana Pérez", HASH, EstadoUsuario.ACTIVO,
+                intentos, null, false, null, null, ahora, ahora);
     }
 }

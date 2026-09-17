@@ -60,8 +60,15 @@ public class LoginService implements LoginUseCase {
 
     @Override
     public LoginResultado login(LoginComando comando) {
+        Instant ahora = Instant.now();
         Email email = Email.de(comando.email());
         Optional<Usuario> usuarioOpt = usuarioRepositoryPort.buscarPorEmail(email);
+
+        // Una cuenta bloqueada temporalmente rechaza de una, sin sumar más intentos ni
+        // extender el bloqueo — la duración quedó fijada cuando se activó el bloqueo.
+        if (usuarioOpt.isPresent() && usuarioOpt.get().estaBloqueadoTemporalmente(ahora)) {
+            throw new CredencialesInvalidasException();
+        }
 
         String hashParaComparar = usuarioOpt
                 .map(usuario -> usuario.getPasswordHash().getValor())
@@ -73,14 +80,14 @@ public class LoginService implements LoginUseCase {
                 && usuarioOpt.get().getEstado() == EstadoUsuario.ACTIVO;
 
         if (!credencialesValidas) {
+            usuarioOpt.ifPresent(usuario -> usuarioRepositoryPort.guardar(usuario.registrarIntentoFallido(ahora)));
             throw new CredencialesInvalidasException();
         }
 
-        Usuario usuario = usuarioOpt.get();
+        Usuario usuario = usuarioRepositoryPort.guardar(usuarioOpt.get().registrarLoginExitoso(ahora));
         String accessToken = accessTokenGeneratorPort.generar(usuario);
 
         String refreshTokenValor = generarValorAleatorio();
-        Instant ahora = Instant.now();
         Instant expiraEn = ahora.plus(Duration.ofDays(refreshTokenTtlDias));
         RefreshToken refreshToken = RefreshToken.crear(usuario.getId(), sha256Hex(refreshTokenValor), ahora, expiraEn);
         refreshTokenRepositoryPort.guardar(refreshToken);
