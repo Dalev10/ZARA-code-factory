@@ -4,6 +4,7 @@ import com.codefactory.supplychain.identity.infrastructure.adapter.out.persisten
 import com.codefactory.supplychain.identity.infrastructure.adapter.out.persistence.entity.UsuarioRolId;
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -12,4 +13,8 @@ import java.util.UUID;
 public interface UsuarioRolJpaRepository extends JpaRepository<UsuarioRolEntity, UsuarioRolId> {
 
     boolean existsByIdRolId(UUID rolId);
+
+    List<UsuarioRolEntity> findByIdUsuarioId(UUID usuarioId);
+
+    long countByIdRolId(UUID rolId);
 }

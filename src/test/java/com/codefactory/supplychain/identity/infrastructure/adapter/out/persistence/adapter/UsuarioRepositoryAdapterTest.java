@@ -105,4 +105,15 @@ class UsuarioRepositoryAdapterTest {
 
         assertThatThrownBy(entityManager::flush).isInstanceOf(RuntimeException.class);
     }
+
+    @Test
+    void listarTodosIncluyeLosUsuariosGuardados() {
+        usuarioRepository.guardar(Usuario.crear(Email.de("listado-a@ejemplo.com"), "Listado A", HASH));
+        usuarioRepository.guardar(Usuario.crear(Email.de("listado-b@ejemplo.com"), "Listado B", HASH));
+        entityManager.flush();
+
+        assertThat(usuarioRepository.listarTodos())
+                .extracting(u -> u.getEmail().getValor())
+                .contains("listado-a@ejemplo.com", "listado-b@ejemplo.com");
+    }
 }

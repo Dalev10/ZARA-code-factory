@@ -1,13 +1,15 @@
 package com.codefactory.supplychain.identity.application.port.out;
 
+import com.codefactory.supplychain.identity.domain.model.Rol;
+
+import java.util.List;
 import java.util.UUID;
 
 /**
- * Lectura de la relación N-N entre Usuario y Rol (tabla usuario_rol). La asignación
- * en sí (HU-10) todavía no existe como caso de uso — esto solo cubre lo que HU-09
- * necesita ya: saber si un Rol sigue en uso antes de borrarlo, y resolver si el
- * usuario autenticado tiene el rol ADMIN para las verificaciones de autorización
- * provisorias hasta que exista el guard genérico de HU-11.
+ * Gestiona la relación N-N entre Usuario y Rol (tabla usuario_rol). La lectura
+ * (tieneUsuariosAsignados, usuarioTieneRolNombrado) nació en HU-09 para el guard
+ * de borrado de Rol y el chequeo provisorio de "solo ADMIN"; HU-10 agrega la
+ * asignación real.
  *
  * Módulo: identity — Gestión de usuarios y autenticación (transversal, no forma parte del ERD de negocio)
  */
@@ -16,4 +18,14 @@ public interface UsuarioRolRepositoryPort {
     boolean tieneUsuariosAsignados(UUID rolId);
 
     boolean usuarioTieneRolNombrado(UUID usuarioId, String nombreRol);
+
+    void asignar(UUID usuarioId, UUID rolId);
+
+    void quitar(UUID usuarioId, UUID rolId);
+
+    boolean existeAsignacion(UUID usuarioId, UUID rolId);
+
+    List<Rol> listarRolesDeUsuario(UUID usuarioId);
+
+    long contarUsuariosConRol(UUID rolId);
 }

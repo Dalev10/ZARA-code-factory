@@ -9,6 +9,7 @@ import com.codefactory.supplychain.identity.infrastructure.adapter.out.persisten
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -41,5 +42,10 @@ public class UsuarioRepositoryAdapter implements UsuarioRepositoryPort {
     @Override
     public boolean existePorEmail(Email email) {
         return jpaRepository.existsByEmail(email.getValor());
+    }
+
+    @Override
+    public List<Usuario> listarTodos() {
+        return jpaRepository.findAll().stream().map(mapper::toDomain).toList();
     }
 }

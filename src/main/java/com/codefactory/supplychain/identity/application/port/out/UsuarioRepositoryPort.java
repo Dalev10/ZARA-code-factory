@@ -3,6 +3,7 @@ package com.codefactory.supplychain.identity.application.port.out;
 import com.codefactory.supplychain.identity.domain.model.Email;
 import com.codefactory.supplychain.identity.domain.model.Usuario;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -18,4 +19,6 @@ public interface UsuarioRepositoryPort {
     Optional<Usuario> buscarPorEmail(Email email);
 
     boolean existePorEmail(Email email);
+
+    List<Usuario> listarTodos();
 }
