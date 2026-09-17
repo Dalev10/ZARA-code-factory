@@ -3,6 +3,8 @@ package com.codefactory.supplychain.identity.infrastructure.adapter.in.web;
 import com.codefactory.supplychain.identity.application.port.in.LoginComando;
 import com.codefactory.supplychain.identity.application.port.in.LoginResultado;
 import com.codefactory.supplychain.identity.application.port.in.LoginUseCase;
+import com.codefactory.supplychain.identity.application.port.in.LogoutComando;
+import com.codefactory.supplychain.identity.application.port.in.LogoutUseCase;
 import com.codefactory.supplychain.identity.application.port.in.RefrescarTokenComando;
 import com.codefactory.supplychain.identity.application.port.in.RefrescarTokenResultado;
 import com.codefactory.supplychain.identity.application.port.in.RefrescarTokenUseCase;
@@ -15,11 +17,13 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
 import org.springframework.web.bind.annotation.CookieValue;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.time.Duration;
@@ -38,6 +42,7 @@ public class AuthController {
 
     private final LoginUseCase loginUseCase;
     private final RefrescarTokenUseCase refrescarTokenUseCase;
+    private final LogoutUseCase logoutUseCase;
 
     @PostMapping("/login")
     public LoginResponse login(@Valid @RequestBody LoginRequest request, HttpServletResponse response) {
@@ -68,6 +73,22 @@ public class AuthController {
         return new RefrescarTokenResponse(resultado.accessToken());
     }
 
+    /**
+     * Idempotente a propósito: sin cookie, con un token ya inválido, o con uno
+     * vigente, siempre responde 204 y limpia la cookie — nunca revela si había
+     * o no una sesión activa.
+     */
+    @PostMapping("/logout")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void logout(@CookieValue(name = COOKIE_REFRESH_TOKEN, required = false) String refreshTokenCookie,
+                        HttpServletResponse response) {
+        if (refreshTokenCookie != null && !refreshTokenCookie.isBlank()) {
+            logoutUseCase.logout(new LogoutComando(refreshTokenCookie));
+        }
+
+        response.addHeader(HttpHeaders.SET_COOKIE, construirCookieDeBorrado().toString());
+    }
+
     private static ResponseCookie construirCookieRefreshToken(String valor, Instant expiraEn) {
         Duration maxAge = Duration.between(Instant.now(), expiraEn);
         return ResponseCookie.from(COOKIE_REFRESH_TOKEN, valor)
@@ -76,6 +97,16 @@ public class AuthController {
                 .sameSite("Strict")
                 .path(COOKIE_PATH)
                 .maxAge(maxAge)
+                .build();
+    }
+
+    private static ResponseCookie construirCookieDeBorrado() {
+        return ResponseCookie.from(COOKIE_REFRESH_TOKEN, "")
+                .httpOnly(true)
+                .secure(true)
+                .sameSite("Strict")
+                .path(COOKIE_PATH)
+                .maxAge(0)
                 .build();
     }
 }

@@ -220,6 +220,57 @@ class AuthControllerTest {
                 .andExpect(status().isUnauthorized());
     }
 
+    @Test
+    void logoutRevocaElRefreshTokenYLimpiaLaCookie() throws Exception {
+        crearUsuario("logout@ejemplo.com", "contraseñaSegura123", EstadoUsuario.ACTIVO);
+        MvcResult login = mockMvc.perform(post("/api/v1/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(loginJson("logout@ejemplo.com", "contraseñaSegura123")))
+                .andExpect(status().isOk())
+                .andReturn();
+        String refreshToken = extraerValorCookie(login);
+
+        MvcResult logout = mockMvc.perform(post("/api/v1/auth/logout")
+                        .cookie(new Cookie("refresh_token", refreshToken)))
+                .andExpect(status().isNoContent())
+                .andReturn();
+
+        String setCookie = logout.getResponse().getHeader("Set-Cookie");
+        assertThat(setCookie).isNotNull();
+        assertThat(setCookie).containsAnyOf("Max-Age=0", "Max-Age=0;");
+
+        // El refresh token quedó revocado: ya no sirve para refrescar.
+        mockMvc.perform(post("/api/v1/auth/refresh")
+                        .cookie(new Cookie("refresh_token", refreshToken)))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void logoutSinCookieResponde204SinFallar() throws Exception {
+        mockMvc.perform(post("/api/v1/auth/logout"))
+                .andExpect(status().isNoContent());
+    }
+
+    @Test
+    void logoutConUnTokenYaRevocadoSigueRespondiendo204() throws Exception {
+        crearUsuario("logout-doble@ejemplo.com", "contraseñaSegura123", EstadoUsuario.ACTIVO);
+        MvcResult login = mockMvc.perform(post("/api/v1/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(loginJson("logout-doble@ejemplo.com", "contraseñaSegura123")))
+                .andExpect(status().isOk())
+                .andReturn();
+        String refreshToken = extraerValorCookie(login);
+
+        mockMvc.perform(post("/api/v1/auth/logout")
+                        .cookie(new Cookie("refresh_token", refreshToken)))
+                .andExpect(status().isNoContent());
+
+        // Segundo logout con el mismo token (ya revocado): sigue siendo idempotente.
+        mockMvc.perform(post("/api/v1/auth/logout")
+                        .cookie(new Cookie("refresh_token", refreshToken)))
+                .andExpect(status().isNoContent());
+    }
+
     private static String extraerValorCookie(MvcResult resultado) {
         String setCookie = resultado.getResponse().getHeader("Set-Cookie");
         assertThat(setCookie).isNotNull();
