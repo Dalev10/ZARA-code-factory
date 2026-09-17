@@ -50,7 +50,8 @@ public class SecurityConfig {
                         // TODO(HU-11): sigue abierto porque el guard de autorización por
                         // scope todavía no existe — ver decisión registrada en HU-02.
                         .requestMatchers(HttpMethod.POST, "/api/v1/usuarios").permitAll()
-                        .requestMatchers("/api/v1/auth/login", "/api/v1/auth/refresh", "/api/v1/auth/logout")
+                        .requestMatchers("/api/v1/auth/login", "/api/v1/auth/login/mfa",
+                                "/api/v1/auth/refresh", "/api/v1/auth/logout")
                         .permitAll()
                         .requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**").permitAll()
                         .anyRequest().authenticated())

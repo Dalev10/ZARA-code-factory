@@ -1,5 +1,7 @@
 package com.codefactory.supplychain.identity.infrastructure.adapter.in.web;
 
+import com.codefactory.supplychain.identity.application.port.in.CompletarLoginMfaComando;
+import com.codefactory.supplychain.identity.application.port.in.CompletarLoginMfaUseCase;
 import com.codefactory.supplychain.identity.application.port.in.LoginComando;
 import com.codefactory.supplychain.identity.application.port.in.LoginResultado;
 import com.codefactory.supplychain.identity.application.port.in.LoginUseCase;
@@ -9,6 +11,7 @@ import com.codefactory.supplychain.identity.application.port.in.RefrescarTokenCo
 import com.codefactory.supplychain.identity.application.port.in.RefrescarTokenResultado;
 import com.codefactory.supplychain.identity.application.port.in.RefrescarTokenUseCase;
 import com.codefactory.supplychain.identity.domain.exception.TokenInvalidoException;
+import com.codefactory.supplychain.identity.infrastructure.adapter.in.web.dto.CompletarLoginMfaRequest;
 import com.codefactory.supplychain.identity.infrastructure.adapter.in.web.dto.LoginRequest;
 import com.codefactory.supplychain.identity.infrastructure.adapter.in.web.dto.LoginResponse;
 import com.codefactory.supplychain.identity.infrastructure.adapter.in.web.dto.RefrescarTokenResponse;
@@ -41,18 +44,27 @@ public class AuthController {
     private static final String COOKIE_PATH = "/api/v1/auth";
 
     private final LoginUseCase loginUseCase;
+    private final CompletarLoginMfaUseCase completarLoginMfaUseCase;
     private final RefrescarTokenUseCase refrescarTokenUseCase;
     private final LogoutUseCase logoutUseCase;
 
     @PostMapping("/login")
     public LoginResponse login(@Valid @RequestBody LoginRequest request, HttpServletResponse response) {
         LoginResultado resultado = loginUseCase.login(new LoginComando(request.email(), request.password()));
+        return construirRespuesta(resultado, response);
+    }
 
-        response.addHeader(HttpHeaders.SET_COOKIE,
-                construirCookieRefreshToken(resultado.refreshTokenValor(), resultado.refreshTokenExpiraEn())
-                        .toString());
-
-        return new LoginResponse(resultado.accessToken(), UsuarioResponse.desde(resultado.usuario()));
+    /**
+     * Segundo paso del login cuando la cuenta tiene MFA habilitado: se intercambia
+     * el token de desafío (recibido en la respuesta de /login) más un código TOTP
+     * o de respaldo por los tokens reales de sesión.
+     */
+    @PostMapping("/login/mfa")
+    public LoginResponse completarLoginMfa(@Valid @RequestBody CompletarLoginMfaRequest request,
+                                            HttpServletResponse response) {
+        LoginResultado.Completado resultado = completarLoginMfaUseCase.completar(
+                new CompletarLoginMfaComando(request.mfaChallengeToken(), request.codigo()));
+        return construirRespuesta(resultado, response);
     }
 
     @PostMapping("/refresh")
@@ -87,6 +99,18 @@ public class AuthController {
         }
 
         response.addHeader(HttpHeaders.SET_COOKIE, construirCookieDeBorrado().toString());
+    }
+
+    private static LoginResponse construirRespuesta(LoginResultado resultado, HttpServletResponse response) {
+        return switch (resultado) {
+            case LoginResultado.RequiereMfa requiereMfa -> LoginResponse.requiereMfa(requiereMfa.mfaChallengeToken());
+            case LoginResultado.Completado completado -> {
+                response.addHeader(HttpHeaders.SET_COOKIE,
+                        construirCookieRefreshToken(completado.refreshTokenValor(), completado.refreshTokenExpiraEn())
+                                .toString());
+                yield LoginResponse.completado(completado.accessToken(), UsuarioResponse.desde(completado.usuario()));
+            }
+        };
     }
 
     private static ResponseCookie construirCookieRefreshToken(String valor, Instant expiraEn) {

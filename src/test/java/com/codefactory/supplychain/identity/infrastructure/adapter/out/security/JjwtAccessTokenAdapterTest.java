@@ -4,6 +4,7 @@ import com.codefactory.supplychain.identity.domain.model.Email;
 import com.codefactory.supplychain.identity.domain.model.EstadoUsuario;
 import com.codefactory.supplychain.identity.domain.model.PasswordHash;
 import com.codefactory.supplychain.identity.domain.model.Usuario;
+import com.codefactory.supplychain.shared.security.JwtClaimTypes;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
@@ -35,6 +36,7 @@ class JjwtAccessTokenAdapterTest {
 
         assertThat(claims.getSubject()).isEqualTo(usuario.getId().toString());
         assertThat(claims.get("email", String.class)).isEqualTo("ana@ejemplo.com");
+        assertThat(claims.get(JwtClaimTypes.CLAIM_TIPO, String.class)).isEqualTo(JwtClaimTypes.TIPO_ACCESO);
         assertThat(claims.getExpiration()).isAfter(new java.util.Date());
     }
 

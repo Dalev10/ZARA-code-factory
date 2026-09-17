@@ -1,11 +1,18 @@
 package com.codefactory.supplychain.identity.infrastructure.adapter.in.web;
 
+import com.codefactory.supplychain.identity.application.port.out.CodigoRespaldoRepositoryPort;
 import com.codefactory.supplychain.identity.application.port.out.PasswordHasherPort;
+import com.codefactory.supplychain.identity.application.port.out.SecretEncryptorPort;
 import com.codefactory.supplychain.identity.application.port.out.UsuarioRepositoryPort;
+import com.codefactory.supplychain.identity.domain.model.CodigoRespaldo;
 import com.codefactory.supplychain.identity.domain.model.Email;
 import com.codefactory.supplychain.identity.domain.model.EstadoUsuario;
 import com.codefactory.supplychain.identity.domain.model.Password;
 import com.codefactory.supplychain.identity.domain.model.Usuario;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import dev.samstevens.totp.code.DefaultCodeGenerator;
+import dev.samstevens.totp.time.SystemTimeProvider;
 import jakarta.servlet.http.Cookie;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,6 +26,9 @@ import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.UUID;
 
@@ -54,6 +64,12 @@ class AuthControllerTest {
     @Autowired
     private PasswordHasherPort passwordHasherPort;
 
+    @Autowired
+    private SecretEncryptorPort secretEncryptorPort;
+
+    @Autowired
+    private CodigoRespaldoRepositoryPort codigoRespaldoRepositoryPort;
+
     private Usuario crearUsuario(String email, String passwordCruda, EstadoUsuario estado) {
         Usuario usuario = Usuario.reconstruir(
                 UUID.randomUUID(),
@@ -69,6 +85,43 @@ class AuthControllerTest {
                 Instant.now(),
                 Instant.now());
         return usuarioRepositoryPort.guardar(usuario);
+    }
+
+    private static final String SECRETO_TOTP_DE_PRUEBA = "JBSWY3DPEHPK3PXP";
+
+    private Usuario crearUsuarioConMfaHabilitado(String email, String passwordCruda) {
+        Usuario usuario = Usuario.reconstruir(
+                UUID.randomUUID(),
+                Email.de(email),
+                "Usuario con MFA",
+                passwordHasherPort.hashear(Password.de(passwordCruda)),
+                EstadoUsuario.ACTIVO,
+                0,
+                null,
+                true,
+                secretEncryptorPort.encriptar(SECRETO_TOTP_DE_PRUEBA),
+                null,
+                Instant.now(),
+                Instant.now());
+        return usuarioRepositoryPort.guardar(usuario);
+    }
+
+    private static String codigoTotpValido() throws Exception {
+        return new DefaultCodeGenerator().generate(SECRETO_TOTP_DE_PRUEBA, new SystemTimeProvider().getTime() / 30);
+    }
+
+    private static String sha256Hex(String valor) {
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            byte[] hash = digest.digest(valor.getBytes(StandardCharsets.UTF_8));
+            StringBuilder hex = new StringBuilder(hash.length * 2);
+            for (byte b : hash) {
+                hex.append(String.format("%02x", b));
+            }
+            return hex.toString();
+        } catch (NoSuchAlgorithmException e) {
+            throw new IllegalStateException(e);
+        }
     }
 
     @Test
@@ -269,6 +322,108 @@ class AuthControllerTest {
         mockMvc.perform(post("/api/v1/auth/logout")
                         .cookie(new Cookie("refresh_token", refreshToken)))
                 .andExpect(status().isNoContent());
+    }
+
+    @Test
+    void loginConMfaHabilitadoDevuelveDesafioSinCookieNiAccessToken() throws Exception {
+        crearUsuarioConMfaHabilitado("login-mfa@ejemplo.com", "contraseñaSegura123");
+
+        MvcResult resultado = mockMvc.perform(post("/api/v1/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(loginJson("login-mfa@ejemplo.com", "contraseñaSegura123")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.mfaRequerido").value(true))
+                .andExpect(jsonPath("$.mfaChallengeToken").isNotEmpty())
+                .andExpect(jsonPath("$.accessToken").doesNotExist())
+                .andExpect(jsonPath("$.usuario").doesNotExist())
+                .andReturn();
+
+        assertThat(resultado.getResponse().getHeader("Set-Cookie")).isNull();
+    }
+
+    @Test
+    void completarLoginMfaConCodigoTotpValidoEmiteTokens() throws Exception {
+        crearUsuarioConMfaHabilitado("mfa-totp@ejemplo.com", "contraseñaSegura123");
+
+        String desafio = obtenerChallengeToken("mfa-totp@ejemplo.com", "contraseñaSegura123");
+
+        MvcResult resultado = mockMvc.perform(post("/api/v1/auth/login/mfa")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"mfaChallengeToken": "%s", "codigo": "%s"}
+                                """.formatted(desafio, codigoTotpValido())))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.mfaRequerido").value(false))
+                .andExpect(jsonPath("$.accessToken").isNotEmpty())
+                .andExpect(jsonPath("$.usuario.email").value("mfa-totp@ejemplo.com"))
+                .andReturn();
+
+        String setCookie = resultado.getResponse().getHeader("Set-Cookie");
+        assertThat(setCookie).isNotNull();
+        assertThat(setCookie).contains("refresh_token=");
+    }
+
+    @Test
+    void completarLoginMfaConCodigoIncorrectoSeRechazaCon400() throws Exception {
+        crearUsuarioConMfaHabilitado("mfa-codigo-malo@ejemplo.com", "contraseñaSegura123");
+
+        String desafio = obtenerChallengeToken("mfa-codigo-malo@ejemplo.com", "contraseñaSegura123");
+
+        mockMvc.perform(post("/api/v1/auth/login/mfa")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"mfaChallengeToken": "%s", "codigo": "000000"}
+                                """.formatted(desafio)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.mensaje").value("El código ingresado no es válido"));
+    }
+
+    @Test
+    void completarLoginMfaConTokenDeDesafioInvalidoSeRechazaCon401() throws Exception {
+        mockMvc.perform(post("/api/v1/auth/login/mfa")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"mfaChallengeToken": "token-inventado", "codigo": "123456"}
+                                """))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.mensaje").value("Sesión inválida o expirada"));
+    }
+
+    @Test
+    void completarLoginMfaConCodigoDeRespaldoLoConsumeYNoPermiteReusarlo() throws Exception {
+        Usuario usuario = crearUsuarioConMfaHabilitado("mfa-respaldo@ejemplo.com", "contraseñaSegura123");
+        String codigoPlano = "ABCD2345";
+        codigoRespaldoRepositoryPort.guardarTodos(
+                java.util.List.of(CodigoRespaldo.crear(usuario.getId(), sha256Hex(codigoPlano), Instant.now())));
+
+        String primerDesafio = obtenerChallengeToken("mfa-respaldo@ejemplo.com", "contraseñaSegura123");
+        mockMvc.perform(post("/api/v1/auth/login/mfa")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"mfaChallengeToken": "%s", "codigo": "%s"}
+                                """.formatted(primerDesafio, codigoPlano)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.accessToken").isNotEmpty());
+
+        // El mismo código de respaldo ya usado no debe volver a servir.
+        String segundoDesafio = obtenerChallengeToken("mfa-respaldo@ejemplo.com", "contraseñaSegura123");
+        mockMvc.perform(post("/api/v1/auth/login/mfa")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"mfaChallengeToken": "%s", "codigo": "%s"}
+                                """.formatted(segundoDesafio, codigoPlano)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.mensaje").value("El código ingresado no es válido"));
+    }
+
+    private String obtenerChallengeToken(String email, String password) throws Exception {
+        MvcResult login = mockMvc.perform(post("/api/v1/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(loginJson(email, password)))
+                .andExpect(status().isOk())
+                .andReturn();
+        JsonNode body = new ObjectMapper().readTree(login.getResponse().getContentAsString());
+        return body.get("mfaChallengeToken").asText();
     }
 
     private static String extraerValorCookie(MvcResult resultado) {

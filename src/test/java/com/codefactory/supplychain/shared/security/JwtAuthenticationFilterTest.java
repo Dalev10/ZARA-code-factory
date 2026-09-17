@@ -81,6 +81,29 @@ class JwtAuthenticationFilterTest {
     }
 
     @Test
+    void unTokenDeDesafioMfaNoSirveComoBearerAccessToken() throws Exception {
+        SecretKey clave = Keys.hmacShaKeyFor(SECRETO.getBytes(StandardCharsets.UTF_8));
+        Instant ahora = Instant.now();
+        String tokenDeDesafio = Jwts.builder()
+                .subject(UUID.randomUUID().toString())
+                .claim(JwtClaimTypes.CLAIM_TIPO, JwtClaimTypes.TIPO_MFA_CHALLENGE)
+                .issuedAt(Date.from(ahora))
+                .expiration(Date.from(ahora.plusSeconds(300)))
+                .signWith(clave)
+                .compact();
+
+        HttpServletRequest request = mock(HttpServletRequest.class);
+        HttpServletResponse response = mock(HttpServletResponse.class);
+        FilterChain chain = mock(FilterChain.class);
+        when(request.getHeader("Authorization")).thenReturn("Bearer " + tokenDeDesafio);
+
+        filtro.doFilterInternal(request, response, chain);
+
+        assertThat(SecurityContextHolder.getContext().getAuthentication()).isNull();
+        verify(chain).doFilter(request, response);
+    }
+
+    @Test
     void unTokenFirmadoConOtroSecretoNoAutentica() throws Exception {
         SecretKey otraClave = Keys.hmacShaKeyFor(
                 "xx-secreto-de-prueba-de-al-menos-32-bytes-de-largo".getBytes(StandardCharsets.UTF_8));
@@ -107,6 +130,7 @@ class JwtAuthenticationFilterTest {
         Instant ahora = Instant.now();
         return Jwts.builder()
                 .subject(usuarioId.toString())
+                .claim(JwtClaimTypes.CLAIM_TIPO, JwtClaimTypes.TIPO_ACCESO)
                 .issuedAt(Date.from(ahora))
                 .expiration(Date.from(ahora.plus(validezDesdeAhora)))
                 .signWith(clave)

@@ -3,20 +3,17 @@ package com.codefactory.supplychain.identity.application.service;
 import com.codefactory.supplychain.identity.application.port.in.LoginComando;
 import com.codefactory.supplychain.identity.application.port.in.LoginResultado;
 import com.codefactory.supplychain.identity.application.port.in.LoginUseCase;
-import com.codefactory.supplychain.identity.application.port.out.AccessTokenGeneratorPort;
+import com.codefactory.supplychain.identity.application.port.out.MfaChallengeTokenPort;
 import com.codefactory.supplychain.identity.application.port.out.PasswordHasherPort;
-import com.codefactory.supplychain.identity.application.port.out.RefreshTokenRepositoryPort;
 import com.codefactory.supplychain.identity.application.port.out.UsuarioRepositoryPort;
 import com.codefactory.supplychain.identity.domain.exception.CredencialesInvalidasException;
 import com.codefactory.supplychain.identity.domain.model.Email;
 import com.codefactory.supplychain.identity.domain.model.EstadoUsuario;
 import com.codefactory.supplychain.identity.domain.model.PasswordHash;
-import com.codefactory.supplychain.identity.domain.model.RefreshToken;
 import com.codefactory.supplychain.identity.domain.model.Usuario;
-import org.springframework.beans.factory.annotation.Value;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.time.Duration;
 import java.time.Instant;
 import java.util.Optional;
 
@@ -24,6 +21,7 @@ import java.util.Optional;
  * Módulo: identity — Gestión de usuarios y autenticación (transversal, no forma parte del ERD de negocio)
  */
 @Service
+@RequiredArgsConstructor
 public class LoginService implements LoginUseCase {
 
     /**
@@ -36,21 +34,8 @@ public class LoginService implements LoginUseCase {
 
     private final UsuarioRepositoryPort usuarioRepositoryPort;
     private final PasswordHasherPort passwordHasherPort;
-    private final AccessTokenGeneratorPort accessTokenGeneratorPort;
-    private final RefreshTokenRepositoryPort refreshTokenRepositoryPort;
-    private final long refreshTokenTtlDias;
-
-    public LoginService(UsuarioRepositoryPort usuarioRepositoryPort,
-                         PasswordHasherPort passwordHasherPort,
-                         AccessTokenGeneratorPort accessTokenGeneratorPort,
-                         RefreshTokenRepositoryPort refreshTokenRepositoryPort,
-                         @Value("${app.security.jwt.refresh-token-ttl-dias}") long refreshTokenTtlDias) {
-        this.usuarioRepositoryPort = usuarioRepositoryPort;
-        this.passwordHasherPort = passwordHasherPort;
-        this.accessTokenGeneratorPort = accessTokenGeneratorPort;
-        this.refreshTokenRepositoryPort = refreshTokenRepositoryPort;
-        this.refreshTokenTtlDias = refreshTokenTtlDias;
-    }
+    private final MfaChallengeTokenPort mfaChallengeTokenPort;
+    private final EmisionTokensService emisionTokensService;
 
     @Override
     public LoginResultado login(LoginComando comando) {
@@ -78,15 +63,18 @@ public class LoginService implements LoginUseCase {
             throw new CredencialesInvalidasException();
         }
 
-        Usuario usuario = usuarioRepositoryPort.guardar(usuarioOpt.get().registrarLoginExitoso(ahora));
-        String accessToken = accessTokenGeneratorPort.generar(usuario);
+        Usuario usuario = usuarioOpt.get();
 
-        String refreshTokenValor = HashingSupport.generarValorAleatorio();
-        Instant expiraEn = ahora.plus(Duration.ofDays(refreshTokenTtlDias));
-        RefreshToken refreshToken = RefreshToken.crearNuevaFamilia(usuario.getId(),
-                HashingSupport.sha256Hex(refreshTokenValor), ahora, expiraEn);
-        refreshTokenRepositoryPort.guardar(refreshToken);
+        // MFA habilitado: no se emiten tokens todavía. El contador de intentos
+        // fallidos tampoco se resetea acá — solo con un login TOTALMENTE completo
+        // (ver CompletarLoginMfaService), para que un password correcto sin el
+        // segundo factor no cuente como "éxito".
+        if (usuario.isMfaHabilitado()) {
+            String challengeToken = mfaChallengeTokenPort.generar(usuario.getId());
+            return new LoginResultado.RequiereMfa(challengeToken);
+        }
 
-        return new LoginResultado(accessToken, refreshTokenValor, expiraEn, usuario);
+        Usuario actualizado = usuarioRepositoryPort.guardar(usuario.registrarLoginExitoso(ahora));
+        return emisionTokensService.emitirParaUsuarioAutenticado(actualizado);
     }
 }

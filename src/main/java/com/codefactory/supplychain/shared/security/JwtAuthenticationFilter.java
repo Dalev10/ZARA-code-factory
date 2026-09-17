@@ -52,9 +52,15 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             String token = header.substring("Bearer ".length());
             try {
                 Claims claims = Jwts.parser().verifyWith(clave).build().parseSignedClaims(token).getPayload();
-                UUID usuarioId = UUID.fromString(claims.getSubject());
-                var authentication = new UsernamePasswordAuthenticationToken(usuarioId, null, List.of());
-                SecurityContextHolder.getContext().setAuthentication(authentication);
+                // Un token de otro tipo (ej. el desafío de MFA de vida corta) NUNCA debe
+                // servir como access token, aunque esté firmado correctamente.
+                if (!JwtClaimTypes.TIPO_ACCESO.equals(claims.get(JwtClaimTypes.CLAIM_TIPO, String.class))) {
+                    SecurityContextHolder.clearContext();
+                } else {
+                    UUID usuarioId = UUID.fromString(claims.getSubject());
+                    var authentication = new UsernamePasswordAuthenticationToken(usuarioId, null, List.of());
+                    SecurityContextHolder.getContext().setAuthentication(authentication);
+                }
             } catch (JwtException | IllegalArgumentException excepcionTokenInvalido) {
                 SecurityContextHolder.clearContext();
             }

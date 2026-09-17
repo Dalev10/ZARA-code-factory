@@ -1,7 +1,9 @@
 package com.codefactory.supplychain.identity.application.service;
 
 import com.codefactory.supplychain.identity.application.port.in.LoginComando;
+import com.codefactory.supplychain.identity.application.port.in.LoginResultado;
 import com.codefactory.supplychain.identity.application.port.out.AccessTokenGeneratorPort;
+import com.codefactory.supplychain.identity.application.port.out.MfaChallengeTokenPort;
 import com.codefactory.supplychain.identity.application.port.out.PasswordHasherPort;
 import com.codefactory.supplychain.identity.application.port.out.RefreshTokenRepositoryPort;
 import com.codefactory.supplychain.identity.application.port.out.UsuarioRepositoryPort;
@@ -37,6 +39,7 @@ class LoginServiceTest {
     private PasswordHasherPort passwordHasherPort;
     private AccessTokenGeneratorPort accessTokenGeneratorPort;
     private RefreshTokenRepositoryPort refreshTokenRepositoryPort;
+    private MfaChallengeTokenPort mfaChallengeTokenPort;
     private LoginService servicio;
 
     @BeforeEach
@@ -45,13 +48,26 @@ class LoginServiceTest {
         passwordHasherPort = mock(PasswordHasherPort.class);
         accessTokenGeneratorPort = mock(AccessTokenGeneratorPort.class);
         refreshTokenRepositoryPort = mock(RefreshTokenRepositoryPort.class);
-        servicio = new LoginService(usuarioRepositoryPort, passwordHasherPort, accessTokenGeneratorPort,
+        mfaChallengeTokenPort = mock(MfaChallengeTokenPort.class);
+        EmisionTokensService emisionTokensService = new EmisionTokensService(accessTokenGeneratorPort,
                 refreshTokenRepositoryPort, 7L);
+        servicio = new LoginService(usuarioRepositoryPort, passwordHasherPort, mfaChallengeTokenPort,
+                emisionTokensService);
     }
 
     private static Usuario usuarioActivo(String email) {
         return Usuario.reconstruir(UUID.randomUUID(), Email.de(email), "Usuario de Prueba", HASH,
                 EstadoUsuario.ACTIVO, 0, null, false, null, null, Instant.now(), Instant.now());
+    }
+
+    private static Usuario usuarioActivoConMfa(String email) {
+        return Usuario.reconstruir(UUID.randomUUID(), Email.de(email), "Usuario de Prueba", HASH,
+                EstadoUsuario.ACTIVO, 0, null, true, "secreto-cifrado", null, Instant.now(), Instant.now());
+    }
+
+    private static LoginResultado.Completado comoCompletado(LoginResultado resultado) {
+        assertThat(resultado).isInstanceOf(LoginResultado.Completado.class);
+        return (LoginResultado.Completado) resultado;
     }
 
     @Test
@@ -63,7 +79,8 @@ class LoginServiceTest {
         when(accessTokenGeneratorPort.generar(any())).thenReturn("access-token-de-prueba");
         when(refreshTokenRepositoryPort.guardar(any())).thenAnswer(inv -> inv.getArgument(0));
 
-        var resultado = servicio.login(new LoginComando("ana@ejemplo.com", "contraseñaCorrecta123"));
+        LoginResultado.Completado resultado = comoCompletado(
+                servicio.login(new LoginComando("ana@ejemplo.com", "contraseñaCorrecta123")));
 
         assertThat(resultado.accessToken()).isEqualTo("access-token-de-prueba");
         assertThat(resultado.refreshTokenValor()).isNotBlank();
@@ -71,6 +88,23 @@ class LoginServiceTest {
         assertThat(resultado.refreshTokenExpiraEn()).isAfter(Instant.now());
 
         verify(refreshTokenRepositoryPort).guardar(any(RefreshToken.class));
+    }
+
+    @Test
+    void loginConMfaHabilitadoDevuelveDesafioSinEmitirTokensNiResetearContador() {
+        Usuario usuario = usuarioActivoConMfa("ana@ejemplo.com");
+        when(usuarioRepositoryPort.buscarPorEmail(Email.de("ana@ejemplo.com"))).thenReturn(Optional.of(usuario));
+        when(passwordHasherPort.coincide(eq("contraseñaCorrecta123"), eq(HASH))).thenReturn(true);
+        when(mfaChallengeTokenPort.generar(usuario.getId())).thenReturn("challenge-token-de-prueba");
+
+        var resultado = servicio.login(new LoginComando("ana@ejemplo.com", "contraseñaCorrecta123"));
+
+        assertThat(resultado).isInstanceOf(LoginResultado.RequiereMfa.class);
+        assertThat(((LoginResultado.RequiereMfa) resultado).mfaChallengeToken()).isEqualTo("challenge-token-de-prueba");
+
+        verify(accessTokenGeneratorPort, never()).generar(any());
+        verify(refreshTokenRepositoryPort, never()).guardar(any());
+        verify(usuarioRepositoryPort, never()).guardar(any());
     }
 
     @Test

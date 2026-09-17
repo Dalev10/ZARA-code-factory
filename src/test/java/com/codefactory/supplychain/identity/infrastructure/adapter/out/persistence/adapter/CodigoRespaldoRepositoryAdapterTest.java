@@ -19,6 +19,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -88,5 +89,49 @@ class CodigoRespaldoRepositoryAdapterTest {
                 .setParameter("id", usuario.getId())
                 .getSingleResult();
         assertThat(restantes).isZero();
+    }
+
+    @Test
+    void encuentraUnCodigoNoUsadoPorSuHash() {
+        Usuario usuario = usuarioRepository.guardar(Usuario.crear(Email.de("mfa-buscar@ejemplo.com"), "Usuario MFA",
+                PasswordHash.de("$2a$10$abcdefghijklmnopqrstuv")));
+        entityManager.flush();
+
+        codigoRespaldoRepository.guardarTodos(List.of(
+                CodigoRespaldo.crear(usuario.getId(), "hash-a-buscar", Instant.now())));
+        entityManager.flush();
+        entityManager.clear();
+
+        Optional<CodigoRespaldo> encontrado = codigoRespaldoRepository.buscarNoUsadoPorHash(usuario.getId(),
+                "hash-a-buscar");
+
+        assertThat(encontrado).isPresent();
+        assertThat(encontrado.get().estaUsado()).isFalse();
+    }
+
+    @Test
+    void noEncuentraUnCodigoYaUsadoNiUnoDeOtroUsuario() {
+        Usuario usuario = usuarioRepository.guardar(Usuario.crear(Email.de("mfa-usado@ejemplo.com"), "Usuario MFA",
+                PasswordHash.de("$2a$10$abcdefghijklmnopqrstuv")));
+        Usuario otroUsuario = usuarioRepository.guardar(Usuario.crear(Email.de("mfa-otro@ejemplo.com"), "Otro Usuario",
+                PasswordHash.de("$2a$10$abcdefghijklmnopqrstuv")));
+        entityManager.flush();
+
+        List<CodigoRespaldo> guardados = codigoRespaldoRepository.guardarTodos(List.of(
+                CodigoRespaldo.crear(usuario.getId(), "hash-ya-usado", Instant.now()),
+                CodigoRespaldo.crear(otroUsuario.getId(), "hash-de-otro", Instant.now())));
+        entityManager.flush();
+        entityManager.clear();
+
+        CodigoRespaldo codigoUsado = guardados.stream()
+                .filter(c -> c.getCodigoHash().equals("hash-ya-usado"))
+                .findFirst().orElseThrow();
+        codigoRespaldoRepository.guardar(codigoUsado.marcarUsado(Instant.now()));
+        entityManager.flush();
+        entityManager.clear();
+
+        assertThat(codigoRespaldoRepository.buscarNoUsadoPorHash(usuario.getId(), "hash-ya-usado")).isEmpty();
+        assertThat(codigoRespaldoRepository.buscarNoUsadoPorHash(usuario.getId(), "hash-de-otro")).isEmpty();
+        assertThat(codigoRespaldoRepository.buscarNoUsadoPorHash(otroUsuario.getId(), "hash-de-otro")).isPresent();
     }
 }

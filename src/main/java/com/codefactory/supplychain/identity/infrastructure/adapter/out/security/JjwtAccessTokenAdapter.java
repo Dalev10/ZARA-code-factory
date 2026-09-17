@@ -2,6 +2,7 @@ package com.codefactory.supplychain.identity.infrastructure.adapter.out.security
 
 import com.codefactory.supplychain.identity.application.port.out.AccessTokenGeneratorPort;
 import com.codefactory.supplychain.identity.domain.model.Usuario;
+import com.codefactory.supplychain.shared.security.JwtClaimTypes;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
@@ -35,6 +36,7 @@ public class JjwtAccessTokenAdapter implements AccessTokenGeneratorPort {
         return Jwts.builder()
                 .subject(usuario.getId().toString())
                 .claim("email", usuario.getEmail().getValor())
+                .claim(JwtClaimTypes.CLAIM_TIPO, JwtClaimTypes.TIPO_ACCESO)
                 .issuedAt(Date.from(ahora))
                 .expiration(Date.from(ahora.plus(ttl)))
                 .signWith(clave)
