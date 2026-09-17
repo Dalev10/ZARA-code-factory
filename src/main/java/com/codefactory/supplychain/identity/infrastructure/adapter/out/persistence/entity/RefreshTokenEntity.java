@@ -36,6 +36,9 @@ public class RefreshTokenEntity {
     @Column(name = "usuario_id", nullable = false)
     private UUID usuarioId;
 
+    @Column(name = "familia_id", nullable = false)
+    private UUID familiaId;
+
     @Column(name = "token_hash", nullable = false, unique = true, length = 255)
     private String tokenHash;
 
@@ -44,4 +47,7 @@ public class RefreshTokenEntity {
 
     @Column(name = "expira_en", nullable = false)
     private Instant expiraEn;
+
+    @Column(name = "revocado_en")
+    private Instant revocadoEn;
 }

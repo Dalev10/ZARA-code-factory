@@ -14,14 +14,16 @@ public class RefreshTokenMapper {
         return RefreshTokenEntity.builder()
                 .id(refreshToken.getId())
                 .usuarioId(refreshToken.getUsuarioId())
+                .familiaId(refreshToken.getFamiliaId())
                 .tokenHash(refreshToken.getTokenHash())
                 .creadoEn(refreshToken.getCreadoEn())
                 .expiraEn(refreshToken.getExpiraEn())
+                .revocadoEn(refreshToken.getRevocadoEn())
                 .build();
     }
 
     public RefreshToken toDomain(RefreshTokenEntity entity) {
-        return RefreshToken.reconstruir(entity.getId(), entity.getUsuarioId(), entity.getTokenHash(),
-                entity.getCreadoEn(), entity.getExpiraEn());
+        return RefreshToken.reconstruir(entity.getId(), entity.getUsuarioId(), entity.getFamiliaId(),
+                entity.getTokenHash(), entity.getCreadoEn(), entity.getExpiraEn(), entity.getRevocadoEn());
     }
 }

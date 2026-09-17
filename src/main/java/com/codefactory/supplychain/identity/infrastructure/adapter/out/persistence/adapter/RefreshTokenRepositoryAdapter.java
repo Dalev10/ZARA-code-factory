@@ -7,6 +7,11 @@ import com.codefactory.supplychain.identity.infrastructure.adapter.out.persisten
 import com.codefactory.supplychain.identity.infrastructure.adapter.out.persistence.repository.RefreshTokenJpaRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.time.Instant;
+import java.util.Optional;
+import java.util.UUID;
 
 /**
  * Módulo: identity — Gestión de usuarios y autenticación (transversal, no forma parte del ERD de negocio)
@@ -22,5 +27,16 @@ public class RefreshTokenRepositoryAdapter implements RefreshTokenRepositoryPort
     public RefreshToken guardar(RefreshToken refreshToken) {
         RefreshTokenEntity guardado = jpaRepository.save(mapper.toEntity(refreshToken));
         return mapper.toDomain(guardado);
+    }
+
+    @Override
+    public Optional<RefreshToken> buscarPorTokenHash(String tokenHash) {
+        return jpaRepository.findByTokenHash(tokenHash).map(mapper::toDomain);
+    }
+
+    @Override
+    @Transactional
+    public void revocarFamilia(UUID familiaId, Instant ahora) {
+        jpaRepository.revocarFamilia(familiaId, ahora);
     }
 }

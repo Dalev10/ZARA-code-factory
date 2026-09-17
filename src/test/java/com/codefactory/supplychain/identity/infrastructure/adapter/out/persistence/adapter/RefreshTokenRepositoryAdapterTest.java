@@ -50,7 +50,8 @@ class RefreshTokenRepositoryAdapterTest {
         entityManager.flush();
 
         Instant ahora = Instant.now();
-        RefreshToken token = RefreshToken.crear(usuario.getId(), "hash-de-prueba", ahora, ahora.plusSeconds(3600));
+        RefreshToken token = RefreshToken.crearNuevaFamilia(usuario.getId(), "hash-de-prueba", ahora,
+                ahora.plusSeconds(3600));
 
         RefreshToken guardado = refreshTokenRepository.guardar(token);
         entityManager.flush();
@@ -58,7 +59,51 @@ class RefreshTokenRepositoryAdapterTest {
 
         assertThat(guardado.getId()).isNotNull();
         assertThat(guardado.getUsuarioId()).isEqualTo(usuario.getId());
+        assertThat(guardado.getFamiliaId()).isEqualTo(token.getFamiliaId());
         assertThat(guardado.getTokenHash()).isEqualTo("hash-de-prueba");
+        assertThat(guardado.getRevocadoEn()).isNull();
+    }
+
+    @Test
+    void buscaUnTokenActivoPorSuHash() {
+        Usuario usuario = usuarioRepository.guardar(Usuario.crear(Email.de("buscar@ejemplo.com"), "Persona Buscada",
+                PasswordHash.de("$2a$10$abcdefghijklmnopqrstuv")));
+        entityManager.flush();
+
+        Instant ahora = Instant.now();
+        refreshTokenRepository.guardar(
+                RefreshToken.crearNuevaFamilia(usuario.getId(), "hash-buscable", ahora, ahora.plusSeconds(3600)));
+        entityManager.flush();
+        entityManager.clear();
+
+        assertThat(refreshTokenRepository.buscarPorTokenHash("hash-buscable")).isPresent();
+        assertThat(refreshTokenRepository.buscarPorTokenHash("hash-que-no-existe")).isEmpty();
+    }
+
+    @Test
+    void revocarFamiliaRevocaTodosLosTokensActivosDeEsaFamiliaYNoTocaOtrasFamilias() {
+        Usuario usuario = usuarioRepository.guardar(Usuario.crear(Email.de("familia@ejemplo.com"), "Con Familia",
+                PasswordHash.de("$2a$10$abcdefghijklmnopqrstuv")));
+        entityManager.flush();
+
+        Instant ahora = Instant.now();
+        RefreshToken original = refreshTokenRepository.guardar(
+                RefreshToken.crearNuevaFamilia(usuario.getId(), "hash-familia-1", ahora, ahora.plusSeconds(3600)));
+        refreshTokenRepository.guardar(
+                RefreshToken.crearRotado(usuario.getId(), original.getFamiliaId(), "hash-familia-2", ahora,
+                        ahora.plusSeconds(3600)));
+        refreshTokenRepository.guardar(
+                RefreshToken.crearNuevaFamilia(usuario.getId(), "hash-otra-familia", ahora, ahora.plusSeconds(3600)));
+        entityManager.flush();
+        entityManager.clear();
+
+        refreshTokenRepository.revocarFamilia(original.getFamiliaId(), ahora);
+        entityManager.clear();
+
+        assertThat(refreshTokenRepository.buscarPorTokenHash("hash-familia-2").orElseThrow().estaRevocado())
+                .isTrue();
+        assertThat(refreshTokenRepository.buscarPorTokenHash("hash-otra-familia").orElseThrow().estaRevocado())
+                .isFalse();
     }
 
     @Test
@@ -69,12 +114,12 @@ class RefreshTokenRepositoryAdapterTest {
 
         Instant ahora = Instant.now();
         refreshTokenRepository.guardar(
-                RefreshToken.crear(usuario.getId(), "hash-repetido", ahora, ahora.plusSeconds(3600)));
+                RefreshToken.crearNuevaFamilia(usuario.getId(), "hash-repetido", ahora, ahora.plusSeconds(3600)));
         entityManager.flush();
         entityManager.clear();
 
         refreshTokenRepository.guardar(
-                RefreshToken.crear(usuario.getId(), "hash-repetido", ahora, ahora.plusSeconds(3600)));
+                RefreshToken.crearNuevaFamilia(usuario.getId(), "hash-repetido", ahora, ahora.plusSeconds(3600)));
 
         org.assertj.core.api.Assertions.assertThatThrownBy(entityManager::flush)
                 .isInstanceOf(RuntimeException.class);
@@ -88,7 +133,7 @@ class RefreshTokenRepositoryAdapterTest {
 
         Instant ahora = Instant.now();
         refreshTokenRepository.guardar(
-                RefreshToken.crear(usuario.getId(), "hash-a-borrar", ahora, ahora.plusSeconds(3600)));
+                RefreshToken.crearNuevaFamilia(usuario.getId(), "hash-a-borrar", ahora, ahora.plusSeconds(3600)));
         entityManager.flush();
         entityManager.clear();
 

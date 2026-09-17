@@ -6,6 +6,7 @@ import com.codefactory.supplychain.identity.domain.model.Email;
 import com.codefactory.supplychain.identity.domain.model.EstadoUsuario;
 import com.codefactory.supplychain.identity.domain.model.Password;
 import com.codefactory.supplychain.identity.domain.model.Usuario;
+import jakarta.servlet.http.Cookie;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -160,6 +161,70 @@ class AuthControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(loginJson("recupera@ejemplo.com", "contraseñaSegura123")))
                 .andExpect(status().isOk());
+    }
+
+    @Test
+    void refrescarConElTokenVigenteDevuelveAccessNuevoYRotaLaCookie() throws Exception {
+        crearUsuario("refresca@ejemplo.com", "contraseñaSegura123", EstadoUsuario.ACTIVO);
+        MvcResult login = mockMvc.perform(post("/api/v1/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(loginJson("refresca@ejemplo.com", "contraseñaSegura123")))
+                .andExpect(status().isOk())
+                .andReturn();
+        String refreshTokenOriginal = extraerValorCookie(login);
+
+        MvcResult refresh = mockMvc.perform(post("/api/v1/auth/refresh")
+                        .cookie(new Cookie("refresh_token", refreshTokenOriginal)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.accessToken").exists())
+                .andReturn();
+
+        String refreshTokenNuevo = extraerValorCookie(refresh);
+        assertThat(refreshTokenNuevo).isNotEqualTo(refreshTokenOriginal);
+    }
+
+    @Test
+    void reusarUnRefreshTokenYaRotadoSeRechazaYRevocaLaFamiliaCompleta() throws Exception {
+        crearUsuario("robado@ejemplo.com", "contraseñaSegura123", EstadoUsuario.ACTIVO);
+        MvcResult login = mockMvc.perform(post("/api/v1/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(loginJson("robado@ejemplo.com", "contraseñaSegura123")))
+                .andExpect(status().isOk())
+                .andReturn();
+        String refreshTokenOriginal = extraerValorCookie(login);
+
+        // Primer refresh: legítimo, rota el token.
+        MvcResult primerRefresh = mockMvc.perform(post("/api/v1/auth/refresh")
+                        .cookie(new Cookie("refresh_token", refreshTokenOriginal)))
+                .andExpect(status().isOk())
+                .andReturn();
+        String refreshTokenRotado = extraerValorCookie(primerRefresh);
+
+        // Alguien vuelve a presentar el token YA rotado (ej. interceptado antes de la
+        // rotación legítima) -> se detecta el reuse y se rechaza.
+        mockMvc.perform(post("/api/v1/auth/refresh")
+                        .cookie(new Cookie("refresh_token", refreshTokenOriginal)))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.mensaje").value("Sesión inválida o expirada"));
+
+        // La detección de reuse revoca TODA la familia: incluso el token rotado
+        // legítimamente (refreshTokenRotado) queda invalidado.
+        mockMvc.perform(post("/api/v1/auth/refresh")
+                        .cookie(new Cookie("refresh_token", refreshTokenRotado)))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void refrescarSinCookieSeRechaza() throws Exception {
+        mockMvc.perform(post("/api/v1/auth/refresh"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    private static String extraerValorCookie(MvcResult resultado) {
+        String setCookie = resultado.getResponse().getHeader("Set-Cookie");
+        assertThat(setCookie).isNotNull();
+        String parteValor = setCookie.split(";", 2)[0];
+        return parteValor.substring(parteValor.indexOf('=') + 1);
     }
 
     private static String loginJson(String email, String password) {

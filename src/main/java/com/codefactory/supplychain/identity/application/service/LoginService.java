@@ -16,12 +16,8 @@ import com.codefactory.supplychain.identity.domain.model.Usuario;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.security.SecureRandom;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.Base64;
 import java.util.Optional;
 
 /**
@@ -37,8 +33,6 @@ public class LoginService implements LoginUseCase {
      */
     private static final String HASH_SEÑUELO =
             "$2a$10$CwTycUXWue0Thq9StjUM0uJ8G8OJ8bbNvJVv53bJ8y6bnJmZ9x7Nu";
-
-    private static final SecureRandom RANDOM = new SecureRandom();
 
     private final UsuarioRepositoryPort usuarioRepositoryPort;
     private final PasswordHasherPort passwordHasherPort;
@@ -87,31 +81,12 @@ public class LoginService implements LoginUseCase {
         Usuario usuario = usuarioRepositoryPort.guardar(usuarioOpt.get().registrarLoginExitoso(ahora));
         String accessToken = accessTokenGeneratorPort.generar(usuario);
 
-        String refreshTokenValor = generarValorAleatorio();
+        String refreshTokenValor = RefreshTokenSupport.generarValorAleatorio();
         Instant expiraEn = ahora.plus(Duration.ofDays(refreshTokenTtlDias));
-        RefreshToken refreshToken = RefreshToken.crear(usuario.getId(), sha256Hex(refreshTokenValor), ahora, expiraEn);
+        RefreshToken refreshToken = RefreshToken.crearNuevaFamilia(usuario.getId(),
+                RefreshTokenSupport.sha256Hex(refreshTokenValor), ahora, expiraEn);
         refreshTokenRepositoryPort.guardar(refreshToken);
 
         return new LoginResultado(accessToken, refreshTokenValor, expiraEn, usuario);
-    }
-
-    private static String generarValorAleatorio() {
-        byte[] bytes = new byte[32];
-        RANDOM.nextBytes(bytes);
-        return Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
-    }
-
-    private static String sha256Hex(String valor) {
-        try {
-            MessageDigest digest = MessageDigest.getInstance("SHA-256");
-            byte[] hash = digest.digest(valor.getBytes(java.nio.charset.StandardCharsets.UTF_8));
-            StringBuilder hex = new StringBuilder(hash.length * 2);
-            for (byte b : hash) {
-                hex.append(String.format("%02x", b));
-            }
-            return hex.toString();
-        } catch (NoSuchAlgorithmException e) {
-            throw new IllegalStateException("SHA-256 no disponible en este JDK", e);
-        }
     }
 }
