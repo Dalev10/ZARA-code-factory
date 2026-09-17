@@ -37,7 +37,9 @@ class RolRepositoryAdapterTest {
 
     @Test
     void guardaYRecuperaUnRolPorId() {
-        Rol guardado = rolRepository.guardar(Rol.crear("ADMIN", "Administrador del sistema"));
+        // No se usa "ADMIN" como nombre: la migración V4 ya siembra ese rol para el bootstrap
+        // del admin inicial, y chocaría con la restricción de unicidad de rol.nombre.
+        Rol guardado = rolRepository.guardar(Rol.crear("ROL_DE_PRUEBA", "Rol usado solo en este test"));
         entityManager.flush();
         entityManager.clear();
 

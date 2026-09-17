@@ -5,9 +5,9 @@ import com.codefactory.supplychain.shared.exception.ReglaDeNegocioException;
 /**
  * Módulo: identity — Gestión de usuarios y autenticación (transversal, no forma parte del ERD de negocio)
  */
-public class PasswordHashInvalidoException extends ReglaDeNegocioException {
+public class PasswordComprometidaException extends ReglaDeNegocioException {
 
-    public PasswordHashInvalidoException(String message) {
+    public PasswordComprometidaException(String message) {
         super(message);
     }
 }

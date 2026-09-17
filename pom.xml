@@ -74,6 +74,26 @@
         </dependency>
 
         <!-- ============================================================
+             Seguridad — usada solo como infraestructura (SecurityFilterChain,
+             PasswordEncoder). La lógica de negocio de autenticación/MFA/tokens
+             vive en identity/application/service, no acoplada a este framework.
+             ============================================================ -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-security</artifactId>
+        </dependency>
+
+        <!-- ============================================================
+             Documentación interactiva de la API (Swagger UI) para probar
+             los endpoints manualmente en localhost durante el desarrollo.
+             ============================================================ -->
+        <dependency>
+            <groupId>org.springdoc</groupId>
+            <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+            <version>3.0.3</version>
+        </dependency>
+
+        <!-- ============================================================
              Utilidades de desarrollo (reduce boilerplate en entidades/DTOs)
              ============================================================ -->
         <dependency>
