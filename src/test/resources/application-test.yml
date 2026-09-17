@@ -1,0 +1,16 @@
+# Archivo de perfil ("test"), no application.yml a secas: Spring Boot NO
+# combina dos archivos que se llamen igual desde distintas raíces del
+# classpath (uno los reemplazaría por completo). Un archivo application-<perfil>.yml
+# sí se combina de forma aditiva sobre application.yml cuando ese perfil está
+# activo — por eso cualquier @SpringBootTest que necesite estas propiedades
+# debe llevar @ActiveProfiles("test").
+#
+# Existe porque app.security.jwt.secret no tiene valor por defecto a propósito
+# (ver application.yml) — .env solo lo inyecta docker-compose, no llega a la
+# JVM cuando corremos ./mvnw test directamente.
+app:
+  security:
+    jwt:
+      secret: "secreto-fijo-usado-solo-en-tests-nunca-en-produccion-32bytes+"
+      access-token-ttl-minutos: 15
+      refresh-token-ttl-dias: 7

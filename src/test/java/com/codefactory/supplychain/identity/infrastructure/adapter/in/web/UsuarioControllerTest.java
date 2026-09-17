@@ -10,6 +10,7 @@ import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Primary;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
@@ -28,9 +29,13 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * El cuerpo de las peticiones se arma a mano (sin ObjectMapper inyectado) porque Spring
  * Boot 4.1.1 registra por defecto un ObjectMapper de Jackson 3.x (tools.jackson.databind),
  * no el com.fasterxml.jackson.databind clásico — evita acoplar el test a esa decisión interna.
+ *
+ * @ActiveProfiles("test") carga application-test.yml (secreto JWT fijo de test),
+ * necesario porque el contexto completo también instancia JjwtAccessTokenAdapter.
  */
 @SpringBootTest
 @AutoConfigureMockMvc
+@ActiveProfiles("test")
 @Testcontainers
 class UsuarioControllerTest {
 

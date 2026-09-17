@@ -26,3 +26,13 @@ spring:
     enabled: true
     locations: classpath:db/migration
     baseline-on-migrate: false
+
+app:
+  security:
+    jwt:
+      # Sin valor por defecto a propósito: un secreto de firma JWT nunca debe
+      # tener un fallback embebido en el código fuente público. Se define en
+      # .env (local) o como variable de entorno real en cada ambiente.
+      secret: ${JWT_SECRET}
+      access-token-ttl-minutos: ${JWT_ACCESS_TOKEN_TTL_MINUTOS:15}
+      refresh-token-ttl-dias: ${JWT_REFRESH_TOKEN_TTL_DIAS:7}

@@ -94,6 +94,30 @@
         </dependency>
 
         <!-- ============================================================
+             JWT — access tokens firmados (HS256). jjwt-jackson usa su propio
+             ObjectMapper interno de Jackson 2.x clásico (com.fasterxml), no
+             el JsonMapper de Jackson 3.x que Boot 4.1.1 registra por defecto,
+             así que no hay conflicto entre ambos.
+             ============================================================ -->
+        <dependency>
+            <groupId>io.jsonwebtoken</groupId>
+            <artifactId>jjwt-api</artifactId>
+            <version>0.12.3</version>
+        </dependency>
+        <dependency>
+            <groupId>io.jsonwebtoken</groupId>
+            <artifactId>jjwt-impl</artifactId>
+            <version>0.12.3</version>
+            <scope>runtime</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.jsonwebtoken</groupId>
+            <artifactId>jjwt-jackson</artifactId>
+            <version>0.12.3</version>
+            <scope>runtime</scope>
+        </dependency>
+
+        <!-- ============================================================
              Utilidades de desarrollo (reduce boilerplate en entidades/DTOs)
              ============================================================ -->
         <dependency>

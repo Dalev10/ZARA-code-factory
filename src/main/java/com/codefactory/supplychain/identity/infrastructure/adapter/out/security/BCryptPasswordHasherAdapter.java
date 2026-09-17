@@ -20,4 +20,9 @@ public class BCryptPasswordHasherAdapter implements PasswordHasherPort {
     public PasswordHash hashear(Password password) {
         return PasswordHash.de(passwordEncoder.encode(password.getValor()));
     }
+
+    @Override
+    public boolean coincide(String passwordCandidata, PasswordHash hashAlmacenado) {
+        return passwordEncoder.matches(passwordCandidata, hashAlmacenado.getValor());
+    }
 }

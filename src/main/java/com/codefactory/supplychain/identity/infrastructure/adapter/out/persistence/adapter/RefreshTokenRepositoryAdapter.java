@@ -1,0 +1,26 @@
+package com.codefactory.supplychain.identity.infrastructure.adapter.out.persistence.adapter;
+
+import com.codefactory.supplychain.identity.application.port.out.RefreshTokenRepositoryPort;
+import com.codefactory.supplychain.identity.domain.model.RefreshToken;
+import com.codefactory.supplychain.identity.infrastructure.adapter.out.persistence.entity.RefreshTokenEntity;
+import com.codefactory.supplychain.identity.infrastructure.adapter.out.persistence.mapper.RefreshTokenMapper;
+import com.codefactory.supplychain.identity.infrastructure.adapter.out.persistence.repository.RefreshTokenJpaRepository;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Component;
+
+/**
+ * Módulo: identity — Gestión de usuarios y autenticación (transversal, no forma parte del ERD de negocio)
+ */
+@Component
+@RequiredArgsConstructor
+public class RefreshTokenRepositoryAdapter implements RefreshTokenRepositoryPort {
+
+    private final RefreshTokenJpaRepository jpaRepository;
+    private final RefreshTokenMapper mapper;
+
+    @Override
+    public RefreshToken guardar(RefreshToken refreshToken) {
+        RefreshTokenEntity guardado = jpaRepository.save(mapper.toEntity(refreshToken));
+        return mapper.toDomain(guardado);
+    }
+}
