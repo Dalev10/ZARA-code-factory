@@ -74,6 +74,61 @@
         </dependency>
 
         <!-- ============================================================
+             Seguridad — usada solo como infraestructura (SecurityFilterChain,
+             PasswordEncoder). La lógica de negocio de autenticación/MFA/tokens
+             vive en identity/application/service, no acoplada a este framework.
+             ============================================================ -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-security</artifactId>
+        </dependency>
+
+        <!-- ============================================================
+             Documentación interactiva de la API (Swagger UI) para probar
+             los endpoints manualmente en localhost durante el desarrollo.
+             ============================================================ -->
+        <dependency>
+            <groupId>org.springdoc</groupId>
+            <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+            <version>3.0.3</version>
+        </dependency>
+
+        <!-- ============================================================
+             JWT — access tokens firmados (HS256). jjwt-jackson usa su propio
+             ObjectMapper interno de Jackson 2.x clásico (com.fasterxml), no
+             el JsonMapper de Jackson 3.x que Boot 4.1.1 registra por defecto,
+             así que no hay conflicto entre ambos.
+             ============================================================ -->
+        <dependency>
+            <groupId>io.jsonwebtoken</groupId>
+            <artifactId>jjwt-api</artifactId>
+            <version>0.12.3</version>
+        </dependency>
+        <dependency>
+            <groupId>io.jsonwebtoken</groupId>
+            <artifactId>jjwt-impl</artifactId>
+            <version>0.12.3</version>
+            <scope>runtime</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.jsonwebtoken</groupId>
+            <artifactId>jjwt-jackson</artifactId>
+            <version>0.12.3</version>
+            <scope>runtime</scope>
+        </dependency>
+
+        <!-- ============================================================
+             MFA TOTP (RFC 6238) — genera/verifica códigos de 6 dígitos
+             compatibles con Google Authenticator/Authy, y renderiza el QR
+             (usa ZXing internamente) para escanear el secreto.
+             ============================================================ -->
+        <dependency>
+            <groupId>dev.samstevens.totp</groupId>
+            <artifactId>totp</artifactId>
+            <version>1.7.1</version>
+        </dependency>
+
+        <!-- ============================================================
              Utilidades de desarrollo (reduce boilerplate en entidades/DTOs)
              ============================================================ -->
         <dependency>
@@ -94,6 +149,28 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-data-jpa-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <!-- ============================================================
+             Testcontainers — levanta un Postgres real (efímero, vía Docker)
+             para los tests de repositorio, en vez de un H2 embebido que no
+             refleja fielmente las migraciones de Flyway (gen_random_uuid(),
+             triggers, CHECK constraints, etc.)
+             ============================================================ -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-testcontainers</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>testcontainers-postgresql</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>testcontainers-junit-jupiter</artifactId>
             <scope>test</scope>
         </dependency>
 

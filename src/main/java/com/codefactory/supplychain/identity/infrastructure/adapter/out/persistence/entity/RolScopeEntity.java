@@ -1,0 +1,24 @@
+package com.codefactory.supplychain.identity.infrastructure.adapter.out.persistence.entity;
+
+import jakarta.persistence.EmbeddedId;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Table;
+import lombok.AllArgsConstructor;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+
+/**
+ * Módulo: identity — Gestión de usuarios y autenticación (transversal, no forma parte del ERD de negocio)
+ */
+@Entity
+@Table(name = "rol_scope")
+@Getter
+@NoArgsConstructor
+@AllArgsConstructor
+@EqualsAndHashCode
+public class RolScopeEntity {
+
+    @EmbeddedId
+    private RolScopeId id;
+}
