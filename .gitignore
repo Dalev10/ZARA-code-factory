@@ -19,3 +19,6 @@ Thumbs.db
 
 # Variables de entorno locales (nunca versionar secretos)
 .env
+
+# Informes de desarrollo (locales, no se suben al remoto)
+docs/
