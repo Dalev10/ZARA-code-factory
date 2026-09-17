@@ -82,4 +82,33 @@ class ScopeRepositoryAdapterTest {
 
         assertThatThrownBy(entityManager::flush).isInstanceOf(RuntimeException.class);
     }
+
+    @Test
+    void guardarUnScopeYaExistenteLoActualizaEnVezDeDuplicarlo() {
+        Scope creado = scopeRepository.guardar(Scope.crear("scope:actualizable", "desc vieja", false));
+        entityManager.flush();
+        entityManager.clear();
+
+        scopeRepository.guardar(creado.actualizar("scope:actualizado", "desc nueva", true));
+        entityManager.flush();
+        entityManager.clear();
+
+        assertThat(scopeRepository.buscarPorId(creado.getId())).get()
+                .satisfies(scope -> {
+                    assertThat(scope.getCodigo()).isEqualTo("scope:actualizado");
+                    assertThat(scope.isSensible()).isTrue();
+                });
+    }
+
+    @Test
+    void eliminaUnScopePorId() {
+        Scope creado = scopeRepository.guardar(Scope.crear("scope:a-eliminar", null, false));
+        entityManager.flush();
+        entityManager.clear();
+
+        scopeRepository.eliminar(creado.getId());
+        entityManager.flush();
+
+        assertThat(scopeRepository.buscarPorId(creado.getId())).isEmpty();
+    }
 }

@@ -34,4 +34,24 @@ class ScopeTest {
         assertThatThrownBy(() -> Scope.crear("codigo", "a".repeat(256), false))
                 .isInstanceOf(ScopeInvalidoException.class);
     }
+
+    @Test
+    void actualizarConservaIdYFechaDeCreacionPeroCambiaCodigoDescripcionYSensible() {
+        Scope scope = Scope.crear("usuarios:leer", "desc original", false);
+
+        Scope actualizado = scope.actualizar("usuarios:leer:v2", "desc nueva", true);
+
+        assertThat(actualizado.getId()).isEqualTo(scope.getId());
+        assertThat(actualizado.getCreadoEn()).isEqualTo(scope.getCreadoEn());
+        assertThat(actualizado.getCodigo()).isEqualTo("usuarios:leer:v2");
+        assertThat(actualizado.getDescripcion()).isEqualTo("desc nueva");
+        assertThat(actualizado.isSensible()).isTrue();
+    }
+
+    @Test
+    void actualizarValidaElNuevoCodigoIgualQueCrear() {
+        Scope scope = Scope.crear("usuarios:leer", "desc", false);
+
+        assertThatThrownBy(() -> scope.actualizar("  ", "desc", false)).isInstanceOf(ScopeInvalidoException.class);
+    }
 }

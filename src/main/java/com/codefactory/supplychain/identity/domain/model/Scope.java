@@ -36,6 +36,10 @@ public final class Scope {
         return new Scope(id, codigo, descripcion, sensible, creadoEn);
     }
 
+    public Scope actualizar(String nuevoCodigo, String nuevaDescripcion, boolean nuevoSensible) {
+        return new Scope(id, nuevoCodigo, nuevaDescripcion, nuevoSensible, creadoEn);
+    }
+
     private static String validarCodigo(String codigo) {
         if (codigo == null || codigo.isBlank()) {
             throw new ScopeInvalidoException("El código del scope no puede estar vacío");

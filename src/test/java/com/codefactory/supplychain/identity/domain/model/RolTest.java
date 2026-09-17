@@ -38,4 +38,23 @@ class RolTest {
     void rechazaDescripcionDemasiadoLarga() {
         assertThatThrownBy(() -> Rol.crear("ADMIN", "a".repeat(256))).isInstanceOf(RolInvalidoException.class);
     }
+
+    @Test
+    void actualizarConservaIdYFechaDeCreacionPeroCambiaNombreYDescripcion() {
+        Rol rol = Rol.crear("VENDEDOR", "Rol original");
+
+        Rol actualizado = rol.actualizar("VENDEDOR_SENIOR", "Descripción nueva");
+
+        assertThat(actualizado.getId()).isEqualTo(rol.getId());
+        assertThat(actualizado.getCreadoEn()).isEqualTo(rol.getCreadoEn());
+        assertThat(actualizado.getNombre()).isEqualTo("VENDEDOR_SENIOR");
+        assertThat(actualizado.getDescripcion()).isEqualTo("Descripción nueva");
+    }
+
+    @Test
+    void actualizarValidaElNuevoNombreIgualQueCrear() {
+        Rol rol = Rol.crear("VENDEDOR", "desc");
+
+        assertThatThrownBy(() -> rol.actualizar("  ", "desc")).isInstanceOf(RolInvalidoException.class);
+    }
 }

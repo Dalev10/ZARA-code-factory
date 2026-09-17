@@ -20,4 +20,6 @@ public interface ScopeRepositoryPort {
     List<Scope> listarTodos();
 
     boolean existePorCodigo(String codigo);
+
+    void eliminar(UUID id);
 }

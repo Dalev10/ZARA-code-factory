@@ -81,4 +81,31 @@ class RolRepositoryAdapterTest {
 
         assertThatThrownBy(entityManager::flush).isInstanceOf(RuntimeException.class);
     }
+
+    @Test
+    void guardarUnRolYaExistenteLoActualizaEnVezDeDuplicarlo() {
+        Rol creado = rolRepository.guardar(Rol.crear("ROL_ACTUALIZABLE", "desc vieja"));
+        entityManager.flush();
+        entityManager.clear();
+
+        rolRepository.guardar(creado.actualizar("ROL_ACTUALIZADO", "desc nueva"));
+        entityManager.flush();
+        entityManager.clear();
+
+        assertThat(rolRepository.listarTodos()).extracting(Rol::getId).contains(creado.getId());
+        assertThat(rolRepository.buscarPorId(creado.getId())).get()
+                .extracting(Rol::getNombre).isEqualTo("ROL_ACTUALIZADO");
+    }
+
+    @Test
+    void eliminaUnRolPorId() {
+        Rol creado = rolRepository.guardar(Rol.crear("ROL_A_ELIMINAR", null));
+        entityManager.flush();
+        entityManager.clear();
+
+        rolRepository.eliminar(creado.getId());
+        entityManager.flush();
+
+        assertThat(rolRepository.buscarPorId(creado.getId())).isEmpty();
+    }
 }

@@ -20,4 +20,6 @@ public interface RolRepositoryPort {
     List<Rol> listarTodos();
 
     boolean existePorNombre(String nombre);
+
+    void eliminar(UUID id);
 }

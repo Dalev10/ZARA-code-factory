@@ -34,6 +34,10 @@ public final class Rol {
         return new Rol(id, nombre, descripcion, creadoEn);
     }
 
+    public Rol actualizar(String nuevoNombre, String nuevaDescripcion) {
+        return new Rol(id, nuevoNombre, nuevaDescripcion, creadoEn);
+    }
+
     private static String validarNombre(String nombre) {
         if (nombre == null || nombre.isBlank()) {
             throw new RolInvalidoException("El nombre del rol no puede estar vacío");

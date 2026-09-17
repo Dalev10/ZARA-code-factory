@@ -47,4 +47,9 @@ public class RolRepositoryAdapter implements RolRepositoryPort {
     public boolean existePorNombre(String nombre) {
         return jpaRepository.existsByNombre(nombre);
     }
+
+    @Override
+    public void eliminar(UUID id) {
+        jpaRepository.deleteById(id);
+    }
 }

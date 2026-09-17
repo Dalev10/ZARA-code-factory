@@ -47,4 +47,9 @@ public class ScopeRepositoryAdapter implements ScopeRepositoryPort {
     public boolean existePorCodigo(String codigo) {
         return jpaRepository.existsByCodigo(codigo);
     }
+
+    @Override
+    public void eliminar(UUID id) {
+        jpaRepository.deleteById(id);
+    }
 }
