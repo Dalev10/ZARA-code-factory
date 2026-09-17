@@ -1,5 +1,7 @@
 package com.codefactory.supplychain.identity.domain.model;
 
+import com.codefactory.supplychain.identity.domain.exception.MfaNoConfiguradoException;
+import com.codefactory.supplychain.identity.domain.exception.MfaYaActivoException;
 import com.codefactory.supplychain.identity.domain.exception.NombreCompletoInvalidoException;
 
 import java.time.Duration;
@@ -121,6 +123,32 @@ public final class Usuario {
      */
     public boolean estaBloqueadoTemporalmente(Instant ahora) {
         return bloqueadoHasta != null && bloqueadoHasta.isAfter(ahora);
+    }
+
+    /**
+     * Primer paso de la activación de MFA: guarda el secreto TOTP (ya cifrado por la
+     * capa de aplicación — el dominio nunca ve el secreto en texto plano) sin habilitar
+     * MFA todavía. Recién queda habilitado tras {@link #confirmarActivacionMfa}, una vez
+     * que el usuario demuestra que configuró su app TOTP correctamente.
+     */
+    public Usuario iniciarActivacionMfa(String secretoCifrado, Instant ahora) {
+        if (mfaHabilitado) {
+            throw new MfaYaActivoException();
+        }
+        return new Usuario(id, email, nombreCompleto, passwordHash, estado, intentosFallidos, bloqueadoHasta,
+                false, secretoCifrado, proveedorExterno, creadoEn, ahora);
+    }
+
+    /**
+     * Segundo paso: habilita MFA. Requiere que {@link #iniciarActivacionMfa} ya haya
+     * dejado un secreto pendiente de confirmar.
+     */
+    public Usuario confirmarActivacionMfa(Instant ahora) {
+        if (mfaSecretEncrypted == null) {
+            throw new MfaNoConfiguradoException();
+        }
+        return new Usuario(id, email, nombreCompleto, passwordHash, estado, intentosFallidos, bloqueadoHasta,
+                true, mfaSecretEncrypted, proveedorExterno, creadoEn, ahora);
     }
 
     private static Instant calcularBloqueoHasta(int intentosFallidosConsecutivos, Instant ahora) {

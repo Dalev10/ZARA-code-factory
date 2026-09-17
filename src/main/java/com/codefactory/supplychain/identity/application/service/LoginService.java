@@ -81,10 +81,10 @@ public class LoginService implements LoginUseCase {
         Usuario usuario = usuarioRepositoryPort.guardar(usuarioOpt.get().registrarLoginExitoso(ahora));
         String accessToken = accessTokenGeneratorPort.generar(usuario);
 
-        String refreshTokenValor = RefreshTokenSupport.generarValorAleatorio();
+        String refreshTokenValor = HashingSupport.generarValorAleatorio();
         Instant expiraEn = ahora.plus(Duration.ofDays(refreshTokenTtlDias));
         RefreshToken refreshToken = RefreshToken.crearNuevaFamilia(usuario.getId(),
-                RefreshTokenSupport.sha256Hex(refreshTokenValor), ahora, expiraEn);
+                HashingSupport.sha256Hex(refreshTokenValor), ahora, expiraEn);
         refreshTokenRepositoryPort.guardar(refreshToken);
 
         return new LoginResultado(accessToken, refreshTokenValor, expiraEn, usuario);

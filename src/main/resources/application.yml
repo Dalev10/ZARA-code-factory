@@ -36,3 +36,7 @@ app:
       secret: ${JWT_SECRET}
       access-token-ttl-minutos: ${JWT_ACCESS_TOKEN_TTL_MINUTOS:15}
       refresh-token-ttl-dias: ${JWT_REFRESH_TOKEN_TTL_DIAS:7}
+    mfa:
+      # Clave AES-256 (32 bytes en base64) para cifrar el secreto TOTP en reposo.
+      # Igual que el secreto JWT: sin default embebido a propósito.
+      encryption-key: ${MFA_ENCRYPTION_KEY}

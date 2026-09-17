@@ -5,12 +5,15 @@
 # activo — por eso cualquier @SpringBootTest que necesite estas propiedades
 # debe llevar @ActiveProfiles("test").
 #
-# Existe porque app.security.jwt.secret no tiene valor por defecto a propósito
-# (ver application.yml) — .env solo lo inyecta docker-compose, no llega a la
-# JVM cuando corremos ./mvnw test directamente.
+# Existe porque app.security.jwt.secret y app.security.mfa.encryption-key no
+# tienen valor por defecto a propósito (ver application.yml) — .env solo lo
+# inyecta docker-compose, no llega a la JVM cuando corremos ./mvnw test directamente.
 app:
   security:
     jwt:
       secret: "secreto-fijo-usado-solo-en-tests-nunca-en-produccion-32bytes+"
       access-token-ttl-minutos: 15
       refresh-token-ttl-dias: 7
+    mfa:
+      # Clave AES-256 (32 bytes en base64) fija, solo para tests.
+      encryption-key: "41M9dS8yxw4o+6oal6BDM8qx4647WusECIc9SUE4pck="

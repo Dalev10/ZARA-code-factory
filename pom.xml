@@ -118,6 +118,17 @@
         </dependency>
 
         <!-- ============================================================
+             MFA TOTP (RFC 6238) — genera/verifica códigos de 6 dígitos
+             compatibles con Google Authenticator/Authy, y renderiza el QR
+             (usa ZXing internamente) para escanear el secreto.
+             ============================================================ -->
+        <dependency>
+            <groupId>dev.samstevens.totp</groupId>
+            <artifactId>totp</artifactId>
+            <version>1.7.1</version>
+        </dependency>
+
+        <!-- ============================================================
              Utilidades de desarrollo (reduce boilerplate en entidades/DTOs)
              ============================================================ -->
         <dependency>

@@ -25,7 +25,7 @@ public class LogoutService implements LogoutUseCase {
 
     @Override
     public void logout(LogoutComando comando) {
-        String hash = RefreshTokenSupport.sha256Hex(comando.refreshTokenValor());
+        String hash = HashingSupport.sha256Hex(comando.refreshTokenValor());
         refreshTokenRepositoryPort.buscarPorTokenHash(hash)
                 .filter(token -> !token.estaRevocado())
                 .ifPresent(token -> refreshTokenRepositoryPort.guardar(token.revocar(Instant.now())));

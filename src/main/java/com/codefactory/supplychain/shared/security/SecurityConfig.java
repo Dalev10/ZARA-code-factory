@@ -1,29 +1,37 @@
 package com.codefactory.supplychain.shared.security;
 
+import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 /**
- * Configuración de Spring Security usada únicamente como infraestructura
- * (PasswordEncoder, filter chain) — la lógica de negocio de autenticación,
- * MFA y tokens vive en identity/application/service, no acoplada a este framework.
+ * Configuración de Spring Security usada como infraestructura (PasswordEncoder,
+ * filter chain, resolución de "quién sos" vía JWT) — la lógica de negocio de
+ * autenticación, MFA y tokens vive en identity/application/service, no acoplada
+ * a este framework.
  *
- * TODO(HU-11): hoy todos los endpoints quedan abiertos (permitAll) porque ni
- * la autenticación (HU-03) ni el guard de autorización por scope (HU-11)
- * existen todavía. HU-11 debe reemplazar authorizeHttpRequests por reglas
- * reales basadas en scopes.
+ * Desde HU-07: los endpoints de auth (login/refresh/logout), el registro (HU-02,
+ * deliberadamente sin proteger todavía) y Swagger quedan públicos; CUALQUIER OTRO
+ * endpoint exige un JWT válido (autenticación). Esto es distinto de autorización
+ * por scope — "qué puede hacer" un usuario ya autenticado sigue siendo HU-11, que
+ * debe reemplazar el bloque de reglas de abajo por chequeos reales de scope.
  *
  * Componentes transversales de tipo 'security', compartidos por todos los módulos.
  */
 @Configuration
 @EnableWebSecurity
+@RequiredArgsConstructor
 public class SecurityConfig {
+
+    private final JwtAuthenticationFilter jwtAuthenticationFilter;
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -37,7 +45,15 @@ public class SecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .formLogin(form -> form.disable())
                 .httpBasic(basic -> basic.disable())
-                .authorizeHttpRequests(auth -> auth.anyRequest().permitAll())
+                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+                .authorizeHttpRequests(auth -> auth
+                        // TODO(HU-11): sigue abierto porque el guard de autorización por
+                        // scope todavía no existe — ver decisión registrada en HU-02.
+                        .requestMatchers(HttpMethod.POST, "/api/v1/usuarios").permitAll()
+                        .requestMatchers("/api/v1/auth/login", "/api/v1/auth/refresh", "/api/v1/auth/logout")
+                        .permitAll()
+                        .requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**").permitAll()
+                        .anyRequest().authenticated())
                 .build();
     }
 }

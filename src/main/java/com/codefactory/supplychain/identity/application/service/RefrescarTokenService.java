@@ -47,7 +47,7 @@ public class RefrescarTokenService implements RefrescarTokenUseCase {
     @Override
     public RefrescarTokenResultado refrescar(RefrescarTokenComando comando) {
         Instant ahora = Instant.now();
-        String hashPresentado = RefreshTokenSupport.sha256Hex(comando.refreshTokenValor());
+        String hashPresentado = HashingSupport.sha256Hex(comando.refreshTokenValor());
 
         RefreshToken tokenPresentado = refreshTokenRepositoryPort.buscarPorTokenHash(hashPresentado)
                 .orElseThrow(TokenInvalidoException::new);
@@ -68,10 +68,10 @@ public class RefrescarTokenService implements RefrescarTokenUseCase {
         // Rotación: se revoca el token presentado y se emite uno nuevo en la misma familia.
         refreshTokenRepositoryPort.guardar(tokenPresentado.revocar(ahora));
 
-        String nuevoValor = RefreshTokenSupport.generarValorAleatorio();
+        String nuevoValor = HashingSupport.generarValorAleatorio();
         Instant nuevaExpiracion = ahora.plus(Duration.ofDays(refreshTokenTtlDias));
         RefreshToken nuevoToken = RefreshToken.crearRotado(usuario.getId(), tokenPresentado.getFamiliaId(),
-                RefreshTokenSupport.sha256Hex(nuevoValor), ahora, nuevaExpiracion);
+                HashingSupport.sha256Hex(nuevoValor), ahora, nuevaExpiracion);
         refreshTokenRepositoryPort.guardar(nuevoToken);
 
         String accessToken = accessTokenGeneratorPort.generar(usuario);

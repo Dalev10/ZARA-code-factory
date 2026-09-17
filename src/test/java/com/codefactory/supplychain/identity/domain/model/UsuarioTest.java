@@ -1,5 +1,7 @@
 package com.codefactory.supplychain.identity.domain.model;
 
+import com.codefactory.supplychain.identity.domain.exception.MfaNoConfiguradoException;
+import com.codefactory.supplychain.identity.domain.exception.MfaYaActivoException;
 import com.codefactory.supplychain.identity.domain.exception.NombreCompletoInvalidoException;
 import org.junit.jupiter.api.Test;
 
@@ -154,5 +156,44 @@ class UsuarioTest {
         Instant ahora = Instant.now();
         return Usuario.reconstruir(UUID.randomUUID(), EMAIL, "Ana Pérez", HASH, EstadoUsuario.ACTIVO,
                 intentos, null, false, null, null, ahora, ahora);
+    }
+
+    @Test
+    void iniciarActivacionMfaGuardaElSecretoCifradoSinHabilitarMfaTodavia() {
+        Usuario usuario = Usuario.crear(EMAIL, "Ana Pérez", HASH);
+        Instant ahora = Instant.now();
+
+        Usuario actualizado = usuario.iniciarActivacionMfa("secreto-cifrado", ahora);
+
+        assertThat(actualizado.getMfaSecretEncrypted()).isEqualTo("secreto-cifrado");
+        assertThat(actualizado.isMfaHabilitado()).isFalse();
+    }
+
+    @Test
+    void noSePuedeIniciarActivacionMfaSiYaEstaHabilitado() {
+        Usuario usuario = Usuario.reconstruir(UUID.randomUUID(), EMAIL, "Ana Pérez", HASH, EstadoUsuario.ACTIVO,
+                0, null, true, "secreto-ya-confirmado", null, Instant.now(), Instant.now());
+
+        assertThatThrownBy(() -> usuario.iniciarActivacionMfa("otro-secreto", Instant.now()))
+                .isInstanceOf(MfaYaActivoException.class);
+    }
+
+    @Test
+    void confirmarActivacionMfaHabilitaMfaConservandoElSecreto() {
+        Usuario usuario = Usuario.crear(EMAIL, "Ana Pérez", HASH)
+                .iniciarActivacionMfa("secreto-cifrado", Instant.now());
+
+        Usuario confirmado = usuario.confirmarActivacionMfa(Instant.now());
+
+        assertThat(confirmado.isMfaHabilitado()).isTrue();
+        assertThat(confirmado.getMfaSecretEncrypted()).isEqualTo("secreto-cifrado");
+    }
+
+    @Test
+    void noSePuedeConfirmarActivacionMfaSinHaberlaIniciadoAntes() {
+        Usuario usuario = Usuario.crear(EMAIL, "Ana Pérez", HASH);
+
+        assertThatThrownBy(() -> usuario.confirmarActivacionMfa(Instant.now()))
+                .isInstanceOf(MfaNoConfiguradoException.class);
     }
 }
