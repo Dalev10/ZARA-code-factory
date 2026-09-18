@@ -39,6 +39,15 @@ public interface BodegaTiendaRepositoryPort {
     Optional<BodegaTienda> buscarPorTiendaId(Long tiendaId);
 
     /**
+     * Verifica si existe una bodega tienda por su identificador.
+     * 
+     * @param id El identificador de la bodega tienda.
+     * @return {@code true} si existe la bodega tienda, {@code false} en caso
+     *         contrario.
+     */
+    boolean existePorId(Long id);
+
+    /**
      * Verifica si existe una bodega tienda asociada a una tienda por su
      * identificador.
      * 

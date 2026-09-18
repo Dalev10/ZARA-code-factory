@@ -11,6 +11,8 @@ public interface ModificarBodegaTiendaUseCase {
      * si la bodega no existe.
      * @throws ...domain.exception.bodegatienda.BodegaTiendaInvalidaException     
      * si la bodega no es válida.
+    * @throws ...domain.exception.bodegatienda.TiendaAsociadaNoExisteException
+     * si la tienda no existe.
      */
     BodegaTienda modificar(Long id, BodegaTienda bodegaTienda);
 }

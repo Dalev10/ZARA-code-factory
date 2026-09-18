@@ -7,12 +7,8 @@ package com.codefactory.supplychain.inventario.domain.exception.bodegatienda;
  */
 public class BodegaTiendaNoEncontradaException extends RuntimeException {
 
-    public BodegaTiendaNoEncontradaException(String mensaje) {
+    private BodegaTiendaNoEncontradaException(String mensaje) {
         super(mensaje);
-    }
-
-    public BodegaTiendaNoEncontradaException(Long id) {
-        super(String.format("No se encontró la bodega de tienda con ID: %d", id));
     }
 
     public static BodegaTiendaNoEncontradaException porId(Long id) {
