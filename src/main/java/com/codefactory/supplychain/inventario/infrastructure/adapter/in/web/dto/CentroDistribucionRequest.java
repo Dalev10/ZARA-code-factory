@@ -3,7 +3,7 @@ package com.codefactory.supplychain.inventario.infrastructure.adapter.in.web.dto
 import jakarta.validation.constraints.Size;
 import jakarta.validation.constraints.NotBlank;
 
-public class CentroDistribucionDTO {
+public class CentroDistribucionRequest {
 
     @NotBlank(message = "El nombre del centro de distribución no puede estar vacío")
     @Size(max = 150, message = "El nombre del centro de distribución no puede tener más de 150 caracteres")
@@ -11,9 +11,6 @@ public class CentroDistribucionDTO {
 
     @Size(max = 255, message = "La ubicación del centro de distribución no puede tener más de 255 caracteres")
     private String ubicacion;
-
-    public CentroDistribucionDTO() {
-    }
 
     public String getNombre() {
         return nombre;
