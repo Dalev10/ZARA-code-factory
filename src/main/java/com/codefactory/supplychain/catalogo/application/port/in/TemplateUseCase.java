@@ -1,0 +1,60 @@
+package com.codefactory.supplychain.catalogo.application.port.in;
+
+import com.codefactory.supplychain.catalogo.domain.model.Template;
+
+import java.math.BigDecimal;
+import java.util.List;
+
+/**
+ * Puerto de entrada (Ports and Adapters) que define los casos de uso
+ * disponibles para Template (FEAT-05 / HU-15 a HU-18).
+ * <p>
+ * Será implementado por {@code TemplateService} y, en una etapa
+ * posterior, consumido por un Controller REST a través de DTOs. En esta
+ * etapa no existe todavía ningún Controller.
+ */
+public interface TemplateUseCase {
+
+    /**
+     * Crea un nuevo Template asociado a una Categoria existente.
+     *
+     * @throws com.codefactory.supplychain.catalogo.application.exception.RecursoNoEncontradoException
+     *         si la Categoria referenciada no existe.
+     */
+    Template crear(String nombre, String temporada, String proveedor,
+                    BigDecimal precioBase, Long categoriaId);
+
+    /**
+     * Consulta un Template por su id.
+     *
+     * @throws com.codefactory.supplychain.catalogo.application.exception.RecursoNoEncontradoException
+     *         si no existe un Template con ese id.
+     */
+    Template obtenerPorId(Long id);
+
+    /**
+     * Lista todos los Templates existentes.
+     */
+    List<Template> listar();
+
+    /**
+     * Modifica la información editable de un Template existente
+     * (nombre, temporada, proveedor y precio base).
+     * <p>
+     * La Categoria del Template no se reasigna aquí: el modelo de
+     * dominio la trata como inmutable (ver MODEL_DOMAIN_NOTES.md).
+     *
+     * @throws com.codefactory.supplychain.catalogo.application.exception.RecursoNoEncontradoException
+     *         si no existe un Template con ese id.
+     */
+    Template modificar(Long id, String nombre, String temporada,
+                        String proveedor, BigDecimal precioBase);
+
+    /**
+     * Elimina un Template por su id.
+     *
+     * @throws com.codefactory.supplychain.catalogo.application.exception.RecursoNoEncontradoException
+     *         si no existe un Template con ese id.
+     */
+    void eliminar(Long id);
+}
