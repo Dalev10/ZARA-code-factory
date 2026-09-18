@@ -1,6 +1,7 @@
 package com.codefactory.supplychain.inventario.infrastructure.adapter.out.persistence.bodegatienda.adapter;
 
 import java.util.Optional;
+import java.util.List;
 
 import org.springframework.stereotype.Repository;
 
@@ -26,6 +27,13 @@ public class BodegaTiendaPersistenceAdapter implements BodegaTiendaRepositoryPor
             BodegaTiendaPersistenceMapper mapper) {
         this.repository = repository;
         this.mapper = mapper;
+    }
+
+    @Override
+    public List<BodegaTienda> buscarTodas() {
+        return repository.findByTipo(TIPO_BODEGA_TIENDA).stream()
+                .map(mapper::toDomain)
+                .toList();
     }
 
     @Override

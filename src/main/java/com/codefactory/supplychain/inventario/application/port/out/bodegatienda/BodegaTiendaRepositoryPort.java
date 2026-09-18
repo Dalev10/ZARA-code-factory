@@ -3,6 +3,7 @@ package com.codefactory.supplychain.inventario.application.port.out.bodegatienda
 import com.codefactory.supplychain.inventario.domain.model.bodegatienda.BodegaTienda;
 
 import java.util.Optional;
+import java.util.List;
 
 /**
  * Puerto de salida para persistencia de {@code BodegaTienda}.
@@ -10,6 +11,8 @@ import java.util.Optional;
  * de la capa de infraestructura.
  */
 public interface BodegaTiendaRepositoryPort {
+
+    List<BodegaTienda> buscarTodas();
 
     /**
      * Guarda (crea o actualiza) una bodega tienda.
