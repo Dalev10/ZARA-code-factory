@@ -12,7 +12,7 @@ public interface ConsultarBodegaTiendaUseCase {
      * @throws ...domain.exception.bodegatienda.BodegaTiendaNoEncontradaException
      * si la bodega no existe.
      */
-    BodegaTienda consultarPorId(Long id);
+    BodegaTiendaConsulta consultarPorId(Long id);
 
     /**
      * Consultar una Bodega por el ID de la tienda a la que pertenece
@@ -22,5 +22,5 @@ public interface ConsultarBodegaTiendaUseCase {
      * @throws ...domain.exception.bodegatienda.BodegaTiendaNoEncontradaException
      * si la bodega no existe.
      */
-    BodegaTienda consultarPorTiendaId(Long tiendaId);
+    BodegaTiendaConsulta consultarPorTiendaId(Long tiendaId);
 }

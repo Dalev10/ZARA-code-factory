@@ -4,8 +4,11 @@ import com.codefactory.supplychain.inventario.application.port.in.bodegatienda.C
 import com.codefactory.supplychain.inventario.application.port.in.bodegatienda.EliminarBodegaTiendaUseCase;
 import com.codefactory.supplychain.inventario.application.port.in.bodegatienda.ModificarBodegaTiendaUseCase;
 import com.codefactory.supplychain.inventario.application.port.in.bodegatienda.RegistrarBodegaTiendaUseCase;
+import com.codefactory.supplychain.inventario.application.port.in.bodegatienda.ListarBodegaTiendaUseCase;
+import com.codefactory.supplychain.inventario.application.port.in.bodegatienda.BodegaTiendaConsulta;
 import com.codefactory.supplychain.inventario.application.port.out.bodegatienda.BodegaTiendaRepositoryPort;
-import com.codefactory.supplychain.inventario.application.port.out.bodegatienda.TiendaExistePort;
+import com.codefactory.supplychain.inventario.application.port.out.bodegatienda.InventarioPorNodoPort;
+import com.codefactory.supplychain.inventario.application.port.out.bodegatienda.TiendaConsultaPort;
 import com.codefactory.supplychain.inventario.domain.exception.bodegatienda.BodegaTiendaNoEncontradaException;
 import com.codefactory.supplychain.inventario.domain.exception.bodegatienda.BodegaTiendaInvalidaException;
 import com.codefactory.supplychain.inventario.domain.exception.bodegatienda.BodegaTiendaYaExisteException;
@@ -19,30 +22,36 @@ import com.codefactory.supplychain.inventario.domain.model.bodegatienda.BodegaTi
  * eliminación mediante los puertos de entrada y salida de la arquitectura
  * hexagonal. La validación de las invariantes de la entidad se delega a
  * {@link BodegaTienda} y la existencia de la tienda asociada se consulta a
- * través de {@link TiendaExistePort}.
+ * través de {@link TiendaConsultaPort}.
  */
 public class BodegaTiendaService implements
         RegistrarBodegaTiendaUseCase,
         ConsultarBodegaTiendaUseCase,
         ModificarBodegaTiendaUseCase,
-        EliminarBodegaTiendaUseCase {
+        EliminarBodegaTiendaUseCase,
+        ListarBodegaTiendaUseCase {
 
     private final BodegaTiendaRepositoryPort bodegaTiendaRepositoryPort;
-    private final TiendaExistePort tiendaExistePort;
+    private final TiendaConsultaPort tiendaConsultaPort;
+    private final InventarioPorNodoPort inventarioPorNodoPort;
 
     /**
      * Crea el servicio con sus dependencias de aplicación.
      *
      * @param bodegaTiendaRepositoryPort puerto de salida para persistir y
      *                                    consultar bodegas de tienda
-     * @param tiendaExistePort puerto de salida para comprobar la existencia de
-     *                         la tienda asociada
+     * @param tiendaConsultaPort puerto de salida para comprobar y consultar la
+     *                           tienda asociada
+     * @param inventarioPorNodoPort puerto de salida para consultar el inventario
+     *                              asociado al nodo
      */
     public BodegaTiendaService(BodegaTiendaRepositoryPort bodegaTiendaRepositoryPort,
-            TiendaExistePort tiendaExistePort) {
+            TiendaConsultaPort tiendaConsultaPort,
+            InventarioPorNodoPort inventarioPorNodoPort) {
 
         this.bodegaTiendaRepositoryPort = bodegaTiendaRepositoryPort;
-        this.tiendaExistePort = tiendaExistePort;
+        this.tiendaConsultaPort = tiendaConsultaPort;
+        this.inventarioPorNodoPort = inventarioPorNodoPort;
     }
 
     /**
@@ -57,7 +66,7 @@ public class BodegaTiendaService implements
      *                                       inválido
      */
     public BodegaTienda registrar(Long tiendaId) {
-        if (!tiendaExistePort.existeTienda(tiendaId)) {
+        if (!tiendaConsultaPort.existe(tiendaId)) {
             throw TiendaAsociadaNoExisteException.porId(tiendaId);
         }
 
@@ -77,9 +86,10 @@ public class BodegaTiendaService implements
      * @throws BodegaTiendaNoEncontradaException si no existe una bodega con el
      *                                           identificador indicado
      */
-    public BodegaTienda consultarPorId(Long id) {
-        return bodegaTiendaRepositoryPort.buscarPorId(id)
+    public BodegaTiendaConsulta consultarPorId(Long id) {
+        BodegaTienda bodegaTienda = bodegaTiendaRepositoryPort.buscarPorId(id)
                 .orElseThrow(() -> BodegaTiendaNoEncontradaException.porId(id));
+        return enriquecer(bodegaTienda);
     }
 
     /**
@@ -90,9 +100,10 @@ public class BodegaTiendaService implements
      * @throws BodegaTiendaNoEncontradaException si no existe una bodega asociada
      *                                           a la tienda indicada
      */
-    public BodegaTienda consultarPorTiendaId(Long tiendaId) {
-        return bodegaTiendaRepositoryPort.buscarPorTiendaId(tiendaId)
+    public BodegaTiendaConsulta consultarPorTiendaId(Long tiendaId) {
+        BodegaTienda bodegaTienda = bodegaTiendaRepositoryPort.buscarPorTiendaId(tiendaId)
                 .orElseThrow(() -> BodegaTiendaNoEncontradaException.porTiendaId(tiendaId));
+        return enriquecer(bodegaTienda);
     }
 
     /**
@@ -109,11 +120,12 @@ public class BodegaTiendaService implements
      *                                       inválidos
      */
     public BodegaTienda modificar(Long id, BodegaTienda bodegaTienda) {
-        BodegaTienda actual = consultarPorId(id);
+        BodegaTienda actual = bodegaTiendaRepositoryPort.buscarPorId(id)
+                .orElseThrow(() -> BodegaTiendaNoEncontradaException.porId(id));
         Long nuevaTiendaId = bodegaTienda.getTiendaId();
 
         if (!actual.getTiendaId().equals(nuevaTiendaId)) {
-            if (!tiendaExistePort.existeTienda(nuevaTiendaId)) {
+            if (!tiendaConsultaPort.existe(nuevaTiendaId)) {
                 throw TiendaAsociadaNoExisteException.porId(nuevaTiendaId);
             }
             if (bodegaTiendaRepositoryPort.existePorTiendaId(nuevaTiendaId)) {
@@ -136,7 +148,21 @@ public class BodegaTiendaService implements
         if (!bodegaTiendaRepositoryPort.existePorId(id)) {
             throw BodegaTiendaNoEncontradaException.porId(id);
         }
+        // TODO HU-10: validar inventario y movimientos asociados cuando exista
+        // el historial necesario; por ahora se conserva el borrado físico simple.
         bodegaTiendaRepositoryPort.eliminar(id);
+    }
+
+    @Override
+    public java.util.List<BodegaTienda> listarTodas() {
+        return bodegaTiendaRepositoryPort.buscarTodas();
+    }
+
+    private BodegaTiendaConsulta enriquecer(BodegaTienda bodegaTienda) {
+        return new BodegaTiendaConsulta(
+                bodegaTienda,
+                tiendaConsultaPort.buscarInfo(bodegaTienda.getTiendaId()).orElse(null),
+                inventarioPorNodoPort.consultarPorNodo(bodegaTienda.getId()));
     }
 
 }

@@ -5,25 +5,40 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import jakarta.persistence.Column;
 
 /**
- * Proyección JPA provisional de {@code tienda}, exclusiva para consultar si
- * existe una tienda asociada a una bodega.
+ * Proyección JPA TEMPORAL de {@code tienda}, exclusiva para consultar si
+ * existe y obtener los datos de una tienda asociada a una bodega.
  *
  * No representa la entidad oficial de Tienda.
  */
 @Entity
 @Table(name = "tienda")
-public class TiendaExistenciaJpaEntity {
+public class TiendaJpaEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    protected TiendaExistenciaJpaEntity() {
+    @Column(name = "nombre")
+    private String nombre;
+
+    @Column(name = "ubicacion")
+    private String ubicacion;
+
+    protected TiendaJpaEntity() {
     }
 
     public Long getId() {
         return id;
+    }
+
+    public String getNombre() {
+        return nombre;
+    }
+
+    public String getUbicacion() {
+        return ubicacion;
     }
 }

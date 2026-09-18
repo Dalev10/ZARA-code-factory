@@ -15,9 +15,13 @@ import jakarta.validation.Valid;
 
 import com.codefactory.supplychain.inventario.application.port.in.bodegatienda.ConsultarBodegaTiendaUseCase;
 import com.codefactory.supplychain.inventario.application.port.in.bodegatienda.EliminarBodegaTiendaUseCase;
+import com.codefactory.supplychain.inventario.application.port.in.bodegatienda.ListarBodegaTiendaUseCase;
 import com.codefactory.supplychain.inventario.application.port.in.bodegatienda.ModificarBodegaTiendaUseCase;
 import com.codefactory.supplychain.inventario.application.port.in.bodegatienda.RegistrarBodegaTiendaUseCase;
+import java.util.List;
+
 import com.codefactory.supplychain.inventario.domain.model.bodegatienda.BodegaTienda;
+import com.codefactory.supplychain.inventario.application.port.in.bodegatienda.BodegaTiendaConsulta;
 import com.codefactory.supplychain.inventario.infrastructure.adapter.in.web.bodegatienda.dto.BodegaTiendaResponse;
 import com.codefactory.supplychain.inventario.infrastructure.adapter.in.web.bodegatienda.dto.ModificarBodegaTiendaRequest;
 import com.codefactory.supplychain.inventario.infrastructure.adapter.in.web.bodegatienda.dto.RegistrarBodegaTiendaRequest;
@@ -26,21 +30,24 @@ import com.codefactory.supplychain.inventario.infrastructure.adapter.in.web.bode
  * Adaptador HTTP para los casos de uso de BodegaTienda.
  */
 @RestController
-@RequestMapping("/api/inventario/bodegas-tiendas")
+@RequestMapping("/api/v1/bodegas-tienda")
 public class BodegaTiendaController {
 
     private final RegistrarBodegaTiendaUseCase registrarUseCase;
     private final ConsultarBodegaTiendaUseCase consultarUseCase;
+    private final ListarBodegaTiendaUseCase listarUseCase;
     private final ModificarBodegaTiendaUseCase modificarUseCase;
     private final EliminarBodegaTiendaUseCase eliminarUseCase;
 
     public BodegaTiendaController(
             RegistrarBodegaTiendaUseCase registrarUseCase,
             ConsultarBodegaTiendaUseCase consultarUseCase,
+            ListarBodegaTiendaUseCase listarUseCase,
             ModificarBodegaTiendaUseCase modificarUseCase,
             EliminarBodegaTiendaUseCase eliminarUseCase) {
         this.registrarUseCase = registrarUseCase;
         this.consultarUseCase = consultarUseCase;
+        this.listarUseCase = listarUseCase;
         this.modificarUseCase = modificarUseCase;
         this.eliminarUseCase = eliminarUseCase;
     }
@@ -50,6 +57,13 @@ public class BodegaTiendaController {
             @Valid @RequestBody RegistrarBodegaTiendaRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(toResponse(registrarUseCase.registrar(request.tiendaId())));
+    }
+
+    @GetMapping
+    public List<BodegaTiendaResponse> listarTodas() {
+        return listarUseCase.listarTodas().stream()
+                .map(BodegaTiendaResponse::from)
+                .toList();
     }
 
     @GetMapping("/{id}")
@@ -78,5 +92,9 @@ public class BodegaTiendaController {
 
     private static BodegaTiendaResponse toResponse(BodegaTienda bodegaTienda) {
         return BodegaTiendaResponse.from(bodegaTienda);
+    }
+
+    private static BodegaTiendaResponse toResponse(BodegaTiendaConsulta consulta) {
+        return BodegaTiendaResponse.from(consulta);
     }
 }
