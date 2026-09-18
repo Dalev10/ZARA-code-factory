@@ -44,6 +44,11 @@ public class CentroDistribucionService implements CentroDistribucionUseCase {
     }
 
     public void eliminarCentroDistribucion(int id) {
+        CentroDistribucion centroDistribucionExistente = centroDistribucionRepository.findById(id);
+        if (centroDistribucionExistente == null) {
+            throw new CentroDistribucionNoEncontrado("No existe un centro de distribución con el id " + id);
+        }
+
         centroDistribucionRepository.eliminarCentroDistribucion(id);
     }
 
