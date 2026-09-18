@@ -26,3 +26,20 @@ spring:
     enabled: true
     locations: classpath:db/migration
     baseline-on-migrate: false
+
+app:
+  security:
+    jwt:
+      # Sin valor por defecto a propósito: un secreto de firma JWT nunca debe
+      # tener un fallback embebido en el código fuente público. Se define en
+      # .env (local) o como variable de entorno real en cada ambiente.
+      secret: ${JWT_SECRET}
+      access-token-ttl-minutos: ${JWT_ACCESS_TOKEN_TTL_MINUTOS:15}
+      refresh-token-ttl-dias: ${JWT_REFRESH_TOKEN_TTL_DIAS:7}
+      # Vida corta a propósito: solo alcanza para que el usuario abra su app TOTP
+      # y escriba el código, nunca para usarse como una sesión real.
+      mfa-challenge-ttl-minutos: ${JWT_MFA_CHALLENGE_TTL_MINUTOS:5}
+    mfa:
+      # Clave AES-256 (32 bytes en base64) para cifrar el secreto TOTP en reposo.
+      # Igual que el secreto JWT: sin default embebido a propósito.
+      encryption-key: ${MFA_ENCRYPTION_KEY}
