@@ -1,7 +1,7 @@
-package com.codefactory.supplychain.inventario.infrastructure.adapter.out.persistence.mapper;
+package com.codefactory.supplychain.inventario.infrastructure.adapter.out.persistence.mapper.centrodistribucion;
 
-import com.codefactory.supplychain.inventario.infrastructure.adapter.out.persistence.entity.CentroDistribucionEntity;
-import com.codefactory.supplychain.inventario.domain.model.CentroDistribucion;
+import com.codefactory.supplychain.inventario.infrastructure.adapter.out.persistence.entity.centrodistribucion.CentroDistribucionEntity;
+import com.codefactory.supplychain.inventario.domain.model.centrodistribucion.CentroDistribucion;
 import org.springframework.stereotype.Component;
 
 @Component 

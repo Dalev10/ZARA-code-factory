@@ -1,4 +1,4 @@
-package com.codefactory.supplychain.inventario.infrastructure.adapter.in.web.dto;
+package com.codefactory.supplychain.inventario.infrastructure.adapter.in.web.dto.centrodistribucion;
 
 public class CentroDistribucionResponse {
 

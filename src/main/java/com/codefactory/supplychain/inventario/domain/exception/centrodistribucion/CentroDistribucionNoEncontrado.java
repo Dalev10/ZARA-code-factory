@@ -1,4 +1,4 @@
-package com.codefactory.supplychain.inventario.domain.exception;
+package com.codefactory.supplychain.inventario.domain.exception.centrodistribucion;
 
 import com.codefactory.supplychain.shared.exception.ReglaDeNegocioException;
 

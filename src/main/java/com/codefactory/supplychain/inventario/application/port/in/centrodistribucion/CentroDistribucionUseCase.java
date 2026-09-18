@@ -1,6 +1,6 @@
-package com.codefactory.supplychain.inventario.application.port.in.cd;
+package com.codefactory.supplychain.inventario.application.port.in.centrodistribucion;
 
-import com.codefactory.supplychain.inventario.domain.model.CentroDistribucion;
+import com.codefactory.supplychain.inventario.domain.model.centrodistribucion.CentroDistribucion;
 
 public interface CentroDistribucionUseCase {
     

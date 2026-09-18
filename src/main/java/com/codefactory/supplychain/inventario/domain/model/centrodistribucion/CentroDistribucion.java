@@ -1,4 +1,4 @@
-package com.codefactory.supplychain.inventario.domain.model;
+package com.codefactory.supplychain.inventario.domain.model.centrodistribucion;
 
 public class CentroDistribucion {
 

@@ -1,4 +1,4 @@
-package com.codefactory.supplychain.inventario.infrastructure.adapter.out.persistence.entity;
+package com.codefactory.supplychain.inventario.infrastructure.adapter.out.persistence.entity.centrodistribucion;
 
 import jakarta.persistence.*;
 

@@ -1,10 +1,10 @@
-package com.codefactory.supplychain.inventario.infrastructure.adapter.out.persistence.adapter;
+package com.codefactory.supplychain.inventario.infrastructure.adapter.out.persistence.adapter.centrodistribucion;
 
-import com.codefactory.supplychain.inventario.domain.model.CentroDistribucion;
-import com.codefactory.supplychain.inventario.infrastructure.adapter.out.persistence.entity.CentroDistribucionEntity;
-import com.codefactory.supplychain.inventario.infrastructure.adapter.out.persistence.repository.CentroDistribucionJpaRepository;
-import com.codefactory.supplychain.inventario.application.port.out.CentroDistribucionRepository;
-import com.codefactory.supplychain.inventario.infrastructure.adapter.out.persistence.mapper.CentroDistribucionMapper;
+import com.codefactory.supplychain.inventario.domain.model.centrodistribucion.CentroDistribucion;
+import com.codefactory.supplychain.inventario.infrastructure.adapter.out.persistence.entity.centrodistribucion.CentroDistribucionEntity;
+import com.codefactory.supplychain.inventario.infrastructure.adapter.out.persistence.repository.centrodistribucion.CentroDistribucionJpaRepository;
+import com.codefactory.supplychain.inventario.application.port.out.centrodistribucion.CentroDistribucionRepository;
+import com.codefactory.supplychain.inventario.infrastructure.adapter.out.persistence.mapper.centrodistribucion.CentroDistribucionMapper;
 import org.springframework.stereotype.Repository;
 
 @Repository

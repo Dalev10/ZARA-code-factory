@@ -1,6 +1,6 @@
-package com.codefactory.supplychain.inventario.infrastructure.adapter.out.persistence.repository;
+package com.codefactory.supplychain.inventario.infrastructure.adapter.out.persistence.repository.centrodistribucion;
 
-import com.codefactory.supplychain.inventario.infrastructure.adapter.out.persistence.entity.CentroDistribucionEntity;
+import com.codefactory.supplychain.inventario.infrastructure.adapter.out.persistence.entity.centrodistribucion.CentroDistribucionEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.Optional;
 

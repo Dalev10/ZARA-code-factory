@@ -1,11 +1,11 @@
-package com.codefactory.supplychain.inventario.application.service;
+package com.codefactory.supplychain.inventario.application.service.centrodistribucion;
 
-import com.codefactory.supplychain.inventario.domain.model.CentroDistribucion;
-import com.codefactory.supplychain.inventario.application.port.out.CentroDistribucionRepository;
+import com.codefactory.supplychain.inventario.domain.model.centrodistribucion.CentroDistribucion;
+import com.codefactory.supplychain.inventario.application.port.out.centrodistribucion.CentroDistribucionRepository;
 import org.springframework.stereotype.Service;
-import com.codefactory.supplychain.inventario.domain.exception.CentroDistribucionDuplicado;
-import com.codefactory.supplychain.inventario.domain.exception.CentroDistribucionNoEncontrado;
-import com.codefactory.supplychain.inventario.application.port.in.cd.CentroDistribucionUseCase;
+import com.codefactory.supplychain.inventario.domain.exception.centrodistribucion.CentroDistribucionDuplicado;
+import com.codefactory.supplychain.inventario.domain.exception.centrodistribucion.CentroDistribucionNoEncontrado;
+import com.codefactory.supplychain.inventario.application.port.in.centrodistribucion.CentroDistribucionUseCase;
 
 @Service 
 public class CentroDistribucionService implements CentroDistribucionUseCase {

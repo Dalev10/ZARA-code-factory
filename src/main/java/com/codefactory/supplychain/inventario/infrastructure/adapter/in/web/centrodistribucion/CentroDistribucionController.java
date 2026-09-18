@@ -1,12 +1,12 @@
-package com.codefactory.supplychain.inventario.infrastructure.adapter.in.web;
+package com.codefactory.supplychain.inventario.infrastructure.adapter.in.web.centrodistribucion;
 
 import org.springframework.web.bind.annotation.RestController;
-import com.codefactory.supplychain.inventario.infrastructure.adapter.in.web.dto.CentroDistribucionRequest;
-import com.codefactory.supplychain.inventario.infrastructure.adapter.in.web.dto.CentroDistribucionResponse;
-import com.codefactory.supplychain.inventario.infrastructure.adapter.in.web.mapper.CentroDistribucionWebMapper;
+import com.codefactory.supplychain.inventario.infrastructure.adapter.in.web.dto.centrodistribucion.CentroDistribucionRequest;
+import com.codefactory.supplychain.inventario.infrastructure.adapter.in.web.dto.centrodistribucion.CentroDistribucionResponse;
+import com.codefactory.supplychain.inventario.infrastructure.adapter.in.web.mapper.centrodistribucion.CentroDistribucionWebMapper;
 import jakarta.validation.Valid;
-import com.codefactory.supplychain.inventario.domain.model.CentroDistribucion;
-import com.codefactory.supplychain.inventario.application.service.CentroDistribucionService;
+import com.codefactory.supplychain.inventario.domain.model.centrodistribucion.CentroDistribucion;
+import com.codefactory.supplychain.inventario.application.service.centrodistribucion.CentroDistribucionService;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
