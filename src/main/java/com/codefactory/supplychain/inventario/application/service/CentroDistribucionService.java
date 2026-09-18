@@ -5,9 +5,10 @@ import com.codefactory.supplychain.inventario.application.port.out.CentroDistrib
 import org.springframework.stereotype.Service;
 import com.codefactory.supplychain.inventario.domain.exception.CentroDistribucionDuplicado;
 import com.codefactory.supplychain.inventario.domain.exception.CentroDistribucionNoEncontrado;
+import com.codefactory.supplychain.inventario.application.port.in.cd.CentroDistribucionUseCase;
 
 @Service 
-public class CentroDistribucionService {
+public class CentroDistribucionService implements CentroDistribucionUseCase {
     private CentroDistribucionRepository centroDistribucionRepository;
 
     public CentroDistribucionService(CentroDistribucionRepository centroDistribucionRepository) {
@@ -25,7 +26,7 @@ public class CentroDistribucionService {
     }
 
     public CentroDistribucion actualizarCentroDistribucion(int id, String nombre, String ubicacion) {
-        
+
         CentroDistribucion centroDistribucionExistente = centroDistribucionRepository.findById(id);
         if (centroDistribucionExistente == null) {
             throw new CentroDistribucionNoEncontrado("No existe un centro de distribución con el id " + id);
