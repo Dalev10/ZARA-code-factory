@@ -7,6 +7,8 @@ import com.codefactory.supplychain.inventario.infrastructure.adapter.in.web.mapp
 import jakarta.validation.Valid;
 import com.codefactory.supplychain.inventario.domain.model.centrodistribucion.CentroDistribucion;
 import com.codefactory.supplychain.inventario.application.service.centrodistribucion.CentroDistribucionService;
+import com.codefactory.supplychain.inventario.infrastructure.adapter.in.web.mapper.centrodistribucion.CentroDistribucionConNodoWebMapper;
+import com.codefactory.supplychain.inventario.infrastructure.adapter.in.web.dto.centrodistribucion.CentroDistribucionConNodoResponse;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
@@ -15,10 +17,12 @@ import java.util.List;
 public class CentroDistribucionController {
     private final CentroDistribucionService centroDistribucionService;
     private final CentroDistribucionWebMapper centroDistribucionWebMapper;
+    private final CentroDistribucionConNodoWebMapper centroDistribucionConNodoWebMapper;
 
-    public CentroDistribucionController(CentroDistribucionService centroDistribucionService, CentroDistribucionWebMapper centroDistribucionWebMapper) {
+    public CentroDistribucionController(CentroDistribucionService centroDistribucionService, CentroDistribucionWebMapper centroDistribucionWebMapper, CentroDistribucionConNodoWebMapper centroDistribucionConNodoWebMapper) {
         this.centroDistribucionService = centroDistribucionService;
         this.centroDistribucionWebMapper = centroDistribucionWebMapper;
+        this.centroDistribucionConNodoWebMapper = centroDistribucionConNodoWebMapper;
     }
 
     @GetMapping
@@ -45,6 +49,15 @@ public class CentroDistribucionController {
     @DeleteMapping("/{id}")
     public void eliminarCentroDistribucion(@PathVariable int id) {
         centroDistribucionService.eliminarCentroDistribucion(id);
+    }
+
+    @GetMapping("/{id}")
+    public CentroDistribucionConNodoResponse obtenerCentroDistribucionConNodo(
+            @PathVariable int id) {
+
+        return centroDistribucionConNodoWebMapper.toResponse(
+                centroDistribucionService.buscarCentroDistribucionConNodo(id)
+        );
     }
 
 }

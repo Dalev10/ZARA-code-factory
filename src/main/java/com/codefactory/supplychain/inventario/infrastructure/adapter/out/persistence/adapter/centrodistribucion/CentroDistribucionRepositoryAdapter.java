@@ -6,6 +6,9 @@ import com.codefactory.supplychain.inventario.infrastructure.adapter.out.persist
 import com.codefactory.supplychain.inventario.application.port.out.centrodistribucion.CentroDistribucionRepository;
 import com.codefactory.supplychain.inventario.infrastructure.adapter.out.persistence.mapper.centrodistribucion.CentroDistribucionMapper;
 import com.codefactory.supplychain.inventario.infrastructure.adapter.out.persistence.specification.CentroDistribucionSpecification;
+import com.codefactory.supplychain.inventario.infrastructure.adapter.out.persistence.repository.NodoJpaRepository;
+import com.codefactory.supplychain.inventario.infrastructure.adapter.out.persistence.entity.NodoEntity;
+import com.codefactory.supplychain.inventario.application.dto.CentroDistribucionConNodo;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Repository;
 import java.util.List;
@@ -16,12 +19,15 @@ public class CentroDistribucionRepositoryAdapter
 
     private final CentroDistribucionJpaRepository centroDistribucionJpaRepository;
     private final CentroDistribucionMapper centroDistribucionMapper;
+    private final NodoJpaRepository nodoJpaRepository;
 
     public CentroDistribucionRepositoryAdapter(
             CentroDistribucionJpaRepository centroDistribucionJpaRepository,
-            CentroDistribucionMapper centroDistribucionMapper) {
+            CentroDistribucionMapper centroDistribucionMapper,
+            NodoJpaRepository nodoJpaRepository) {
         this.centroDistribucionJpaRepository = centroDistribucionJpaRepository;
         this.centroDistribucionMapper = centroDistribucionMapper;
+        this.nodoJpaRepository = nodoJpaRepository;
     }
 
     @Override
@@ -80,14 +86,22 @@ public class CentroDistribucionRepositoryAdapter
 
     @Override
     public CentroDistribucion crearCentroDistribucion(String nombre, String ubicacion) {
+
         CentroDistribucionEntity entity = new CentroDistribucionEntity();
         entity.setNombre(nombre);
         entity.setUbicacion(ubicacion);
+
         CentroDistribucionEntity savedEntity =
                 centroDistribucionJpaRepository.save(entity);
 
-        return centroDistribucionMapper.toDomain(savedEntity);
+        NodoEntity nodo = new NodoEntity();
+        nodo.setTipo("CD");
+        nodo.setCdId(savedEntity.getId().longValue());
+        nodo.setTiendaId(null);
 
+        nodoJpaRepository.save(nodo);
+
+        return centroDistribucionMapper.toDomain(savedEntity);
     }
 
     @Override
@@ -116,5 +130,40 @@ public class CentroDistribucionRepositoryAdapter
         centroDistribucionJpaRepository.deleteById(id);
     }
 
+    @Override
+    public CentroDistribucionConNodo buscarPorIdConNodo(int id) {
+
+        CentroDistribucionEntity centroDistribucionEntity =
+                centroDistribucionJpaRepository.findById(id).orElse(null);
+
+        if (centroDistribucionEntity == null) {
+            return null;
+        }
+
+        NodoEntity nodoEntity =
+                nodoJpaRepository.findByCdId((long) id).orElse(null);
+
+        if (nodoEntity == null) {
+            return new CentroDistribucionConNodo(
+                    centroDistribucionEntity.getId(),
+                    centroDistribucionEntity.getNombre(),
+                    centroDistribucionEntity.getUbicacion(),
+                    null,
+                    null,
+                    null,
+                    null
+            );
+        }
+
+        return new CentroDistribucionConNodo(
+                centroDistribucionEntity.getId(),
+                centroDistribucionEntity.getNombre(),
+                centroDistribucionEntity.getUbicacion(),
+                nodoEntity.getId(),
+                nodoEntity.getTipo(),
+                nodoEntity.getCdId(),
+                nodoEntity.getTiendaId()
+        );
+    }
 
 }

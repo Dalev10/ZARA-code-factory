@@ -26,7 +26,7 @@ public class CentroDistribucionEntity {
     }
 
     
-    public int getId() {
+    public Integer getId() {
         return id;
     }
 
