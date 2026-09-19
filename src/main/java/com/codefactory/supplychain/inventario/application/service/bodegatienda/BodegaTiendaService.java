@@ -1,5 +1,7 @@
 package com.codefactory.supplychain.inventario.application.service.bodegatienda;
 
+import org.springframework.transaction.annotation.Transactional;
+
 import com.codefactory.supplychain.inventario.application.port.in.bodegatienda.ConsultarBodegaTiendaUseCase;
 import com.codefactory.supplychain.inventario.application.port.in.bodegatienda.EliminarBodegaTiendaUseCase;
 import com.codefactory.supplychain.inventario.application.port.in.bodegatienda.ModificarBodegaTiendaUseCase;
@@ -9,6 +11,7 @@ import com.codefactory.supplychain.inventario.application.port.in.bodegatienda.B
 import com.codefactory.supplychain.inventario.application.port.out.bodegatienda.BodegaTiendaRepositoryPort;
 import com.codefactory.supplychain.inventario.application.port.out.bodegatienda.InventarioPorNodoPort;
 import com.codefactory.supplychain.inventario.application.port.out.bodegatienda.TiendaConsultaPort;
+import com.codefactory.supplychain.inventario.domain.exception.bodegatienda.BodegaTiendaConInventarioAsociadoException;
 import com.codefactory.supplychain.inventario.domain.exception.bodegatienda.BodegaTiendaNoEncontradaException;
 import com.codefactory.supplychain.inventario.domain.exception.bodegatienda.BodegaTiendaInvalidaException;
 import com.codefactory.supplychain.inventario.domain.exception.bodegatienda.BodegaTiendaYaExisteException;
@@ -144,12 +147,14 @@ public class BodegaTiendaService implements
      * @throws BodegaTiendaNoEncontradaException si no existe una bodega con el
      *                                           identificador indicado
      */
+    @Transactional
     public void eliminar(Long id) {
         if (!bodegaTiendaRepositoryPort.existePorId(id)) {
             throw BodegaTiendaNoEncontradaException.porId(id);
         }
-        // TODO HU-10: validar inventario y movimientos asociados cuando exista
-        // el historial necesario; por ahora se conserva el borrado físico simple.
+        if (!inventarioPorNodoPort.consultarPorNodo(id).isEmpty()) {
+            throw BodegaTiendaConInventarioAsociadoException.porId(id);
+        }
         bodegaTiendaRepositoryPort.eliminar(id);
     }
 

@@ -1,12 +1,16 @@
 package com.codefactory.supplychain.inventario.domain.exception.bodegatienda;
 
 /**
- * Excepción reservada para impedir la eliminación de una bodega con inventario
- * asociado cuando HU-10 defina la validación completa.
+ * Excepción lanzada cuando una bodega de tienda tiene inventario asociado.
  */
 public class BodegaTiendaConInventarioAsociadoException extends RuntimeException {
 
-    public BodegaTiendaConInventarioAsociadoException(Long nodoId) {
-        super(String.format("La bodega de tienda con ID %d tiene inventario asociado", nodoId));
+    private BodegaTiendaConInventarioAsociadoException(String mensaje) {
+        super(mensaje);
+    }
+
+    public static BodegaTiendaConInventarioAsociadoException porId(Long id) {
+        return new BodegaTiendaConInventarioAsociadoException(
+                String.format("La bodega de tienda con ID %d tiene inventario asociado", id));
     }
 }
