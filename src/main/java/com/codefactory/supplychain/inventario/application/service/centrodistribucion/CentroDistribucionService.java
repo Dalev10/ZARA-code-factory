@@ -6,6 +6,7 @@ import org.springframework.stereotype.Service;
 import com.codefactory.supplychain.inventario.domain.exception.centrodistribucion.CentroDistribucionDuplicado;
 import com.codefactory.supplychain.inventario.domain.exception.centrodistribucion.CentroDistribucionNoEncontrado;
 import com.codefactory.supplychain.inventario.application.port.in.centrodistribucion.CentroDistribucionUseCase;
+import java.util.List;
 
 @Service 
 public class CentroDistribucionService implements CentroDistribucionUseCase {
@@ -76,4 +77,18 @@ public class CentroDistribucionService implements CentroDistribucionUseCase {
 
         return centro;
     }
+
+    public List<CentroDistribucion> buscarCentrosDistribucion(Integer id, String nombre, String ubicacion) {
+
+        if (id == null && (nombre == null || nombre.isBlank()) && (ubicacion == null || ubicacion.isBlank())) {
+
+            throw new IllegalArgumentException(
+                    "Debe proporcionar al menos un parámetro de búsqueda (id, nombre o ubicación)."
+            );
+        }
+
+        return centroDistribucionRepository.buscar(id, nombre, ubicacion);
+
+    }
+
 }

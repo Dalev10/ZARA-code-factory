@@ -5,7 +5,10 @@ import com.codefactory.supplychain.inventario.infrastructure.adapter.out.persist
 import com.codefactory.supplychain.inventario.infrastructure.adapter.out.persistence.repository.centrodistribucion.CentroDistribucionJpaRepository;
 import com.codefactory.supplychain.inventario.application.port.out.centrodistribucion.CentroDistribucionRepository;
 import com.codefactory.supplychain.inventario.infrastructure.adapter.out.persistence.mapper.centrodistribucion.CentroDistribucionMapper;
+import com.codefactory.supplychain.inventario.infrastructure.adapter.out.persistence.specification.CentroDistribucionSpecification;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Repository;
+import java.util.List;
 
 @Repository
 public class CentroDistribucionRepositoryAdapter
@@ -31,11 +34,49 @@ public class CentroDistribucionRepositoryAdapter
 
     @Override
     public CentroDistribucion findByNombre(String nombre) {
-        CentroDistribucionEntity entity =
-                centroDistribucionJpaRepository.findByNombre(nombre).orElse(null);
+        List<CentroDistribucionEntity> entities =
+                centroDistribucionJpaRepository.findByNombre(nombre);
 
-        return entity != null ? centroDistribucionMapper.toDomain(entity) : null;
+        return !entities.isEmpty() ? centroDistribucionMapper.toDomain(entities.get(0)) : null;
     }
+
+    @Override
+    public List<CentroDistribucion> buscar(
+            Integer id,
+            String nombre,
+            String ubicacion) {
+
+        Specification<CentroDistribucionEntity> specification = null;
+
+        if (id != null) {
+            specification = CentroDistribucionSpecification.conId(id);
+        }
+
+        if (nombre != null && !nombre.isBlank()) {
+            Specification<CentroDistribucionEntity> nombreSpec =
+                    CentroDistribucionSpecification.conNombre(nombre);
+
+            specification = specification == null
+                    ? nombreSpec
+                    : specification.and(nombreSpec);
+        }
+
+        if (ubicacion != null && !ubicacion.isBlank()) {
+            Specification<CentroDistribucionEntity> ubicacionSpec =
+                    CentroDistribucionSpecification.conUbicacion(ubicacion);
+
+            specification = specification == null
+                    ? ubicacionSpec
+                    : specification.and(ubicacionSpec);
+        }
+
+        List<CentroDistribucionEntity> entities =
+                centroDistribucionJpaRepository.findAll(specification);
+
+        return entities.stream()
+                .map(centroDistribucionMapper::toDomain)
+                .toList();
+    }     
 
     @Override
     public CentroDistribucion crearCentroDistribucion(String nombre, String ubicacion) {

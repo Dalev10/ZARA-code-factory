@@ -8,6 +8,7 @@ import jakarta.validation.Valid;
 import com.codefactory.supplychain.inventario.domain.model.centrodistribucion.CentroDistribucion;
 import com.codefactory.supplychain.inventario.application.service.centrodistribucion.CentroDistribucionService;
 import org.springframework.web.bind.annotation.*;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/centros-distribucion")
@@ -20,16 +21,13 @@ public class CentroDistribucionController {
         this.centroDistribucionWebMapper = centroDistribucionWebMapper;
     }
 
-    @GetMapping("/{id}")
-    public CentroDistribucionResponse obtenerCentroDistribucionPorId(@PathVariable int id) {
-        CentroDistribucion centroDistribucion = centroDistribucionService.obtenerCentroDistribucionPorId(id);
-        return centroDistribucionWebMapper.toResponse(centroDistribucion);
-    }
-
-    @GetMapping("/nombre/{nombre}")
-    public CentroDistribucionResponse obtenerCentroDistribucionPorNombre(@PathVariable String nombre) {
-        CentroDistribucion centroDistribucion = centroDistribucionService.obtenerCentroDistribucionPorNombre(nombre);
-        return centroDistribucionWebMapper.toResponse(centroDistribucion);
+    @GetMapping
+    public List<CentroDistribucionResponse> obtenerCentroDistribucion(@RequestParam(required = false) Integer id, @RequestParam(required = false) String nombre, @RequestParam(required = false) String ubicacion) {
+        return centroDistribucionService
+            .buscarCentrosDistribucion(id, nombre, ubicacion)
+            .stream()
+            .map(centroDistribucionWebMapper::toResponse)
+            .toList();
     }
     
     @PostMapping
