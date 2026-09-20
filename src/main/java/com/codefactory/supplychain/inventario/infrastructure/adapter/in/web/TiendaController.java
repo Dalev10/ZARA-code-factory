@@ -63,4 +63,9 @@ public class TiendaController {
     public void desactivar(@PathVariable UUID id) {
         tiendaUseCase.desactivar(id);
     }
+
+    @PutMapping("/{id}/activar")
+    public TiendaResponse activar(@PathVariable UUID id) {
+        return TiendaResponse.desde(tiendaUseCase.activar(id));
+    }
 }

@@ -52,6 +52,10 @@ public final class Tienda {
         return new Tienda(id, nombre, ubicacion, EstadoTienda.INACTIVA, creadoEn, Instant.now());
     }
 
+    public Tienda activar() {
+        return new Tienda(id, nombre, ubicacion, EstadoTienda.ACTIVA, creadoEn, Instant.now());
+    }
+
     public boolean estaActiva() {
         return estado == EstadoTienda.ACTIVA;
     }

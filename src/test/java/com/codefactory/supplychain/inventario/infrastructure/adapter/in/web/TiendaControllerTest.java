@@ -212,4 +212,45 @@ class TiendaControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.estado").value("INACTIVA"));
     }
+
+    @Test
+    void reactivarUnaTiendaDesactivadaLaVuelveActiva() throws Exception {
+        String token = loguearComoAdmin("admin-reactiva-tienda@ejemplo.com");
+        MvcResult creada = mockMvc.perform(post("/api/v1/tiendas")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"nombre": "Tienda A Reactivar", "ubicacion": "Bogotá"}
+                                """))
+                .andExpect(status().isCreated())
+                .andReturn();
+        String id = new ObjectMapper().readTree(creada.getResponse().getContentAsString()).get("id").asText();
+        mockMvc.perform(delete("/api/v1/tiendas/" + id)
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + token))
+                .andExpect(status().isNoContent());
+
+        mockMvc.perform(put("/api/v1/tiendas/" + id + "/activar")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.estado").value("ACTIVA"));
+    }
+
+    @Test
+    void reactivarUnaTiendaYaActivaEsIdempotente() throws Exception {
+        String token = loguearComoAdmin("admin-reactiva-tienda-idempotente@ejemplo.com");
+        MvcResult creada = mockMvc.perform(post("/api/v1/tiendas")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"nombre": "Tienda Ya Activa", "ubicacion": "Bogotá"}
+                                """))
+                .andExpect(status().isCreated())
+                .andReturn();
+        String id = new ObjectMapper().readTree(creada.getResponse().getContentAsString()).get("id").asText();
+
+        mockMvc.perform(put("/api/v1/tiendas/" + id + "/activar")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.estado").value("ACTIVA"));
+    }
 }

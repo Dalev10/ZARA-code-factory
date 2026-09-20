@@ -65,6 +65,19 @@ class TiendaTest {
     }
 
     @Test
+    void activarCambiaElEstadoAActivaSinTocarElResto() {
+        Tienda tienda = Tienda.reconstruir(UUID.randomUUID(), "Tienda Centro", "Bogotá", EstadoTienda.INACTIVA,
+                Instant.parse("2026-01-01T00:00:00Z"), Instant.parse("2026-01-01T00:00:00Z"));
+
+        Tienda activada = tienda.activar();
+
+        assertThat(activada.getEstado()).isEqualTo(EstadoTienda.ACTIVA);
+        assertThat(activada.estaActiva()).isTrue();
+        assertThat(activada.getId()).isEqualTo(tienda.getId());
+        assertThat(activada.getNombre()).isEqualTo(tienda.getNombre());
+    }
+
+    @Test
     void reconstruirPermiteRehidratarUnaTiendaExistente() {
         UUID id = UUID.randomUUID();
         Instant creadoEn = Instant.parse("2026-01-01T00:00:00Z");

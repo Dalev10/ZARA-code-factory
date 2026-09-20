@@ -4,6 +4,7 @@ import com.codefactory.supplychain.inventario.application.port.out.NodoRepositor
 import com.codefactory.supplychain.inventario.application.port.out.TiendaRepositoryPort;
 import com.codefactory.supplychain.inventario.domain.exception.TiendaNoEncontradaException;
 import com.codefactory.supplychain.inventario.domain.exception.TiendaYaExisteException;
+import com.codefactory.supplychain.inventario.domain.model.EstadoTienda;
 import com.codefactory.supplychain.inventario.domain.model.Nodo;
 import com.codefactory.supplychain.inventario.domain.model.TipoNodo;
 import com.codefactory.supplychain.inventario.domain.model.Tienda;
@@ -11,6 +12,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -110,5 +112,17 @@ class TiendaServiceTest {
         ArgumentCaptor<Tienda> captor = ArgumentCaptor.forClass(Tienda.class);
         verify(tiendaRepositoryPort).guardar(captor.capture());
         assertThat(captor.getValue().estaActiva()).isFalse();
+    }
+
+    @Test
+    void activarCambiaElEstadoDeLaTienda() {
+        Tienda tienda = Tienda.reconstruir(UUID.randomUUID(), "Tienda Centro", "Bogotá",
+                EstadoTienda.INACTIVA, Instant.now(), Instant.now());
+        when(tiendaRepositoryPort.buscarPorId(tienda.getId())).thenReturn(Optional.of(tienda));
+        when(tiendaRepositoryPort.guardar(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        Tienda activada = servicio.activar(tienda.getId());
+
+        assertThat(activada.estaActiva()).isTrue();
     }
 }

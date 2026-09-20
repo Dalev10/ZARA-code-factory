@@ -65,4 +65,10 @@ public class TiendaService implements TiendaUseCase {
         Tienda tienda = obtenerPorId(id);
         tiendaRepositoryPort.guardar(tienda.desactivar());
     }
+
+    @Override
+    public Tienda activar(UUID id) {
+        Tienda tienda = obtenerPorId(id);
+        return tiendaRepositoryPort.guardar(tienda.activar());
+    }
 }

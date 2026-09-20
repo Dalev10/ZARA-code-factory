@@ -19,4 +19,6 @@ public interface TiendaUseCase {
     Tienda actualizar(UUID id, String nombre, String ubicacion);
 
     void desactivar(UUID id);
+
+    Tienda activar(UUID id);
 }
