@@ -57,9 +57,10 @@ public class CentroDistribucionService implements CentroDistribucionUseCase {
     public void eliminarCentroDistribucion(UUID id) {
         obtenerCentroDistribucionPorId(id);
         // NOTA: no elimina el Nodo asociado (tipo=CD) — deuda técnica conocida,
-        // registrada para resolverse cuando se retome FEAT-04 de lleno. Hoy
-        // este DELETE falla por la FK de nodo.cd_id si el CD ya tiene su nodo
-        // (que siempre lo tiene, dado que crearCentroDistribucion lo aprovisiona).
+        // registrada para resolverse en HU-22. Hoy este DELETE falla por la FK
+        // de nodo.cd_id (el CD siempre tiene su nodo, aprovisionado en
+        // crearCentroDistribucion), pero desde HU-19 esa DataIntegrityViolationException
+        // ya no llega como 500 sin manejar: GlobalExceptionHandler la traduce a un 409.
         centroDistribucionRepository.eliminar(id);
     }
 

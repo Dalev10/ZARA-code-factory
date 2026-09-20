@@ -146,4 +146,32 @@ class CategoriaControllerTest {
                         .header(HttpHeaders.AUTHORIZATION, "Bearer " + token))
                 .andExpect(status().isNotFound());
     }
+
+    @Test
+    void eliminarUnaCategoriaConTemplatesAsociadosDevuelve409() throws Exception {
+        String token = loguearUsuario("usuario-categoria-con-templates@ejemplo.com");
+        MvcResult categoria = mockMvc.perform(post("/api/v1/categorias")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"nombre": "Categoria Con Template"}
+                                """))
+                .andExpect(status().isCreated())
+                .andReturn();
+        String categoriaId = new ObjectMapper().readTree(categoria.getResponse().getContentAsString())
+                .get("id").asText();
+        mockMvc.perform(post("/api/v1/templates")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"nombre": "Template Asociado", "categoriaId": "%s"}
+                                """.formatted(categoriaId)))
+                .andExpect(status().isCreated());
+
+        // HU-19: la violación de FK (categoria_id en template) ya no llega como un
+        // 500 sin manejar — GlobalExceptionHandler la traduce a un 409 uniforme.
+        mockMvc.perform(delete("/api/v1/categorias/" + categoriaId)
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + token))
+                .andExpect(status().isConflict());
+    }
 }

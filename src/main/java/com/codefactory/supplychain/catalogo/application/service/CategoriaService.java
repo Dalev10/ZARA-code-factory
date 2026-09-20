@@ -60,14 +60,10 @@ public class CategoriaService implements CategoriaUseCase {
         if (!categoriaRepository.existsById(id)) {
             throw CatalogoRecursoNoEncontradoException.categoria(id);
         }
-        // NOTA: si la Categoria está referenciada por uno o más Template,
-        // el borrado físico puede violar la FK definida en PostgreSQL
-        // (categoria_id en la tabla template). Este puerto/adaptador no
-        // implementa borrado lógico (ver PERSISTENCE_NOTES.md y la
-        // sección 19/20 del pedido de esta etapa): si el repositorio
-        // actual no permite resolver este caso, la excepción de
-        // integridad referencial se propagará tal cual desde la capa de
-        // persistencia. Documentado en lugar de resuelto silenciosamente.
+        // Si la Categoria está referenciada por uno o más Template, el borrado
+        // físico viola la FK definida en PostgreSQL (categoria_id en la tabla
+        // template); no se implementa borrado lógico. La DataIntegrityViolationException
+        // resultante la traduce GlobalExceptionHandler a un 409 uniforme (HU-19).
         categoriaRepository.deleteById(id);
     }
 

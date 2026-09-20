@@ -24,6 +24,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import java.time.Instant;
 import java.util.UUID;
 
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
@@ -154,5 +155,34 @@ class TemplateControllerTest {
         mockMvc.perform(get("/api/v1/templates/" + UUID.randomUUID())
                         .header(HttpHeaders.AUTHORIZATION, "Bearer " + token))
                 .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void eliminarUnTemplateConVariantesAsociadasDevuelve409() throws Exception {
+        String token = loguearUsuario("usuario-template-con-variantes@ejemplo.com");
+        String categoriaId = crearCategoria(token, "Categoria Template Con Variante");
+        MvcResult creado = mockMvc.perform(post("/api/v1/templates")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"nombre": "Template Con Variante", "categoriaId": "%s"}
+                                """.formatted(categoriaId)))
+                .andExpect(status().isCreated())
+                .andReturn();
+        String templateId = new ObjectMapper().readTree(creado.getResponse().getContentAsString())
+                .get("id").asText();
+        mockMvc.perform(post("/api/v1/variantes")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"sku": "SKU-TEMPLATE-CON-VARIANTE", "templateId": "%s"}
+                                """.formatted(templateId)))
+                .andExpect(status().isCreated());
+
+        // HU-19: la violación de FK (template_id en variante) ya no llega como un
+        // 500 sin manejar — GlobalExceptionHandler la traduce a un 409 uniforme.
+        mockMvc.perform(delete("/api/v1/templates/" + templateId)
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + token))
+                .andExpect(status().isConflict());
     }
 }

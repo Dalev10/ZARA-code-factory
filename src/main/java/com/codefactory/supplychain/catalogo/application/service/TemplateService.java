@@ -68,13 +68,11 @@ public class TemplateService implements TemplateUseCase {
         if (!templateRepository.existsById(id)) {
             throw CatalogoRecursoNoEncontradoException.template(id);
         }
-        // NOTA: si el Template está referenciado por una o más Variante,
-        // el borrado físico puede violar la FK definida en PostgreSQL
-        // (template_id en la tabla variante, NOT NULL). No se implementa
-        // borrado lógico en esta etapa (ver PERSISTENCE_NOTES.md); si el
-        // repositorio actual no permite resolver este caso, la excepción
-        // de integridad referencial se propagará tal cual desde la capa
-        // de persistencia. Documentado en lugar de resuelto silenciosamente.
+        // Si el Template está referenciado por una o más Variante, el borrado
+        // físico viola la FK definida en PostgreSQL (template_id en la tabla
+        // variante, NOT NULL); no se implementa borrado lógico. La
+        // DataIntegrityViolationException resultante la traduce
+        // GlobalExceptionHandler a un 409 uniforme (HU-19).
         templateRepository.deleteById(id);
     }
 

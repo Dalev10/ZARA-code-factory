@@ -13,7 +13,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
@@ -26,7 +25,6 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import java.time.Instant;
 import java.util.UUID;
 
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -155,7 +153,7 @@ class CentroDistribucionControllerTest {
     }
 
     @Test
-    void eliminarUnCdConNodoAsociadoFallaConBadRequestPorElBugConocidoYDeferido() throws Exception {
+    void eliminarUnCdConNodoAsociadoDevuelve409EnVezDeUnErrorSinManejar() throws Exception {
         String token = loguearUsuario("usuario-elimina-cd-huerfano@ejemplo.com");
         MvcResult creado = mockMvc.perform(post("/api/v1/centros-distribucion")
                         .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
@@ -167,15 +165,13 @@ class CentroDistribucionControllerTest {
                 .andReturn();
         String id = new ObjectMapper().readTree(creado.getResponse().getContentAsString()).get("id").asText();
 
-        // Bug conocido, deliberadamente NO corregido en este refactor (fuera de alcance:
-        // pertenece a FEAT-04, no a FEAT-02/Tienda): eliminar un CD no elimina su Nodo
-        // asociado primero, así que la violación de llave foránea llega sin traducir
-        // hasta el cliente MockMvc como una excepción sin manejar (no hay
-        // @ExceptionHandler para DataIntegrityViolationException en GlobalExceptionHandler).
-        // En producción esto se traduce en un 500 genérico. Esta prueba documenta y fija
-        // ese comportamiento actual para detectar si cambia sin intención en el futuro.
-        assertThatThrownBy(() -> mockMvc.perform(delete("/api/v1/centros-distribucion/" + id)
-                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)))
-                .hasCauseInstanceOf(DataIntegrityViolationException.class);
+        // Deuda técnica conocida, deliberadamente NO corregida todavía (pertenece a
+        // HU-22): eliminar un CD no elimina su Nodo asociado primero, así que la
+        // violación de llave foránea sigue ocurriendo. Lo que sí cambió con HU-19 es que
+        // GlobalExceptionHandler ahora traduce esa DataIntegrityViolationException a un
+        // 409 uniforme en vez de dejarla propagar como una excepción sin manejar (500).
+        mockMvc.perform(delete("/api/v1/centros-distribucion/" + id)
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + token))
+                .andExpect(status().isConflict());
     }
 }
