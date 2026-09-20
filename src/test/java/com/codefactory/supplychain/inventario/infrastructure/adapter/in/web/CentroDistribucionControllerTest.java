@@ -37,9 +37,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 /**
  * Prueba de extremo a extremo de CentroDistribucion, incluyendo el guard de
- * autorización por scope "cd:administrar" (HU-20). El bug conocido de DELETE
- * (huérfana el Nodo asociado) se deja intacto a propósito — pertenece a
- * HU-22 — y se verifica aquí que sigue comportándose igual.
+ * autorización por scope "cd:administrar" (HU-20) y el ciclo de vida
+ * corregido en HU-22 (DELETE elimina el Nodo asociado, y los status code de
+ * duplicado/no-encontrado ya son 409/404 en vez de 400).
  */
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -133,7 +133,7 @@ class CentroDistribucionControllerTest {
     }
 
     @Test
-    void crearConNombreDuplicadoDevuelveBadRequestPorLaDeudaDeStatusCodeDeferida() throws Exception {
+    void crearConNombreDuplicadoDevuelve409() throws Exception {
         String token = loguearComoAdmin("usuario-duplica-cd@ejemplo.com");
         mockMvc.perform(post("/api/v1/centros-distribucion")
                         .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
@@ -143,28 +143,22 @@ class CentroDistribucionControllerTest {
                                 """))
                 .andExpect(status().isCreated());
 
-        // Comportamiento heredado y deliberadamente sin corregir en este refactor:
-        // CentroDistribucionDuplicadoException también extiende ReglaDeNegocioException
-        // (400), no RecursoDuplicadoException (409). Ver auditoría / deuda técnica de FEAT-04.
         mockMvc.perform(post("/api/v1/centros-distribucion")
                         .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {"nombre": "CD Duplicado Http", "ubicacion": "Otra"}
                                 """))
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isConflict());
     }
 
     @Test
-    void consultarUnCdInexistenteDevuelveBadRequestPorLaDeudaDeStatusCodeDeferida() throws Exception {
+    void consultarUnCdInexistenteDevuelve404() throws Exception {
         String token = loguearComoAdmin("usuario-cd-no-encontrado@ejemplo.com");
 
-        // Comportamiento heredado y deliberadamente sin corregir en este refactor:
-        // CentroDistribucionNoEncontradaException extiende ReglaDeNegocioException (400),
-        // no RecursoNoEncontradoException (404). Ver auditoría / deuda técnica de FEAT-04.
         mockMvc.perform(get("/api/v1/centros-distribucion/" + UUID.randomUUID())
                         .header(HttpHeaders.AUTHORIZATION, "Bearer " + token))
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isNotFound());
     }
 
     @Test
@@ -185,7 +179,7 @@ class CentroDistribucionControllerTest {
     }
 
     @Test
-    void eliminarUnCdConNodoAsociadoDevuelve409EnVezDeUnErrorSinManejar() throws Exception {
+    void eliminarUnCdConNodoAsociadoDevuelve204YEliminaElNodo() throws Exception {
         String token = loguearComoAdmin("usuario-elimina-cd-huerfano@ejemplo.com");
         MvcResult creado = mockMvc.perform(post("/api/v1/centros-distribucion")
                         .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
@@ -197,13 +191,15 @@ class CentroDistribucionControllerTest {
                 .andReturn();
         String id = new ObjectMapper().readTree(creado.getResponse().getContentAsString()).get("id").asText();
 
-        // Deuda técnica conocida, deliberadamente NO corregida todavía (pertenece a
-        // HU-22): eliminar un CD no elimina su Nodo asociado primero, así que la
-        // violación de llave foránea sigue ocurriendo. Lo que sí cambió con HU-19 es que
-        // GlobalExceptionHandler ahora traduce esa DataIntegrityViolationException a un
-        // 409 uniforme en vez de dejarla propagar como una excepción sin manejar (500).
+        // HU-22: el CD siempre tiene su Nodo asociado (aprovisionado al crearlo);
+        // eliminarCentroDistribucion ahora lo elimina primero, así que el DELETE
+        // ya no falla por la FK nodo.cd_id.
         mockMvc.perform(delete("/api/v1/centros-distribucion/" + id)
                         .header(HttpHeaders.AUTHORIZATION, "Bearer " + token))
-                .andExpect(status().isConflict());
+                .andExpect(status().isNoContent());
+
+        mockMvc.perform(get("/api/v1/centros-distribucion/" + id)
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + token))
+                .andExpect(status().isNotFound());
     }
 }

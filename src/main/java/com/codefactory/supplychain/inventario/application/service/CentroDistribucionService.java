@@ -56,11 +56,10 @@ public class CentroDistribucionService implements CentroDistribucionUseCase {
     @Transactional
     public void eliminarCentroDistribucion(UUID id) {
         obtenerCentroDistribucionPorId(id);
-        // NOTA: no elimina el Nodo asociado (tipo=CD) — deuda técnica conocida,
-        // registrada para resolverse en HU-22. Hoy este DELETE falla por la FK
-        // de nodo.cd_id (el CD siempre tiene su nodo, aprovisionado en
-        // crearCentroDistribucion), pero desde HU-19 esa DataIntegrityViolationException
-        // ya no llega como 500 sin manejar: GlobalExceptionHandler la traduce a un 409.
+        // El CD siempre tiene su Nodo asociado (aprovisionado en
+        // crearCentroDistribucion); hay que eliminarlo primero para no violar
+        // la FK nodo.cd_id (HU-22).
+        nodoRepositoryPort.buscarPorCdId(id).ifPresent(nodo -> nodoRepositoryPort.eliminar(nodo.getId()));
         centroDistribucionRepository.eliminar(id);
     }
 

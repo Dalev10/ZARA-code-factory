@@ -85,6 +85,31 @@ class CentroDistribucionServiceTest {
     }
 
     @Test
+    void eliminarBorraElNodoAsociadoAntesQueElCd() {
+        CentroDistribucion cd = CentroDistribucion.crear("CD Principal", "Bogotá");
+        Nodo nodo = Nodo.crearParaCd(cd.getId());
+        when(centroDistribucionRepository.buscarPorId(cd.getId())).thenReturn(Optional.of(cd));
+        when(nodoRepositoryPort.buscarPorCdId(cd.getId())).thenReturn(Optional.of(nodo));
+
+        servicio.eliminarCentroDistribucion(cd.getId());
+
+        verify(nodoRepositoryPort).eliminar(nodo.getId());
+        verify(centroDistribucionRepository).eliminar(cd.getId());
+    }
+
+    @Test
+    void eliminarUnCdInexistenteLanzaExcepcionSinTocarNingunPuerto() {
+        UUID id = UUID.randomUUID();
+        when(centroDistribucionRepository.buscarPorId(id)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> servicio.eliminarCentroDistribucion(id))
+                .isInstanceOf(CentroDistribucionNoEncontradoException.class);
+
+        verify(nodoRepositoryPort, never()).eliminar(any());
+        verify(centroDistribucionRepository, never()).eliminar(any());
+    }
+
+    @Test
     void obtenerPorIdRechazaUnCdInexistente() {
         UUID id = UUID.randomUUID();
         when(centroDistribucionRepository.buscarPorId(id)).thenReturn(Optional.empty());
