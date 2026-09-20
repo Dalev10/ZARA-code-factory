@@ -9,6 +9,7 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 /**
  * Adaptador de salida que implementa {@link CategoriaRepository}
@@ -34,7 +35,7 @@ public class CategoriaPersistenceAdapter implements CategoriaRepository {
     }
 
     @Override
-    public Optional<Categoria> findById(Long id) {
+    public Optional<Categoria> findById(UUID id) {
         return categoriaJpaRepository.findById(id)
                 .map(categoriaPersistenceMapper::toDomain);
     }
@@ -47,12 +48,12 @@ public class CategoriaPersistenceAdapter implements CategoriaRepository {
     }
 
     @Override
-    public boolean existsById(Long id) {
+    public boolean existsById(UUID id) {
         return categoriaJpaRepository.existsById(id);
     }
 
     @Override
-    public void deleteById(Long id) {
+    public void deleteById(UUID id) {
         categoriaJpaRepository.deleteById(id);
     }
 }

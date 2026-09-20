@@ -1,5 +1,6 @@
 package com.codefactory.supplychain.catalogo.application.port.in;
 
+import java.util.UUID;
 import com.codefactory.supplychain.catalogo.domain.model.Variante;
 
 import java.util.List;
@@ -19,25 +20,25 @@ public interface VarianteUseCase {
      * {@code talla} y {@code color} son opcionales (pueden ser
      * {@code null}).
      *
-     * @throws com.codefactory.supplychain.catalogo.application.exception.RecursoNoEncontradoException
+     * @throws com.codefactory.supplychain.catalogo.application.exception.CatalogoRecursoNoEncontradoException
      *         si el Template referenciado no existe.
      * @throws com.codefactory.supplychain.catalogo.application.exception.SkuDuplicadoException
      *         si ya existe una Variante con ese sku.
      */
-    Variante crear(String sku, Long templateId, String talla, String color);
+    Variante crear(String sku, UUID templateId, String talla, String color);
 
     /**
      * Consulta una Variante por su id.
      *
-     * @throws com.codefactory.supplychain.catalogo.application.exception.RecursoNoEncontradoException
+     * @throws com.codefactory.supplychain.catalogo.application.exception.CatalogoRecursoNoEncontradoException
      *         si no existe una Variante con ese id.
      */
-    Variante obtenerPorId(Long id);
+    Variante obtenerPorId(UUID id);
 
     /**
      * Consulta una Variante por su sku.
      *
-     * @throws com.codefactory.supplychain.catalogo.application.exception.RecursoNoEncontradoException
+     * @throws com.codefactory.supplychain.catalogo.application.exception.CatalogoRecursoNoEncontradoException
      *         si no existe una Variante con ese sku.
      */
     Variante obtenerPorSku(String sku);
@@ -59,20 +60,20 @@ public interface VarianteUseCase {
      * patrón que ya usa la persistencia existente para reconstituir
      * entidades. Ver MODEL_DOMAIN_NOTES.md.
      *
-     * @throws com.codefactory.supplychain.catalogo.application.exception.RecursoNoEncontradoException
+     * @throws com.codefactory.supplychain.catalogo.application.exception.CatalogoRecursoNoEncontradoException
      *         si no existe una Variante con ese id, o si el Template
      *         referenciado no existe.
      * @throws com.codefactory.supplychain.catalogo.application.exception.SkuDuplicadoException
      *         si el nuevo sku ya pertenece a otra Variante distinta de
      *         esta.
      */
-    Variante modificar(Long id, String nuevoSku, Long nuevoTemplateId, String nuevaTalla, String nuevoColor);
+    Variante modificar(UUID id, String nuevoSku, UUID nuevoTemplateId, String nuevaTalla, String nuevoColor);
 
     /**
      * Elimina una Variante por su id.
      *
-     * @throws com.codefactory.supplychain.catalogo.application.exception.RecursoNoEncontradoException
+     * @throws com.codefactory.supplychain.catalogo.application.exception.CatalogoRecursoNoEncontradoException
      *         si no existe una Variante con ese id.
      */
-    void eliminar(Long id);
+    void eliminar(UUID id);
 }

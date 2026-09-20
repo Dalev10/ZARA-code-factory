@@ -1,6 +1,7 @@
 package com.codefactory.supplychain.catalogo.application.service;
 
-import com.codefactory.supplychain.catalogo.application.exception.RecursoNoEncontradoException;
+import java.util.UUID;
+import com.codefactory.supplychain.catalogo.application.exception.CatalogoRecursoNoEncontradoException;
 import com.codefactory.supplychain.catalogo.application.port.in.TemplateUseCase;
 import com.codefactory.supplychain.catalogo.application.port.out.CategoriaRepository;
 import com.codefactory.supplychain.catalogo.application.port.out.TemplateRepository;
@@ -35,16 +36,16 @@ public class TemplateService implements TemplateUseCase {
     @Override
     @Transactional
     public Template crear(String nombre, String temporada, String proveedor,
-                           BigDecimal precioBase, Long categoriaId) {
+                           BigDecimal precioBase, UUID categoriaId) {
         Categoria categoria = obtenerCategoriaExistente(categoriaId);
         Template template = new Template(nombre, temporada, proveedor, precioBase, categoria);
         return templateRepository.save(template);
     }
 
     @Override
-    public Template obtenerPorId(Long id) {
+    public Template obtenerPorId(UUID id) {
         return templateRepository.findById(id)
-                .orElseThrow(() -> RecursoNoEncontradoException.template(id));
+                .orElseThrow(() -> CatalogoRecursoNoEncontradoException.template(id));
     }
 
     @Override
@@ -54,7 +55,7 @@ public class TemplateService implements TemplateUseCase {
 
     @Override
     @Transactional
-    public Template modificar(Long id, String nombre, String temporada,
+    public Template modificar(UUID id, String nombre, String temporada,
                                String proveedor, BigDecimal precioBase) {
         Template template = obtenerPorId(id);
         template.actualizarInformacion(nombre, temporada, proveedor, precioBase);
@@ -63,9 +64,9 @@ public class TemplateService implements TemplateUseCase {
 
     @Override
     @Transactional
-    public void eliminar(Long id) {
+    public void eliminar(UUID id) {
         if (!templateRepository.existsById(id)) {
-            throw RecursoNoEncontradoException.template(id);
+            throw CatalogoRecursoNoEncontradoException.template(id);
         }
         // NOTA: si el Template está referenciado por una o más Variante,
         // el borrado físico puede violar la FK definida en PostgreSQL
@@ -77,8 +78,8 @@ public class TemplateService implements TemplateUseCase {
         templateRepository.deleteById(id);
     }
 
-    private Categoria obtenerCategoriaExistente(Long categoriaId) {
+    private Categoria obtenerCategoriaExistente(UUID categoriaId) {
         return categoriaRepository.findById(categoriaId)
-                .orElseThrow(() -> RecursoNoEncontradoException.categoria(categoriaId));
+                .orElseThrow(() -> CatalogoRecursoNoEncontradoException.categoria(categoriaId));
     }
 }

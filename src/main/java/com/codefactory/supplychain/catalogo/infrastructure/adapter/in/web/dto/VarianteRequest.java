@@ -1,5 +1,6 @@
 package com.codefactory.supplychain.catalogo.infrastructure.adapter.in.web.dto;
 
+import java.util.UUID;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
@@ -27,6 +28,6 @@ public record VarianteRequest(
         String color,
 
         @NotNull(message = "El id del template es obligatorio")
-        Long templateId
+        UUID templateId
 ) {
 }

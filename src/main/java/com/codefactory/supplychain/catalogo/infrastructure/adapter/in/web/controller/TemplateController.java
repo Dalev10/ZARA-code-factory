@@ -1,5 +1,6 @@
 package com.codefactory.supplychain.catalogo.infrastructure.adapter.in.web.controller;
 
+import java.util.UUID;
 import com.codefactory.supplychain.catalogo.application.port.in.TemplateUseCase;
 import com.codefactory.supplychain.catalogo.domain.model.Template;
 import com.codefactory.supplychain.catalogo.infrastructure.adapter.in.web.dto.TemplateRequest;
@@ -63,13 +64,13 @@ public class TemplateController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<TemplateResponse> obtenerPorId(@PathVariable Long id) {
+    public ResponseEntity<TemplateResponse> obtenerPorId(@PathVariable UUID id) {
         Template template = templateUseCase.obtenerPorId(id);
         return ResponseEntity.ok(templateWebMapper.toResponse(template));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<TemplateResponse> modificar(@PathVariable Long id,
+    public ResponseEntity<TemplateResponse> modificar(@PathVariable UUID id,
                                                         @Valid @RequestBody TemplateRequest request) {
         Template template = templateUseCase.modificar(
                 id,
@@ -82,7 +83,7 @@ public class TemplateController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> eliminar(@PathVariable Long id) {
+    public ResponseEntity<Void> eliminar(@PathVariable UUID id) {
         templateUseCase.eliminar(id);
         return ResponseEntity.noContent().build();
     }

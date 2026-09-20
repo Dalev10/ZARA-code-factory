@@ -1,5 +1,6 @@
 package com.codefactory.supplychain.catalogo.infrastructure.adapter.in.web.controller;
 
+import java.util.UUID;
 import com.codefactory.supplychain.catalogo.application.port.in.CategoriaUseCase;
 import com.codefactory.supplychain.catalogo.domain.model.Categoria;
 import com.codefactory.supplychain.catalogo.infrastructure.adapter.in.web.dto.CategoriaRequest;
@@ -55,20 +56,20 @@ public class CategoriaController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<CategoriaResponse> obtenerPorId(@PathVariable Long id) {
+    public ResponseEntity<CategoriaResponse> obtenerPorId(@PathVariable UUID id) {
         Categoria categoria = categoriaUseCase.obtenerPorId(id);
         return ResponseEntity.ok(categoriaWebMapper.toResponse(categoria));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<CategoriaResponse> modificar(@PathVariable Long id,
+    public ResponseEntity<CategoriaResponse> modificar(@PathVariable UUID id,
                                                          @Valid @RequestBody CategoriaRequest request) {
         Categoria categoria = categoriaUseCase.modificar(id, request.nombre());
         return ResponseEntity.ok(categoriaWebMapper.toResponse(categoria));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> eliminar(@PathVariable Long id) {
+    public ResponseEntity<Void> eliminar(@PathVariable UUID id) {
         categoriaUseCase.eliminar(id);
         return ResponseEntity.noContent().build();
     }

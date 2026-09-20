@@ -1,5 +1,6 @@
 package com.codefactory.supplychain.catalogo.infrastructure.adapter.in.web.controller;
 
+import java.util.UUID;
 import com.codefactory.supplychain.catalogo.application.port.in.VarianteUseCase;
 import com.codefactory.supplychain.catalogo.domain.model.Variante;
 import com.codefactory.supplychain.catalogo.infrastructure.adapter.in.web.dto.VarianteRequest;
@@ -56,7 +57,7 @@ public class VarianteController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<VarianteResponse> obtenerPorId(@PathVariable Long id) {
+    public ResponseEntity<VarianteResponse> obtenerPorId(@PathVariable UUID id) {
         Variante variante = varianteUseCase.obtenerPorId(id);
         return ResponseEntity.ok(varianteWebMapper.toResponse(variante));
     }
@@ -68,7 +69,7 @@ public class VarianteController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<VarianteResponse> modificar(@PathVariable Long id,
+    public ResponseEntity<VarianteResponse> modificar(@PathVariable UUID id,
                                                         @Valid @RequestBody VarianteRequest request) {
         Variante variante = varianteUseCase.modificar(
                 id, request.sku(), request.templateId(), request.talla(), request.color());
@@ -76,7 +77,7 @@ public class VarianteController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> eliminar(@PathVariable Long id) {
+    public ResponseEntity<Void> eliminar(@PathVariable UUID id) {
         varianteUseCase.eliminar(id);
         return ResponseEntity.noContent().build();
     }

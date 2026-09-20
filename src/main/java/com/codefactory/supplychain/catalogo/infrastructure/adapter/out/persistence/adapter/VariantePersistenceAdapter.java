@@ -1,5 +1,6 @@
 package com.codefactory.supplychain.catalogo.infrastructure.adapter.out.persistence.adapter;
 
+import java.util.UUID;
 import com.codefactory.supplychain.catalogo.application.port.out.VarianteRepository;
 import com.codefactory.supplychain.catalogo.domain.model.Variante;
 import com.codefactory.supplychain.catalogo.infrastructure.adapter.out.persistence.entity.VarianteEntity;
@@ -41,7 +42,7 @@ public class VariantePersistenceAdapter implements VarianteRepository {
     }
 
     @Override
-    public Optional<Variante> findById(Long id) {
+    public Optional<Variante> findById(UUID id) {
         return varianteJpaRepository.findById(id)
                 .map(variantePersistenceMapper::toDomain);
     }
@@ -60,7 +61,7 @@ public class VariantePersistenceAdapter implements VarianteRepository {
     }
 
     @Override
-    public boolean existsById(Long id) {
+    public boolean existsById(UUID id) {
         return varianteJpaRepository.existsById(id);
     }
 
@@ -70,7 +71,7 @@ public class VariantePersistenceAdapter implements VarianteRepository {
     }
 
     @Override
-    public void deleteById(Long id) {
+    public void deleteById(UUID id) {
         varianteJpaRepository.deleteById(id);
     }
 }

@@ -1,5 +1,6 @@
 package com.codefactory.supplychain.catalogo.application.port.out;
 
+import java.util.UUID;
 import com.codefactory.supplychain.catalogo.domain.model.Variante;
 
 import java.util.List;
@@ -28,7 +29,7 @@ public interface VarianteRepository {
     /**
      * Busca una Variante por su identificador.
      */
-    Optional<Variante> findById(Long id);
+    Optional<Variante> findById(UUID id);
 
     /**
      * Busca una Variante por su SKU.
@@ -43,7 +44,7 @@ public interface VarianteRepository {
     /**
      * Comprueba si existe una Variante con el identificador dado.
      */
-    boolean existsById(Long id);
+    boolean existsById(UUID id);
 
     /**
      * Comprueba si existe una Variante con el SKU dado.
@@ -57,5 +58,5 @@ public interface VarianteRepository {
      * decisión corresponde al adaptador de persistencia y se tomará al
      * implementar HU-18.
      */
-    void deleteById(Long id);
+    void deleteById(UUID id);
 }

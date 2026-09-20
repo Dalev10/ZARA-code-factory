@@ -1,5 +1,6 @@
 package com.codefactory.supplychain.catalogo.application.port.out;
 
+import java.util.UUID;
 import com.codefactory.supplychain.catalogo.domain.model.Template;
 
 import java.util.List;
@@ -28,7 +29,7 @@ public interface TemplateRepository {
     /**
      * Busca un Template por su identificador.
      */
-    Optional<Template> findById(Long id);
+    Optional<Template> findById(UUID id);
 
     /**
      * Obtiene los Templates existentes.
@@ -38,7 +39,7 @@ public interface TemplateRepository {
     /**
      * Comprueba si existe un Template con el identificador dado.
      */
-    boolean existsById(Long id);
+    boolean existsById(UUID id);
 
     /**
      * Elimina un Template por su identificador.
@@ -47,5 +48,5 @@ public interface TemplateRepository {
      * decisión corresponde al adaptador de persistencia y se tomará al
      * implementar HU-18.
      */
-    void deleteById(Long id);
+    void deleteById(UUID id);
 }

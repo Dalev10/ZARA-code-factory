@@ -1,5 +1,6 @@
 package com.codefactory.supplychain.catalogo.infrastructure.adapter.out.persistence.adapter;
 
+import java.util.UUID;
 import com.codefactory.supplychain.catalogo.application.port.out.TemplateRepository;
 import com.codefactory.supplychain.catalogo.domain.model.Template;
 import com.codefactory.supplychain.catalogo.infrastructure.adapter.out.persistence.entity.TemplateEntity;
@@ -34,7 +35,7 @@ public class TemplatePersistenceAdapter implements TemplateRepository {
     }
 
     @Override
-    public Optional<Template> findById(Long id) {
+    public Optional<Template> findById(UUID id) {
         return templateJpaRepository.findById(id)
                 .map(templatePersistenceMapper::toDomain);
     }
@@ -47,12 +48,12 @@ public class TemplatePersistenceAdapter implements TemplateRepository {
     }
 
     @Override
-    public boolean existsById(Long id) {
+    public boolean existsById(UUID id) {
         return templateJpaRepository.existsById(id);
     }
 
     @Override
-    public void deleteById(Long id) {
+    public void deleteById(UUID id) {
         templateJpaRepository.deleteById(id);
     }
 }
