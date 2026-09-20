@@ -1,0 +1,78 @@
+package com.codefactory.supplychain.catalogo.application.port.in;
+
+import com.codefactory.supplychain.catalogo.domain.model.Variante;
+
+import java.util.List;
+
+/**
+ * Puerto de entrada (Ports and Adapters) que define los casos de uso
+ * disponibles para Variante / SKU (FEAT-05 / HU-15 a HU-18).
+ * <p>
+ * Será implementado por {@code VarianteService} y, en una etapa
+ * posterior, consumido por un Controller REST a través de DTOs. En esta
+ * etapa no existe todavía ningún Controller.
+ */
+public interface VarianteUseCase {
+
+    /**
+     * Crea una nueva Variante asociada a un Template existente.
+     * {@code talla} y {@code color} son opcionales (pueden ser
+     * {@code null}).
+     *
+     * @throws com.codefactory.supplychain.catalogo.application.exception.RecursoNoEncontradoException
+     *         si el Template referenciado no existe.
+     * @throws com.codefactory.supplychain.catalogo.application.exception.SkuDuplicadoException
+     *         si ya existe una Variante con ese sku.
+     */
+    Variante crear(String sku, Long templateId, String talla, String color);
+
+    /**
+     * Consulta una Variante por su id.
+     *
+     * @throws com.codefactory.supplychain.catalogo.application.exception.RecursoNoEncontradoException
+     *         si no existe una Variante con ese id.
+     */
+    Variante obtenerPorId(Long id);
+
+    /**
+     * Consulta una Variante por su sku.
+     *
+     * @throws com.codefactory.supplychain.catalogo.application.exception.RecursoNoEncontradoException
+     *         si no existe una Variante con ese sku.
+     */
+    Variante obtenerPorSku(String sku);
+
+    /**
+     * Lista todas las Variantes existentes.
+     */
+    List<Variante> listar();
+
+    /**
+     * Modifica el sku, el Template, la talla y/o el color de una
+     * Variante existente. {@code nuevaTalla} y {@code nuevoColor} son
+     * opcionales (pueden ser {@code null}).
+     * <p>
+     * El modelo de dominio {@code Variante} es inmutable (no expone
+     * métodos de modificación); la actualización se realiza
+     * reconstituyendo una nueva instancia con el mismo id y los nuevos
+     * valores, y guardándola a través del puerto de salida — el mismo
+     * patrón que ya usa la persistencia existente para reconstituir
+     * entidades. Ver MODEL_DOMAIN_NOTES.md.
+     *
+     * @throws com.codefactory.supplychain.catalogo.application.exception.RecursoNoEncontradoException
+     *         si no existe una Variante con ese id, o si el Template
+     *         referenciado no existe.
+     * @throws com.codefactory.supplychain.catalogo.application.exception.SkuDuplicadoException
+     *         si el nuevo sku ya pertenece a otra Variante distinta de
+     *         esta.
+     */
+    Variante modificar(Long id, String nuevoSku, Long nuevoTemplateId, String nuevaTalla, String nuevoColor);
+
+    /**
+     * Elimina una Variante por su id.
+     *
+     * @throws com.codefactory.supplychain.catalogo.application.exception.RecursoNoEncontradoException
+     *         si no existe una Variante con ese id.
+     */
+    void eliminar(Long id);
+}
