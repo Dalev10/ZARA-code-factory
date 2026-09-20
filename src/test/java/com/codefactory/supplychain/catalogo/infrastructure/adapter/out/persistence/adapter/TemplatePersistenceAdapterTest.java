@@ -44,7 +44,7 @@ class TemplatePersistenceAdapterTest {
     private TestEntityManager entityManager;
 
     private Categoria categoriaPersistida() {
-        Categoria categoria = categoriaRepository.save(new Categoria("Calzado"));
+        Categoria categoria = categoriaRepository.save(Categoria.crear("Calzado"));
         entityManager.flush();
         return categoria;
     }
@@ -54,7 +54,7 @@ class TemplatePersistenceAdapterTest {
         Categoria categoria = categoriaPersistida();
 
         Template guardado = templateRepository.save(
-                new Template("Zapatilla X", "Verano", "ProveedorX", BigDecimal.TEN, categoria));
+                Template.crear("Zapatilla X", "Verano", "ProveedorX", BigDecimal.TEN, categoria));
         entityManager.flush();
         entityManager.clear();
 
@@ -66,8 +66,8 @@ class TemplatePersistenceAdapterTest {
     @Test
     void listarTodosIncluyeLosTemplatesGuardados() {
         Categoria categoria = categoriaPersistida();
-        templateRepository.save(new Template("Template A", null, null, null, categoria));
-        templateRepository.save(new Template("Template B", null, null, null, categoria));
+        templateRepository.save(Template.crear("Template A", null, null, null, categoria));
+        templateRepository.save(Template.crear("Template B", null, null, null, categoria));
         entityManager.flush();
 
         assertThat(templateRepository.findAll()).extracting(Template::getNombre)
@@ -83,12 +83,12 @@ class TemplatePersistenceAdapterTest {
     void guardarUnTemplateYaExistenteLoActualiza() {
         Categoria categoria = categoriaPersistida();
         Template creado = templateRepository.save(
-                new Template("Zapatilla X", "Verano", "ProveedorX", BigDecimal.TEN, categoria));
+                Template.crear("Zapatilla X", "Verano", "ProveedorX", BigDecimal.TEN, categoria));
         entityManager.flush();
         entityManager.clear();
 
-        creado.actualizarInformacion("Zapatilla Y", "Invierno", "ProveedorY", BigDecimal.ONE);
-        templateRepository.save(creado);
+        templateRepository.save(creado.actualizarInformacion("Zapatilla Y", "Invierno", "ProveedorY",
+                BigDecimal.ONE));
         entityManager.flush();
         entityManager.clear();
 
@@ -100,7 +100,7 @@ class TemplatePersistenceAdapterTest {
     @Test
     void deleteByIdEliminaElTemplate() {
         Categoria categoria = categoriaPersistida();
-        Template creado = templateRepository.save(new Template("Descartable", null, null, null, categoria));
+        Template creado = templateRepository.save(Template.crear("Descartable", null, null, null, categoria));
         entityManager.flush();
         entityManager.clear();
 

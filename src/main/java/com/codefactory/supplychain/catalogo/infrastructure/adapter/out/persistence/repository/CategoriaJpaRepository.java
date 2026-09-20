@@ -9,4 +9,6 @@ import java.util.UUID;
  * Repositorio Spring Data JPA para {@link CategoriaEntity}.
  */
 public interface CategoriaJpaRepository extends JpaRepository<CategoriaEntity, UUID> {
+
+    boolean existsByNombre(String nombre);
 }

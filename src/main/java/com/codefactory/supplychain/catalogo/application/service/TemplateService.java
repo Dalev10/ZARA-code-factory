@@ -38,7 +38,7 @@ public class TemplateService implements TemplateUseCase {
     public Template crear(String nombre, String temporada, String proveedor,
                            BigDecimal precioBase, UUID categoriaId) {
         Categoria categoria = obtenerCategoriaExistente(categoriaId);
-        Template template = new Template(nombre, temporada, proveedor, precioBase, categoria);
+        Template template = Template.crear(nombre, temporada, proveedor, precioBase, categoria);
         return templateRepository.save(template);
     }
 
@@ -58,8 +58,7 @@ public class TemplateService implements TemplateUseCase {
     public Template modificar(UUID id, String nombre, String temporada,
                                String proveedor, BigDecimal precioBase) {
         Template template = obtenerPorId(id);
-        template.actualizarInformacion(nombre, temporada, proveedor, precioBase);
-        return templateRepository.save(template);
+        return templateRepository.save(template.actualizarInformacion(nombre, temporada, proveedor, precioBase));
     }
 
     @Override

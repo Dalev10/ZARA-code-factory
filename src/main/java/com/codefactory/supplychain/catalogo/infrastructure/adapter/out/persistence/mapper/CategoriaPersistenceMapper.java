@@ -22,6 +22,6 @@ public class CategoriaPersistenceMapper {
         if (entity == null) {
             return null;
         }
-        return new Categoria(entity.getId(), entity.getNombre());
+        return Categoria.reconstruir(entity.getId(), entity.getNombre());
     }
 }

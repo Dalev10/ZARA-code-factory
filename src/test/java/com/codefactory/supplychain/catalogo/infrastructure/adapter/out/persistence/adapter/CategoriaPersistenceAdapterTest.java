@@ -39,7 +39,7 @@ class CategoriaPersistenceAdapterTest {
 
     @Test
     void guardaYRecuperaUnaCategoriaPorId() {
-        Categoria guardada = categoriaRepository.save(new Categoria("Calzado"));
+        Categoria guardada = categoriaRepository.save(Categoria.crear("Calzado"));
         entityManager.flush();
         entityManager.clear();
 
@@ -49,8 +49,8 @@ class CategoriaPersistenceAdapterTest {
 
     @Test
     void listarTodasIncluyeLasCategoriasGuardadas() {
-        categoriaRepository.save(new Categoria("Calzado"));
-        categoriaRepository.save(new Categoria("Ropa"));
+        categoriaRepository.save(Categoria.crear("Calzado"));
+        categoriaRepository.save(Categoria.crear("Ropa"));
         entityManager.flush();
 
         assertThat(categoriaRepository.findAll()).extracting(Categoria::getNombre).contains("Calzado", "Ropa");
@@ -63,12 +63,11 @@ class CategoriaPersistenceAdapterTest {
 
     @Test
     void guardarUnaCategoriaYaExistenteLaActualiza() {
-        Categoria creada = categoriaRepository.save(new Categoria("Calzado"));
+        Categoria creada = categoriaRepository.save(Categoria.crear("Calzado"));
         entityManager.flush();
         entityManager.clear();
 
-        creada.cambiarNombre("Calzado Deportivo");
-        categoriaRepository.save(creada);
+        categoriaRepository.save(creada.cambiarNombre("Calzado Deportivo"));
         entityManager.flush();
         entityManager.clear();
 
@@ -78,18 +77,18 @@ class CategoriaPersistenceAdapterTest {
 
     @Test
     void laBaseDeDatosRechazaNombresDuplicados() {
-        categoriaRepository.save(new Categoria("Categoria Duplicada"));
+        categoriaRepository.save(Categoria.crear("Categoria Duplicada"));
         entityManager.flush();
         entityManager.clear();
 
-        categoriaRepository.save(new Categoria("Categoria Duplicada"));
+        categoriaRepository.save(Categoria.crear("Categoria Duplicada"));
 
         assertThatThrownBy(entityManager::flush).isInstanceOf(RuntimeException.class);
     }
 
     @Test
     void deleteByIdEliminaLaCategoria() {
-        Categoria creada = categoriaRepository.save(new Categoria("Descartable"));
+        Categoria creada = categoriaRepository.save(Categoria.crear("Descartable"));
         entityManager.flush();
         entityManager.clear();
 

@@ -20,5 +20,7 @@ public interface CategoriaRepository {
 
     boolean existsById(UUID id);
 
+    boolean existsByNombre(String nombre);
+
     void deleteById(UUID id);
 }

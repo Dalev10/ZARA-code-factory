@@ -53,6 +53,11 @@ public class CategoriaPersistenceAdapter implements CategoriaRepository {
     }
 
     @Override
+    public boolean existsByNombre(String nombre) {
+        return categoriaJpaRepository.existsByNombre(nombre);
+    }
+
+    @Override
     public void deleteById(UUID id) {
         categoriaJpaRepository.deleteById(id);
     }

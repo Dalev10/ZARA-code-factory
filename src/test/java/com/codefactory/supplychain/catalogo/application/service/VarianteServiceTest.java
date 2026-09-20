@@ -37,7 +37,7 @@ class VarianteServiceTest {
     }
 
     private static Template template() {
-        return new Template("Zapatilla X", "Verano", "ProveedorX", BigDecimal.TEN, new Categoria("Calzado"));
+        return Template.crear("Zapatilla X", "Verano", "ProveedorX", BigDecimal.TEN, Categoria.crear("Calzado"));
     }
 
     @Test

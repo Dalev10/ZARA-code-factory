@@ -36,7 +36,7 @@ class TemplateServiceTest {
 
     @Test
     void creaUnTemplateAsociadoAUnaCategoriaExistente() {
-        Categoria categoria = new Categoria("Calzado");
+        Categoria categoria = Categoria.crear("Calzado");
         when(categoriaRepository.findById(categoria.getId())).thenReturn(Optional.of(categoria));
         when(templateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
@@ -67,8 +67,8 @@ class TemplateServiceTest {
 
     @Test
     void listarDelegaAlRepositorio() {
-        Template template = new Template("Zapatilla X", "Verano", "ProveedorX", BigDecimal.TEN,
-                new Categoria("Calzado"));
+        Template template = Template.crear("Zapatilla X", "Verano", "ProveedorX", BigDecimal.TEN,
+                Categoria.crear("Calzado"));
         when(templateRepository.findAll()).thenReturn(List.of(template));
 
         assertThat(servicio.listar()).containsExactly(template);
@@ -76,8 +76,8 @@ class TemplateServiceTest {
 
     @Test
     void modificarActualizaLaInformacionEditableSinTocarLaCategoria() {
-        Categoria categoria = new Categoria("Calzado");
-        Template template = new Template("Zapatilla X", "Verano", "ProveedorX", BigDecimal.TEN, categoria);
+        Categoria categoria = Categoria.crear("Calzado");
+        Template template = Template.crear("Zapatilla X", "Verano", "ProveedorX", BigDecimal.TEN, categoria);
         when(templateRepository.findById(template.getId())).thenReturn(Optional.of(template));
         when(templateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
