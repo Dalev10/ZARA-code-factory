@@ -21,6 +21,7 @@ import java.time.Instant;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
  * Módulo: inventario — Red de nodos (CD, Tienda/Almacén, Bodega_Tienda) e inventario polimórfico sobre ellos.
@@ -106,6 +107,18 @@ class NodoRepositoryAdapterTest {
     @Test
     void existePorTiendaYTipoDevuelveFalseSiNoExiste() {
         assertThat(nodoRepository.existePorTiendaYTipo(UUID.randomUUID(), TipoNodo.ALMACEN)).isFalse();
+    }
+
+    @Test
+    void laBaseDeDatosRechazaDosBodegasParaLaMismaTienda() {
+        UUID tiendaId = persistirTienda("Tienda Nodo Test 5");
+        nodoRepository.guardar(Nodo.crearParaTienda(tiendaId, TipoNodo.BODEGA_TIENDA));
+        entityManager.flush();
+        entityManager.clear();
+
+        nodoRepository.guardar(Nodo.crearParaTienda(tiendaId, TipoNodo.BODEGA_TIENDA));
+
+        assertThatThrownBy(entityManager::flush).isInstanceOf(RuntimeException.class);
     }
 
     @Test

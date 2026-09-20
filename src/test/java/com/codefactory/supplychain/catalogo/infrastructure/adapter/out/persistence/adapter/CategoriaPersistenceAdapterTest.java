@@ -16,6 +16,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
  * Módulo: catalogo — Categoria/Template/Variante (FEAT-05).
@@ -73,6 +74,17 @@ class CategoriaPersistenceAdapterTest {
 
         assertThat(categoriaRepository.findById(creada.getId()))
                 .isPresent().get().extracting(Categoria::getNombre).isEqualTo("Calzado Deportivo");
+    }
+
+    @Test
+    void laBaseDeDatosRechazaNombresDuplicados() {
+        categoriaRepository.save(new Categoria("Categoria Duplicada"));
+        entityManager.flush();
+        entityManager.clear();
+
+        categoriaRepository.save(new Categoria("Categoria Duplicada"));
+
+        assertThatThrownBy(entityManager::flush).isInstanceOf(RuntimeException.class);
     }
 
     @Test
