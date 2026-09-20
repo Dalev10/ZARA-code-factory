@@ -37,5 +37,10 @@ jobs:
       # necesita un "services: postgres:" aparte: Testcontainers gestiona su
       # propio contenedor efímero usando el daemon de Docker que ya viene
       # preinstalado en los runners de GitHub Actions (ubuntu-latest).
+      #
+      # "verify" también corre los gates de calidad agregados en HU-27:
+      # JaCoCo falla el build si la cobertura de línea del proyecto cae por
+      # debajo del 85%, y Checkstyle publica su reporte sin romper el build
+      # todavía (failOnViolation=false) hasta que se cure el ruleset.
       - name: Compilar y verificar
         run: ./mvnw -B clean verify

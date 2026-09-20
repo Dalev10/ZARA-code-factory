@@ -190,6 +190,86 @@
                     </excludes>
                 </configuration>
             </plugin>
+
+            <!-- ============================================================
+                 HU-27: cobertura de tests (JaCoCo). Genera el reporte HTML en
+                 target/site/jacoco/index.html en cada "mvn verify", y falla
+                 el build si la cobertura de línea del proyecto cae por debajo
+                 del piso configurado. El umbral (85%) se calibró contra la
+                 cobertura real medida al agregar este gate (~92.7%), dejando
+                 margen para trabajo futuro sin ser un piso trivial de cumplir.
+                 No cubre clase por clase todavía, solo el total del proyecto.
+                 ============================================================ -->
+            <plugin>
+                <groupId>org.jacoco</groupId>
+                <artifactId>jacoco-maven-plugin</artifactId>
+                <version>0.8.12</version>
+                <executions>
+                    <execution>
+                        <id>prepare-agent</id>
+                        <goals>
+                            <goal>prepare-agent</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>report</id>
+                        <phase>test</phase>
+                        <goals>
+                            <goal>report</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>check</id>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>check</goal>
+                        </goals>
+                        <configuration>
+                            <rules>
+                                <rule>
+                                    <element>BUNDLE</element>
+                                    <limits>
+                                        <limit>
+                                            <counter>LINE</counter>
+                                            <value>COVEREDRATIO</value>
+                                            <minimum>0.85</minimum>
+                                        </limit>
+                                    </limits>
+                                </rule>
+                            </rules>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <!-- ============================================================
+                 HU-27: linter estático (Checkstyle). Corre en "mvn verify" y
+                 publica el reporte en target/checkstyle-result.xml, pero
+                 todavía NO rompe el build (failOnViolation=false): esta base
+                 de código nunca pasó por un linter, así que primero hay que
+                 medir el volumen real de violaciones antes de decidir qué
+                 reglas conviene exigir de forma obligatoria.
+                 ============================================================ -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-checkstyle-plugin</artifactId>
+                <version>3.6.0</version>
+                <configuration>
+                    <configLocation>google_checks.xml</configLocation>
+                    <failOnViolation>false</failOnViolation>
+                    <violationSeverity>warning</violationSeverity>
+                    <consoleOutput>true</consoleOutput>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>checkstyle-check</id>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>check</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
         </plugins>
     </build>
 
