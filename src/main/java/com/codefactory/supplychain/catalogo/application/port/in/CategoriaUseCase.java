@@ -9,9 +9,8 @@ import java.util.UUID;
  * Puerto de entrada (Ports and Adapters) que define los casos de uso
  * disponibles para Categoria (FEAT-05 / HU-15 a HU-18).
  * <p>
- * Será implementado por {@code CategoriaService} y, en una etapa
- * posterior, consumido por un Controller REST a través de DTOs. En esta
- * etapa no existe todavía ningún Controller.
+ * Implementado por {@code CategoriaService} y consumido por
+ * {@code CategoriaController} a través de DTOs.
  */
 public interface CategoriaUseCase {
 

@@ -10,9 +10,8 @@ import java.util.List;
  * Puerto de entrada (Ports and Adapters) que define los casos de uso
  * disponibles para Template (FEAT-05 / HU-15 a HU-18).
  * <p>
- * Será implementado por {@code TemplateService} y, en una etapa
- * posterior, consumido por un Controller REST a través de DTOs. En esta
- * etapa no existe todavía ningún Controller.
+ * Implementado por {@code TemplateService} y consumido por
+ * {@code TemplateController} a través de DTOs.
  */
 public interface TemplateUseCase {
 
@@ -42,8 +41,8 @@ public interface TemplateUseCase {
      * Modifica la información editable de un Template existente
      * (nombre, temporada, proveedor y precio base).
      * <p>
-     * La Categoria del Template no se reasigna aquí: el modelo de
-     * dominio la trata como inmutable (ver MODEL_DOMAIN_NOTES.md).
+     * La Categoria del Template no se reasigna aquí: no hay un requisito
+     * funcional que establezca que un Template pueda cambiar de Categoria.
      *
      * @throws com.codefactory.supplychain.catalogo.application.exception.CatalogoRecursoNoEncontradoException
      *         si no existe un Template con ese id.

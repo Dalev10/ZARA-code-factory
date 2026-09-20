@@ -9,9 +9,8 @@ import java.util.List;
  * Puerto de entrada (Ports and Adapters) que define los casos de uso
  * disponibles para Variante / SKU (FEAT-05 / HU-15 a HU-18).
  * <p>
- * Será implementado por {@code VarianteService} y, en una etapa
- * posterior, consumido por un Controller REST a través de DTOs. En esta
- * etapa no existe todavía ningún Controller.
+ * Implementado por {@code VarianteService} y consumido por
+ * {@code VarianteController} a través de DTOs.
  */
 public interface VarianteUseCase {
 
@@ -58,7 +57,7 @@ public interface VarianteUseCase {
      * reconstituyendo una nueva instancia con el mismo id y los nuevos
      * valores, y guardándola a través del puerto de salida — el mismo
      * patrón que ya usa la persistencia existente para reconstituir
-     * entidades. Ver MODEL_DOMAIN_NOTES.md.
+     * entidades.
      *
      * @throws com.codefactory.supplychain.catalogo.application.exception.CatalogoRecursoNoEncontradoException
      *         si no existe una Variante con ese id, o si el Template
