@@ -11,6 +11,7 @@ import org.springframework.boot.jdbc.test.autoconfigure.AutoConfigureTestDatabas
 import org.springframework.boot.jpa.test.autoconfigure.TestEntityManager;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.context.annotation.Import;
+import org.springframework.data.domain.Pageable;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
@@ -70,7 +71,7 @@ class TemplatePersistenceAdapterTest {
         templateRepository.save(Template.crear("Template B", null, null, null, categoria));
         entityManager.flush();
 
-        assertThat(templateRepository.findAll()).extracting(Template::getNombre)
+        assertThat(templateRepository.findAll(Pageable.unpaged())).extracting(Template::getNombre)
                 .contains("Template A", "Template B");
     }
 

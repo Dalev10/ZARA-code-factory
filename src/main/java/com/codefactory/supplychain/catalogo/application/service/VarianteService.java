@@ -8,10 +8,10 @@ import com.codefactory.supplychain.catalogo.application.port.out.TemplateReposit
 import com.codefactory.supplychain.catalogo.application.port.out.VarianteRepository;
 import com.codefactory.supplychain.catalogo.domain.model.Template;
 import com.codefactory.supplychain.catalogo.domain.model.Variante;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
 
 /**
  * Servicio de aplicación que implementa los casos de uso de Variante/SKU
@@ -63,8 +63,8 @@ public class VarianteService implements VarianteUseCase {
     }
 
     @Override
-    public List<Variante> listar() {
-        return varianteRepository.findAll();
+    public Page<Variante> listar(Pageable pageable) {
+        return varianteRepository.findAll(pageable);
     }
 
     @Override

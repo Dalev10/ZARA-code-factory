@@ -2,8 +2,8 @@ package com.codefactory.supplychain.catalogo.application.port.in;
 
 import java.util.UUID;
 import com.codefactory.supplychain.catalogo.domain.model.Variante;
-
-import java.util.List;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 /**
  * Puerto de entrada (Ports and Adapters) que define los casos de uso
@@ -43,9 +43,9 @@ public interface VarianteUseCase {
     Variante obtenerPorSku(String sku);
 
     /**
-     * Lista todas las Variantes existentes.
+     * Lista las Variantes existentes, paginadas.
      */
-    List<Variante> listar();
+    Page<Variante> listar(Pageable pageable);
 
     /**
      * Modifica el sku, el Template, la talla y/o el color de una

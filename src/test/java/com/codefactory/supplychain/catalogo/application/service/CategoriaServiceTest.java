@@ -7,6 +7,8 @@ import com.codefactory.supplychain.catalogo.domain.exception.CategoriaInvalidaEx
 import com.codefactory.supplychain.catalogo.domain.model.Categoria;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 import java.util.Optional;
@@ -67,9 +69,10 @@ class CategoriaServiceTest {
     @Test
     void listarDelegaAlRepositorio() {
         Categoria categoria = Categoria.crear("Calzado");
-        when(categoriaRepository.findAll()).thenReturn(List.of(categoria));
+        Pageable pageable = Pageable.unpaged();
+        when(categoriaRepository.findAll(pageable)).thenReturn(new PageImpl<>(List.of(categoria)));
 
-        assertThat(servicio.listar()).containsExactly(categoria);
+        assertThat(servicio.listar(pageable)).containsExactly(categoria);
     }
 
     @Test

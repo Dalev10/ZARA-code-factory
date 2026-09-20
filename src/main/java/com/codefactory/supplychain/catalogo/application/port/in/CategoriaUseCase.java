@@ -1,8 +1,9 @@
 package com.codefactory.supplychain.catalogo.application.port.in;
 
 import com.codefactory.supplychain.catalogo.domain.model.Categoria;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
-import java.util.List;
 import java.util.UUID;
 
 /**
@@ -28,9 +29,9 @@ public interface CategoriaUseCase {
     Categoria obtenerPorId(UUID id);
 
     /**
-     * Lista todas las Categorias existentes.
+     * Lista las Categorias existentes, paginadas.
      */
-    List<Categoria> listar();
+    Page<Categoria> listar(Pageable pageable);
 
     /**
      * Modifica el nombre de una Categoria existente.

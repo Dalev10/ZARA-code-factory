@@ -14,10 +14,11 @@ import com.codefactory.supplychain.inventario.domain.model.Nodo;
 import com.codefactory.supplychain.inventario.domain.model.Tienda;
 import com.codefactory.supplychain.inventario.domain.model.TipoNodo;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
 import java.util.UUID;
 
 /**
@@ -59,8 +60,8 @@ public class BodegaTiendaService implements BodegaTiendaUseCase {
     }
 
     @Override
-    public List<Nodo> listarTodas() {
-        return nodoRepositoryPort.listarPorTipo(TipoNodo.BODEGA_TIENDA);
+    public Page<Nodo> listarTodas(Pageable pageable) {
+        return nodoRepositoryPort.listarPorTipo(TipoNodo.BODEGA_TIENDA, pageable);
     }
 
     @Override

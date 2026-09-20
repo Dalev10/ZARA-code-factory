@@ -9,10 +9,11 @@ import com.codefactory.supplychain.inventario.domain.model.Nodo;
 import com.codefactory.supplychain.inventario.domain.model.TipoNodo;
 import com.codefactory.supplychain.inventario.domain.model.Tienda;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
 import java.util.UUID;
 
 /**
@@ -47,8 +48,8 @@ public class TiendaService implements TiendaUseCase {
     }
 
     @Override
-    public List<Tienda> listar() {
-        return tiendaRepositoryPort.listarTodas();
+    public Page<Tienda> listar(Pageable pageable) {
+        return tiendaRepositoryPort.listarTodas(pageable);
     }
 
     @Override

@@ -9,6 +9,8 @@ import com.codefactory.supplychain.catalogo.domain.model.Template;
 import com.codefactory.supplychain.catalogo.domain.model.Variante;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -95,9 +97,10 @@ class VarianteServiceTest {
     @Test
     void listarDelegaAlRepositorio() {
         Variante variante = new Variante("SKU-001", template(), "M", "Rojo");
-        when(varianteRepository.findAll()).thenReturn(List.of(variante));
+        Pageable pageable = Pageable.unpaged();
+        when(varianteRepository.findAll(pageable)).thenReturn(new PageImpl<>(List.of(variante)));
 
-        assertThat(servicio.listar()).containsExactly(variante);
+        assertThat(servicio.listar(pageable)).containsExactly(variante);
     }
 
     @Test

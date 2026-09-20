@@ -95,6 +95,31 @@ class CategoriaControllerTest {
     }
 
     @Test
+    void listarPaginaLosResultados() throws Exception {
+        String token = loguearComoAdmin("admin-pagina-categorias@ejemplo.com");
+        for (String nombre : new String[] {"Categoria Pag 1", "Categoria Pag 2", "Categoria Pag 3"}) {
+            mockMvc.perform(post("/api/v1/categorias")
+                            .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content("""
+                                    {"nombre": "%s"}
+                                    """.formatted(nombre)))
+                    .andExpect(status().isCreated());
+        }
+
+        // No se asume que la tabla esté vacía (otros tests de esta misma clase
+        // también crean categorías y no hay rollback entre métodos): solo se
+        // verifica que el tamaño de página se respeta y que el conteo total
+        // incluye, al menos, las 3 categorías recién creadas.
+        mockMvc.perform(get("/api/v1/categorias").param("page", "0").param("size", "2")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content.length()").value(2))
+                .andExpect(jsonPath("$.totalElements").value(org.hamcrest.Matchers.greaterThanOrEqualTo(3)))
+                .andExpect(jsonPath("$.size").value(2));
+    }
+
+    @Test
     void crearUnaCategoriaDevuelve201() throws Exception {
         String token = loguearComoAdmin("usuario-crea-categoria@ejemplo.com");
 

@@ -7,6 +7,8 @@ import com.codefactory.supplychain.catalogo.infrastructure.adapter.in.web.dto.Te
 import com.codefactory.supplychain.catalogo.infrastructure.adapter.in.web.dto.TemplateResponse;
 import com.codefactory.supplychain.catalogo.infrastructure.adapter.in.web.mapper.TemplateWebMapper;
 import jakarta.validation.Valid;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -18,8 +20,6 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-
-import java.util.List;
 
 /**
  * Adaptador de entrada REST para Template (FEAT-05 / HU-15 a HU-18).
@@ -58,11 +58,8 @@ public class TemplateController {
     }
 
     @GetMapping
-    public ResponseEntity<List<TemplateResponse>> listar() {
-        List<TemplateResponse> respuesta = templateUseCase.listar().stream()
-                .map(templateWebMapper::toResponse)
-                .toList();
-        return ResponseEntity.ok(respuesta);
+    public ResponseEntity<Page<TemplateResponse>> listar(Pageable pageable) {
+        return ResponseEntity.ok(templateUseCase.listar(pageable).map(templateWebMapper::toResponse));
     }
 
     @GetMapping("/{id}")

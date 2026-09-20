@@ -175,7 +175,7 @@ class CentroDistribucionControllerTest {
         mockMvc.perform(get("/api/v1/centros-distribucion").param("nombre", "norte filtrable")
                         .header(HttpHeaders.AUTHORIZATION, "Bearer " + token))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].nombre").value("CD Norte Filtrable"));
+                .andExpect(jsonPath("$.content[0].nombre").value("CD Norte Filtrable"));
     }
 
     @Test

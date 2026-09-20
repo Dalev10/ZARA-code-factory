@@ -9,6 +9,7 @@ import org.springframework.boot.jdbc.test.autoconfigure.AutoConfigureTestDatabas
 import org.springframework.boot.jpa.test.autoconfigure.TestEntityManager;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.context.annotation.Import;
+import org.springframework.data.domain.Pageable;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
@@ -62,7 +63,7 @@ class CentroDistribucionRepositoryAdapterTest {
         entityManager.flush();
         entityManager.clear();
 
-        assertThat(centroDistribucionRepository.buscar(null, "norte", null))
+        assertThat(centroDistribucionRepository.buscar(null, "norte", null, Pageable.unpaged()))
                 .extracting(CentroDistribucion::getNombre).contains("CD Norte Grande");
     }
 

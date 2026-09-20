@@ -6,10 +6,10 @@ import com.codefactory.supplychain.catalogo.application.exception.CategoriaYaExi
 import com.codefactory.supplychain.catalogo.application.port.in.CategoriaUseCase;
 import com.codefactory.supplychain.catalogo.application.port.out.CategoriaRepository;
 import com.codefactory.supplychain.catalogo.domain.model.Categoria;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
 
 /**
  * Servicio de aplicación que implementa los casos de uso de Categoria
@@ -46,8 +46,8 @@ public class CategoriaService implements CategoriaUseCase {
     }
 
     @Override
-    public List<Categoria> listar() {
-        return categoriaRepository.findAll();
+    public Page<Categoria> listar(Pageable pageable) {
+        return categoriaRepository.findAll(pageable);
     }
 
     @Override

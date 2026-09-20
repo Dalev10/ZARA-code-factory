@@ -2,9 +2,10 @@ package com.codefactory.supplychain.catalogo.application.port.in;
 
 import java.util.UUID;
 import com.codefactory.supplychain.catalogo.domain.model.Template;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import java.math.BigDecimal;
-import java.util.List;
 
 /**
  * Puerto de entrada (Ports and Adapters) que define los casos de uso
@@ -33,9 +34,9 @@ public interface TemplateUseCase {
     Template obtenerPorId(UUID id);
 
     /**
-     * Lista todos los Templates existentes.
+     * Lista los Templates existentes, paginados.
      */
-    List<Template> listar();
+    Page<Template> listar(Pageable pageable);
 
     /**
      * Modifica la información editable de un Template existente

@@ -1,8 +1,9 @@
 package com.codefactory.supplychain.inventario.application.port.out;
 
 import com.codefactory.supplychain.inventario.domain.model.CentroDistribucion;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
-import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -17,7 +18,7 @@ public interface CentroDistribucionRepository {
 
     Optional<CentroDistribucion> buscarPorNombre(String nombre);
 
-    List<CentroDistribucion> buscar(UUID id, String nombre, String ubicacion);
+    Page<CentroDistribucion> buscar(UUID id, String nombre, String ubicacion, Pageable pageable);
 
     void eliminar(UUID id);
 }

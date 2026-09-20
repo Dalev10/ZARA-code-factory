@@ -11,6 +11,8 @@ import com.codefactory.supplychain.inventario.domain.model.TipoNodo;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 import java.util.Optional;
@@ -120,15 +122,18 @@ class CentroDistribucionServiceTest {
 
     @Test
     void buscarSinNingunParametroLanzaIllegalArgumentException() {
-        assertThatThrownBy(() -> servicio.buscarCentrosDistribucion(null, null, null))
+        Pageable pageable = Pageable.unpaged();
+        assertThatThrownBy(() -> servicio.buscarCentrosDistribucion(null, null, null, pageable))
                 .isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test
     void buscarConAlMenosUnParametroDelegaAlRepositorio() {
-        when(centroDistribucionRepository.buscar(null, "Principal", null)).thenReturn(List.of());
+        Pageable pageable = Pageable.unpaged();
+        when(centroDistribucionRepository.buscar(null, "Principal", null, pageable))
+                .thenReturn(new PageImpl<>(List.of()));
 
-        assertThat(servicio.buscarCentrosDistribucion(null, "Principal", null)).isEmpty();
+        assertThat(servicio.buscarCentrosDistribucion(null, "Principal", null, pageable)).isEmpty();
     }
 
     @Test

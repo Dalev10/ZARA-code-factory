@@ -7,6 +7,8 @@ import com.codefactory.supplychain.catalogo.infrastructure.adapter.in.web.dto.Ca
 import com.codefactory.supplychain.catalogo.infrastructure.adapter.in.web.dto.CategoriaResponse;
 import com.codefactory.supplychain.catalogo.infrastructure.adapter.in.web.mapper.CategoriaWebMapper;
 import jakarta.validation.Valid;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -18,8 +20,6 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-
-import java.util.List;
 
 /**
  * Adaptador de entrada REST para Categoria (FEAT-05 / HU-15 a HU-18).
@@ -50,11 +50,8 @@ public class CategoriaController {
     }
 
     @GetMapping
-    public ResponseEntity<List<CategoriaResponse>> listar() {
-        List<CategoriaResponse> respuesta = categoriaUseCase.listar().stream()
-                .map(categoriaWebMapper::toResponse)
-                .toList();
-        return ResponseEntity.ok(respuesta);
+    public ResponseEntity<Page<CategoriaResponse>> listar(Pageable pageable) {
+        return ResponseEntity.ok(categoriaUseCase.listar(pageable).map(categoriaWebMapper::toResponse));
     }
 
     @GetMapping("/{id}")

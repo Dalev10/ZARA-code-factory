@@ -8,6 +8,8 @@ import com.codefactory.supplychain.inventario.infrastructure.adapter.in.web.dto.
 import com.codefactory.supplychain.inventario.infrastructure.adapter.in.web.mapper.CentroDistribucionWebMapper;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -21,7 +23,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.List;
 import java.util.UUID;
 
 /**
@@ -37,13 +38,13 @@ public class CentroDistribucionController {
     private final CentroDistribucionWebMapper centroDistribucionWebMapper;
 
     @GetMapping
-    public List<CentroDistribucionResponse> obtenerCentroDistribucion(
+    public Page<CentroDistribucionResponse> obtenerCentroDistribucion(
             @RequestParam(required = false) UUID id,
             @RequestParam(required = false) String nombre,
-            @RequestParam(required = false) String ubicacion) {
-        return centroDistribucionUseCase.buscarCentrosDistribucion(id, nombre, ubicacion).stream()
-                .map(centroDistribucionWebMapper::toResponse)
-                .toList();
+            @RequestParam(required = false) String ubicacion,
+            Pageable pageable) {
+        return centroDistribucionUseCase.buscarCentrosDistribucion(id, nombre, ubicacion, pageable)
+                .map(centroDistribucionWebMapper::toResponse);
     }
 
     @PostMapping

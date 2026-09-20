@@ -7,6 +7,8 @@ import com.codefactory.supplychain.catalogo.infrastructure.adapter.in.web.dto.Va
 import com.codefactory.supplychain.catalogo.infrastructure.adapter.in.web.dto.VarianteResponse;
 import com.codefactory.supplychain.catalogo.infrastructure.adapter.in.web.mapper.VarianteWebMapper;
 import jakarta.validation.Valid;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -18,8 +20,6 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-
-import java.util.List;
 
 /**
  * Adaptador de entrada REST para Variante (FEAT-05 / HU-15 a HU-18).
@@ -51,11 +51,8 @@ public class VarianteController {
     }
 
     @GetMapping
-    public ResponseEntity<List<VarianteResponse>> listar() {
-        List<VarianteResponse> respuesta = varianteUseCase.listar().stream()
-                .map(varianteWebMapper::toResponse)
-                .toList();
-        return ResponseEntity.ok(respuesta);
+    public ResponseEntity<Page<VarianteResponse>> listar(Pageable pageable) {
+        return ResponseEntity.ok(varianteUseCase.listar(pageable).map(varianteWebMapper::toResponse));
     }
 
     @GetMapping("/{id}")

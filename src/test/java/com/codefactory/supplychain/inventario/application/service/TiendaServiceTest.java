@@ -11,6 +11,8 @@ import com.codefactory.supplychain.inventario.domain.model.Tienda;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 
 import java.time.Instant;
 import java.util.List;
@@ -75,9 +77,10 @@ class TiendaServiceTest {
     @Test
     void listarDelegaAlPuerto() {
         Tienda tienda = Tienda.crear("Tienda Centro", "Bogotá");
-        when(tiendaRepositoryPort.listarTodas()).thenReturn(List.of(tienda));
+        Pageable pageable = Pageable.unpaged();
+        when(tiendaRepositoryPort.listarTodas(pageable)).thenReturn(new PageImpl<>(List.of(tienda)));
 
-        assertThat(servicio.listar()).containsExactly(tienda);
+        assertThat(servicio.listar(pageable)).containsExactly(tienda);
     }
 
     @Test

@@ -13,6 +13,7 @@ import org.springframework.boot.jdbc.test.autoconfigure.AutoConfigureTestDatabas
 import org.springframework.boot.jpa.test.autoconfigure.TestEntityManager;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.context.annotation.Import;
+import org.springframework.data.domain.Pageable;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
@@ -100,7 +101,7 @@ class NodoRepositoryAdapterTest {
         entityManager.flush();
         entityManager.clear();
 
-        assertThat(nodoRepository.listarPorTipo(TipoNodo.BODEGA_TIENDA))
+        assertThat(nodoRepository.listarPorTipo(TipoNodo.BODEGA_TIENDA, Pageable.unpaged()))
                 .allMatch(n -> n.getTipo() == TipoNodo.BODEGA_TIENDA);
     }
 

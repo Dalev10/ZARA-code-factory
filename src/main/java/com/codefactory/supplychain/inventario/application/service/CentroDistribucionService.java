@@ -9,10 +9,11 @@ import com.codefactory.supplychain.inventario.domain.exception.CentroDistribucio
 import com.codefactory.supplychain.inventario.domain.model.CentroDistribucion;
 import com.codefactory.supplychain.inventario.domain.model.Nodo;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
 import java.util.UUID;
 
 /**
@@ -78,12 +79,13 @@ public class CentroDistribucionService implements CentroDistribucionUseCase {
     }
 
     @Override
-    public List<CentroDistribucion> buscarCentrosDistribucion(UUID id, String nombre, String ubicacion) {
+    public Page<CentroDistribucion> buscarCentrosDistribucion(UUID id, String nombre, String ubicacion,
+                                                               Pageable pageable) {
         if (id == null && (nombre == null || nombre.isBlank()) && (ubicacion == null || ubicacion.isBlank())) {
             throw new IllegalArgumentException(
                     "Debe proporcionar al menos un parámetro de búsqueda (id, nombre o ubicación).");
         }
-        return centroDistribucionRepository.buscar(id, nombre, ubicacion);
+        return centroDistribucionRepository.buscar(id, nombre, ubicacion, pageable);
     }
 
     @Override

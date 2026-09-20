@@ -7,6 +7,8 @@ import com.codefactory.supplychain.catalogo.domain.model.Categoria;
 import com.codefactory.supplychain.catalogo.domain.model.Template;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -69,9 +71,10 @@ class TemplateServiceTest {
     void listarDelegaAlRepositorio() {
         Template template = Template.crear("Zapatilla X", "Verano", "ProveedorX", BigDecimal.TEN,
                 Categoria.crear("Calzado"));
-        when(templateRepository.findAll()).thenReturn(List.of(template));
+        Pageable pageable = Pageable.unpaged();
+        when(templateRepository.findAll(pageable)).thenReturn(new PageImpl<>(List.of(template)));
 
-        assertThat(servicio.listar()).containsExactly(template);
+        assertThat(servicio.listar(pageable)).containsExactly(template);
     }
 
     @Test
