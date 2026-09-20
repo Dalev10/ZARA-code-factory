@@ -1,5 +1,6 @@
 package com.codefactory.supplychain.catalogo.application.port.in;
 
+import java.util.UUID;
 import com.codefactory.supplychain.catalogo.domain.model.Template;
 
 import java.math.BigDecimal;
@@ -18,19 +19,19 @@ public interface TemplateUseCase {
     /**
      * Crea un nuevo Template asociado a una Categoria existente.
      *
-     * @throws com.codefactory.supplychain.catalogo.application.exception.RecursoNoEncontradoException
+     * @throws com.codefactory.supplychain.catalogo.application.exception.CatalogoRecursoNoEncontradoException
      *         si la Categoria referenciada no existe.
      */
     Template crear(String nombre, String temporada, String proveedor,
-                    BigDecimal precioBase, Long categoriaId);
+                    BigDecimal precioBase, UUID categoriaId);
 
     /**
      * Consulta un Template por su id.
      *
-     * @throws com.codefactory.supplychain.catalogo.application.exception.RecursoNoEncontradoException
+     * @throws com.codefactory.supplychain.catalogo.application.exception.CatalogoRecursoNoEncontradoException
      *         si no existe un Template con ese id.
      */
-    Template obtenerPorId(Long id);
+    Template obtenerPorId(UUID id);
 
     /**
      * Lista todos los Templates existentes.
@@ -44,17 +45,17 @@ public interface TemplateUseCase {
      * La Categoria del Template no se reasigna aquí: el modelo de
      * dominio la trata como inmutable (ver MODEL_DOMAIN_NOTES.md).
      *
-     * @throws com.codefactory.supplychain.catalogo.application.exception.RecursoNoEncontradoException
+     * @throws com.codefactory.supplychain.catalogo.application.exception.CatalogoRecursoNoEncontradoException
      *         si no existe un Template con ese id.
      */
-    Template modificar(Long id, String nombre, String temporada,
+    Template modificar(UUID id, String nombre, String temporada,
                         String proveedor, BigDecimal precioBase);
 
     /**
      * Elimina un Template por su id.
      *
-     * @throws com.codefactory.supplychain.catalogo.application.exception.RecursoNoEncontradoException
+     * @throws com.codefactory.supplychain.catalogo.application.exception.CatalogoRecursoNoEncontradoException
      *         si no existe un Template con ese id.
      */
-    void eliminar(Long id);
+    void eliminar(UUID id);
 }

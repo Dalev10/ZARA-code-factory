@@ -3,14 +3,19 @@ package com.codefactory.supplychain.catalogo.infrastructure.adapter.out.persiste
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.math.BigDecimal;
+import java.util.UUID;
 
 /**
  * Entidad JPA que mapea la tabla {@code template}, definida en
@@ -25,12 +30,17 @@ import java.math.BigDecimal;
  */
 @Entity
 @Table(name = "template")
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public class TemplateEntity {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id")
-    private Long id;
+    @EqualsAndHashCode.Include
+    private UUID id;
 
     // categoria_id es nullable en el esquema existente (no tiene NOT NULL),
     // por lo que la relación se mapea como opcional.
@@ -49,66 +59,4 @@ public class TemplateEntity {
 
     @Column(name = "precio_base", precision = 12, scale = 2)
     private BigDecimal precioBase;
-
-    protected TemplateEntity() {
-        // Requerido por JPA.
-    }
-
-    public TemplateEntity(Long id, CategoriaEntity categoria, String nombre,
-                           String temporada, String proveedor, BigDecimal precioBase) {
-        this.id = id;
-        this.categoria = categoria;
-        this.nombre = nombre;
-        this.temporada = temporada;
-        this.proveedor = proveedor;
-        this.precioBase = precioBase;
-    }
-
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public CategoriaEntity getCategoria() {
-        return categoria;
-    }
-
-    public void setCategoria(CategoriaEntity categoria) {
-        this.categoria = categoria;
-    }
-
-    public String getNombre() {
-        return nombre;
-    }
-
-    public void setNombre(String nombre) {
-        this.nombre = nombre;
-    }
-
-    public String getTemporada() {
-        return temporada;
-    }
-
-    public void setTemporada(String temporada) {
-        this.temporada = temporada;
-    }
-
-    public String getProveedor() {
-        return proveedor;
-    }
-
-    public void setProveedor(String proveedor) {
-        this.proveedor = proveedor;
-    }
-
-    public BigDecimal getPrecioBase() {
-        return precioBase;
-    }
-
-    public void setPrecioBase(BigDecimal precioBase) {
-        this.precioBase = precioBase;
-    }
 }

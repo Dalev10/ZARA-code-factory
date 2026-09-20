@@ -1,7 +1,8 @@
 package com.codefactory.supplychain.catalogo.application.service;
 
+import java.util.UUID;
 import com.codefactory.supplychain.catalogo.application.exception.DatosInvalidosException;
-import com.codefactory.supplychain.catalogo.application.exception.RecursoNoEncontradoException;
+import com.codefactory.supplychain.catalogo.application.exception.CatalogoRecursoNoEncontradoException;
 import com.codefactory.supplychain.catalogo.application.port.in.CategoriaUseCase;
 import com.codefactory.supplychain.catalogo.application.port.out.CategoriaRepository;
 import com.codefactory.supplychain.catalogo.domain.model.Categoria;
@@ -34,9 +35,9 @@ public class CategoriaService implements CategoriaUseCase {
     }
 
     @Override
-    public Categoria obtenerPorId(Long id) {
+    public Categoria obtenerPorId(UUID id) {
         return categoriaRepository.findById(id)
-                .orElseThrow(() -> RecursoNoEncontradoException.categoria(id));
+                .orElseThrow(() -> CatalogoRecursoNoEncontradoException.categoria(id));
     }
 
     @Override
@@ -46,7 +47,7 @@ public class CategoriaService implements CategoriaUseCase {
 
     @Override
     @Transactional
-    public Categoria modificar(Long id, String nuevoNombre) {
+    public Categoria modificar(UUID id, String nuevoNombre) {
         validarNombre(nuevoNombre);
         Categoria categoria = obtenerPorId(id);
         categoria.cambiarNombre(nuevoNombre);
@@ -55,9 +56,9 @@ public class CategoriaService implements CategoriaUseCase {
 
     @Override
     @Transactional
-    public void eliminar(Long id) {
+    public void eliminar(UUID id) {
         if (!categoriaRepository.existsById(id)) {
-            throw RecursoNoEncontradoException.categoria(id);
+            throw CatalogoRecursoNoEncontradoException.categoria(id);
         }
         // NOTA: si la Categoria está referenciada por uno o más Template,
         // el borrado físico puede violar la FK definida en PostgreSQL

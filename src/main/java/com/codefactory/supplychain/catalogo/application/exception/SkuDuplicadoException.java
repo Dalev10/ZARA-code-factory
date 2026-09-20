@@ -1,15 +1,15 @@
 package com.codefactory.supplychain.catalogo.application.exception;
 
+import com.codefactory.supplychain.shared.exception.RecursoDuplicadoException;
+
 /**
  * Se lanza al intentar crear una Variante con un SKU que ya pertenece a
  * otra Variante existente, o al modificar una Variante asignándole un SKU
  * que ya usa otra Variante distinta de ella misma.
- * <p>
- * Ver la nota sobre convenciones de excepciones en
- * {@link RecursoNoEncontradoException}: no fue posible revisar
- * {@code shared/exception} porque no forma parte del ZIP de esta etapa.
+ *
+ * Módulo: catalogo — Categoria/Template/Variante (FEAT-05).
  */
-public class SkuDuplicadoException extends RuntimeException {
+public class SkuDuplicadoException extends RecursoDuplicadoException {
 
     public SkuDuplicadoException(String sku) {
         super("Ya existe una Variante con sku " + sku);

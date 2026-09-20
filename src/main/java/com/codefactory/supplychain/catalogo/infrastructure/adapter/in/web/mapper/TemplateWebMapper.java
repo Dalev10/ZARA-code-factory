@@ -1,5 +1,6 @@
 package com.codefactory.supplychain.catalogo.infrastructure.adapter.in.web.mapper;
 
+import java.util.UUID;
 import com.codefactory.supplychain.catalogo.domain.model.Categoria;
 import com.codefactory.supplychain.catalogo.domain.model.Template;
 import com.codefactory.supplychain.catalogo.infrastructure.adapter.in.web.dto.TemplateResponse;
@@ -14,7 +15,7 @@ public class TemplateWebMapper {
 
     public TemplateResponse toResponse(Template template) {
         Categoria categoria = template.getCategoria();
-        Long categoriaId = categoria != null ? categoria.getId() : null;
+        UUID categoriaId = categoria != null ? categoria.getId() : null;
 
         return new TemplateResponse(
                 template.getId(),

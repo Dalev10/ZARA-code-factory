@@ -3,6 +3,7 @@ package com.codefactory.supplychain.catalogo.application.port.in;
 import com.codefactory.supplychain.catalogo.domain.model.Categoria;
 
 import java.util.List;
+import java.util.UUID;
 
 /**
  * Puerto de entrada (Ports and Adapters) que define los casos de uso
@@ -22,10 +23,10 @@ public interface CategoriaUseCase {
     /**
      * Consulta una Categoria por su id.
      *
-     * @throws com.codefactory.supplychain.catalogo.application.exception.RecursoNoEncontradoException
+     * @throws com.codefactory.supplychain.catalogo.application.exception.CatalogoRecursoNoEncontradoException
      *         si no existe una Categoria con ese id.
      */
-    Categoria obtenerPorId(Long id);
+    Categoria obtenerPorId(UUID id);
 
     /**
      * Lista todas las Categorias existentes.
@@ -35,16 +36,16 @@ public interface CategoriaUseCase {
     /**
      * Modifica el nombre de una Categoria existente.
      *
-     * @throws com.codefactory.supplychain.catalogo.application.exception.RecursoNoEncontradoException
+     * @throws com.codefactory.supplychain.catalogo.application.exception.CatalogoRecursoNoEncontradoException
      *         si no existe una Categoria con ese id.
      */
-    Categoria modificar(Long id, String nuevoNombre);
+    Categoria modificar(UUID id, String nuevoNombre);
 
     /**
      * Elimina una Categoria por su id.
      *
-     * @throws com.codefactory.supplychain.catalogo.application.exception.RecursoNoEncontradoException
+     * @throws com.codefactory.supplychain.catalogo.application.exception.CatalogoRecursoNoEncontradoException
      *         si no existe una Categoria con ese id.
      */
-    void eliminar(Long id);
+    void eliminar(UUID id);
 }

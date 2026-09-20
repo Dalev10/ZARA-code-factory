@@ -1,5 +1,6 @@
 package com.codefactory.supplychain.catalogo.infrastructure.adapter.in.web.dto;
 
+import java.util.UUID;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -33,6 +34,6 @@ public record TemplateRequest(
         BigDecimal precioBase,
 
         @NotNull(message = "El id de la categoria es obligatorio")
-        Long categoriaId
+        UUID categoriaId
 ) {
 }

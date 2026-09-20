@@ -1,6 +1,7 @@
 package com.codefactory.supplychain.catalogo.application.service;
 
-import com.codefactory.supplychain.catalogo.application.exception.RecursoNoEncontradoException;
+import java.util.UUID;
+import com.codefactory.supplychain.catalogo.application.exception.CatalogoRecursoNoEncontradoException;
 import com.codefactory.supplychain.catalogo.application.exception.SkuDuplicadoException;
 import com.codefactory.supplychain.catalogo.application.port.in.VarianteUseCase;
 import com.codefactory.supplychain.catalogo.application.port.out.TemplateRepository;
@@ -19,7 +20,7 @@ import java.util.List;
  * únicamente para resolver/comprobar el Template asociado). No depende de
  * JPA, de entidades de persistencia, de controllers ni de DTOs.
  * <p>
- * NOTA sobre {@link #modificar(Long, String, Long, String, String)}: el modelo de
+ * NOTA sobre {@link #modificar(UUID, String, UUID, String, String)}: el modelo de
  * dominio {@link Variante} es inmutable (no expone setters ni métodos de
  * modificación; ver MODEL_DOMAIN_NOTES.md). Para no rediseñar el dominio
  * ya aprobado, la modificación se implementa reconstituyendo una nueva
@@ -42,7 +43,7 @@ public class VarianteService implements VarianteUseCase {
 
     @Override
     @Transactional
-    public Variante crear(String sku, Long templateId, String talla, String color) {
+    public Variante crear(String sku, UUID templateId, String talla, String color) {
         Template template = obtenerTemplateExistente(templateId);
         rechazarSiSkuYaExiste(sku);
         Variante variante = new Variante(sku, template, talla, color);
@@ -50,15 +51,15 @@ public class VarianteService implements VarianteUseCase {
     }
 
     @Override
-    public Variante obtenerPorId(Long id) {
+    public Variante obtenerPorId(UUID id) {
         return varianteRepository.findById(id)
-                .orElseThrow(() -> RecursoNoEncontradoException.variante(id));
+                .orElseThrow(() -> CatalogoRecursoNoEncontradoException.variante(id));
     }
 
     @Override
     public Variante obtenerPorSku(String sku) {
         return varianteRepository.findBySku(sku)
-                .orElseThrow(() -> RecursoNoEncontradoException.varianteConSku(sku));
+                .orElseThrow(() -> CatalogoRecursoNoEncontradoException.varianteConSku(sku));
     }
 
     @Override
@@ -68,7 +69,7 @@ public class VarianteService implements VarianteUseCase {
 
     @Override
     @Transactional
-    public Variante modificar(Long id, String nuevoSku, Long nuevoTemplateId, String nuevaTalla, String nuevoColor) {
+    public Variante modificar(UUID id, String nuevoSku, UUID nuevoTemplateId, String nuevaTalla, String nuevoColor) {
         Variante existente = obtenerPorId(id);
         Template template = obtenerTemplateExistente(nuevoTemplateId);
         rechazarSiSkuPerteneceAOtraVariante(existente, nuevoSku);
@@ -79,9 +80,9 @@ public class VarianteService implements VarianteUseCase {
 
     @Override
     @Transactional
-    public void eliminar(Long id) {
+    public void eliminar(UUID id) {
         if (!varianteRepository.existsById(id)) {
-            throw RecursoNoEncontradoException.variante(id);
+            throw CatalogoRecursoNoEncontradoException.variante(id);
         }
         // La Variante es la unidad operativa (hoja de la jerarquía
         // Categoria -> Template -> Variante), por lo que su borrado
@@ -90,9 +91,9 @@ public class VarianteService implements VarianteUseCase {
         varianteRepository.deleteById(id);
     }
 
-    private Template obtenerTemplateExistente(Long templateId) {
+    private Template obtenerTemplateExistente(UUID templateId) {
         return templateRepository.findById(templateId)
-                .orElseThrow(() -> RecursoNoEncontradoException.template(templateId));
+                .orElseThrow(() -> CatalogoRecursoNoEncontradoException.template(templateId));
     }
 
     private void rechazarSiSkuYaExiste(String sku) {

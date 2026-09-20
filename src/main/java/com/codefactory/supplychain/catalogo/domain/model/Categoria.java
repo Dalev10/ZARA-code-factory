@@ -1,5 +1,11 @@
 package com.codefactory.supplychain.catalogo.domain.model;
 
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.ToString;
+
+import java.util.UUID;
+
 /**
  * Representa una categoría de productos dentro del catálogo.
  * <p>
@@ -7,34 +13,29 @@ package com.codefactory.supplychain.catalogo.domain.model;
  * responsabilidades de persistencia ni de infraestructura: es un
  * objeto de dominio puro.
  */
+@Getter
+@ToString
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public class Categoria {
 
-    private final Long id;
+    @EqualsAndHashCode.Include
+    private final UUID id;
     private String nombre;
 
     /**
-     * Constructor para crear una nueva Categoria que todavía no ha sido
-     * persistida (por lo tanto no tiene id asignado).
+     * Crea una nueva Categoria (id asignado en dominio, todavía sin persistir).
      */
     public Categoria(String nombre) {
-        this(null, nombre);
+        this(UUID.randomUUID(), nombre);
     }
 
     /**
-     * Constructor para reconstituir una Categoria ya existente
-     * (por ejemplo, a partir de un adaptador de persistencia).
+     * Reconstituye una Categoria ya existente (por ejemplo, desde un
+     * adaptador de persistencia).
      */
-    public Categoria(Long id, String nombre) {
+    public Categoria(UUID id, String nombre) {
         this.id = id;
         this.nombre = nombre;
-    }
-
-    public Long getId() {
-        return id;
-    }
-
-    public String getNombre() {
-        return nombre;
     }
 
     /**

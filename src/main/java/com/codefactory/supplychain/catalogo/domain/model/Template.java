@@ -1,6 +1,11 @@
 package com.codefactory.supplychain.catalogo.domain.model;
 
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.ToString;
+
 import java.math.BigDecimal;
+import java.util.UUID;
 
 /**
  * Representa un Template: la agregación conceptual que describe un
@@ -10,9 +15,13 @@ import java.math.BigDecimal;
  * {@link Variante} (SKU). El Template en sí mismo no tiene inventario
  * propio; el inventario se maneja a nivel de Variante.
  */
+@Getter
+@ToString
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public class Template {
 
-    private final Long id;
+    @EqualsAndHashCode.Include
+    private final UUID id;
     private String nombre;
     private String temporada;
     private String proveedor;
@@ -20,19 +29,18 @@ public class Template {
     private final Categoria categoria;
 
     /**
-     * Constructor para crear un nuevo Template que todavía no ha sido
-     * persistido (por lo tanto no tiene id asignado).
+     * Crea un nuevo Template (id asignado en dominio, todavía sin persistir).
      */
     public Template(String nombre, String temporada, String proveedor,
                      BigDecimal precioBase, Categoria categoria) {
-        this(null, nombre, temporada, proveedor, precioBase, categoria);
+        this(UUID.randomUUID(), nombre, temporada, proveedor, precioBase, categoria);
     }
 
     /**
-     * Constructor para reconstituir un Template ya existente
-     * (por ejemplo, a partir de un adaptador de persistencia).
+     * Reconstituye un Template ya existente (por ejemplo, a partir de un
+     * adaptador de persistencia).
      */
-    public Template(Long id, String nombre, String temporada, String proveedor,
+    public Template(UUID id, String nombre, String temporada, String proveedor,
                      BigDecimal precioBase, Categoria categoria) {
         this.id = id;
         this.nombre = nombre;
@@ -42,35 +50,10 @@ public class Template {
         this.categoria = categoria;
     }
 
-    public Long getId() {
-        return id;
-    }
-
-    public String getNombre() {
-        return nombre;
-    }
-
-    public String getTemporada() {
-        return temporada;
-    }
-
-    public String getProveedor() {
-        return proveedor;
-    }
-
-    public BigDecimal getPrecioBase() {
-        return precioBase;
-    }
-
-    public Categoria getCategoria() {
-        return categoria;
-    }
-
     /**
      * Permite modificar la información editable del Template.
      * La categoría no se incluye aquí porque no hay un requisito que
-     * establezca que un Template pueda reasignarse a otra categoría
-     * (ver MODEL_DOMAIN_NOTES.md).
+     * establezca que un Template pueda reasignarse a otra categoría.
      */
     public void actualizarInformacion(String nombre, String temporada,
                                        String proveedor, BigDecimal precioBase) {
