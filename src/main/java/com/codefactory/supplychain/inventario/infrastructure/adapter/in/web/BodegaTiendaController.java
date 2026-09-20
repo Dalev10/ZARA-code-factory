@@ -6,6 +6,8 @@ import com.codefactory.supplychain.inventario.infrastructure.adapter.in.web.dto.
 import com.codefactory.supplychain.inventario.infrastructure.adapter.in.web.dto.RegistrarBodegaTiendaRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -18,7 +20,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.List;
 import java.util.UUID;
 
 /**
@@ -39,8 +40,8 @@ public class BodegaTiendaController {
     }
 
     @GetMapping
-    public List<BodegaTiendaResponse> listarTodas() {
-        return bodegaTiendaUseCase.listarTodas().stream().map(BodegaTiendaResponse::from).toList();
+    public Page<BodegaTiendaResponse> listarTodas(Pageable pageable) {
+        return bodegaTiendaUseCase.listarTodas(pageable).map(BodegaTiendaResponse::from);
     }
 
     @GetMapping("/{id}")

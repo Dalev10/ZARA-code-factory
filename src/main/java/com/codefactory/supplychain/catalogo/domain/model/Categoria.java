@@ -1,5 +1,6 @@
 package com.codefactory.supplychain.catalogo.domain.model;
 
+import com.codefactory.supplychain.catalogo.domain.exception.CategoriaInvalidaException;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.ToString;
@@ -11,37 +12,42 @@ import java.util.UUID;
  * <p>
  * Una Categoria agrupa uno o varios {@link Template}. No tiene
  * responsabilidades de persistencia ni de infraestructura: es un
- * objeto de dominio puro.
+ * objeto de dominio puro, inmutable — igual que {@code Tienda}/{@code Nodo}
+ * (HU-23).
  */
 @Getter
 @ToString
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
-public class Categoria {
+public final class Categoria {
 
     @EqualsAndHashCode.Include
     private final UUID id;
-    private String nombre;
+    private final String nombre;
 
-    /**
-     * Crea una nueva Categoria (id asignado en dominio, todavía sin persistir).
-     */
-    public Categoria(String nombre) {
-        this(UUID.randomUUID(), nombre);
-    }
-
-    /**
-     * Reconstituye una Categoria ya existente (por ejemplo, desde un
-     * adaptador de persistencia).
-     */
-    public Categoria(UUID id, String nombre) {
+    private Categoria(UUID id, String nombre) {
         this.id = id;
-        this.nombre = nombre;
+        this.nombre = validarNombre(nombre);
     }
 
-    /**
-     * Permite modificar el nombre de la categoría.
-     */
-    public void cambiarNombre(String nuevoNombre) {
-        this.nombre = nuevoNombre;
+    public static Categoria crear(String nombre) {
+        return new Categoria(UUID.randomUUID(), nombre);
+    }
+
+    public static Categoria reconstruir(UUID id, String nombre) {
+        return new Categoria(id, nombre);
+    }
+
+    public Categoria cambiarNombre(String nuevoNombre) {
+        return new Categoria(id, nuevoNombre);
+    }
+
+    private static String validarNombre(String nombre) {
+        if (nombre == null || nombre.isBlank()) {
+            throw new CategoriaInvalidaException("El nombre de la categoria no puede estar vacío");
+        }
+        if (nombre.length() > 150) {
+            throw new CategoriaInvalidaException("El nombre de la categoria no puede superar 150 caracteres");
+        }
+        return nombre;
     }
 }

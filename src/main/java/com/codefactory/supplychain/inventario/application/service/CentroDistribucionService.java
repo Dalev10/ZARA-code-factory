@@ -9,10 +9,11 @@ import com.codefactory.supplychain.inventario.domain.exception.CentroDistribucio
 import com.codefactory.supplychain.inventario.domain.model.CentroDistribucion;
 import com.codefactory.supplychain.inventario.domain.model.Nodo;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
 import java.util.UUID;
 
 /**
@@ -56,10 +57,10 @@ public class CentroDistribucionService implements CentroDistribucionUseCase {
     @Transactional
     public void eliminarCentroDistribucion(UUID id) {
         obtenerCentroDistribucionPorId(id);
-        // NOTA: no elimina el Nodo asociado (tipo=CD) — deuda técnica conocida,
-        // registrada para resolverse cuando se retome FEAT-04 de lleno. Hoy
-        // este DELETE falla por la FK de nodo.cd_id si el CD ya tiene su nodo
-        // (que siempre lo tiene, dado que crearCentroDistribucion lo aprovisiona).
+        // El CD siempre tiene su Nodo asociado (aprovisionado en
+        // crearCentroDistribucion); hay que eliminarlo primero para no violar
+        // la FK nodo.cd_id (HU-22).
+        nodoRepositoryPort.buscarPorCdId(id).ifPresent(nodo -> nodoRepositoryPort.eliminar(nodo.getId()));
         centroDistribucionRepository.eliminar(id);
     }
 
@@ -78,12 +79,13 @@ public class CentroDistribucionService implements CentroDistribucionUseCase {
     }
 
     @Override
-    public List<CentroDistribucion> buscarCentrosDistribucion(UUID id, String nombre, String ubicacion) {
+    public Page<CentroDistribucion> buscarCentrosDistribucion(UUID id, String nombre, String ubicacion,
+                                                               Pageable pageable) {
         if (id == null && (nombre == null || nombre.isBlank()) && (ubicacion == null || ubicacion.isBlank())) {
             throw new IllegalArgumentException(
                     "Debe proporcionar al menos un parámetro de búsqueda (id, nombre o ubicación).");
         }
-        return centroDistribucionRepository.buscar(id, nombre, ubicacion);
+        return centroDistribucionRepository.buscar(id, nombre, ubicacion, pageable);
     }
 
     @Override

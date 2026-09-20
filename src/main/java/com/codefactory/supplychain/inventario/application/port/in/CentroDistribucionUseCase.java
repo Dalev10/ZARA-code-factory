@@ -2,8 +2,9 @@ package com.codefactory.supplychain.inventario.application.port.in;
 
 import com.codefactory.supplychain.inventario.application.dto.CentroDistribucionConNodo;
 import com.codefactory.supplychain.inventario.domain.model.CentroDistribucion;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
-import java.util.List;
 import java.util.UUID;
 
 /**
@@ -21,7 +22,7 @@ public interface CentroDistribucionUseCase {
 
     CentroDistribucion obtenerCentroDistribucionPorNombre(String nombre);
 
-    List<CentroDistribucion> buscarCentrosDistribucion(UUID id, String nombre, String ubicacion);
+    Page<CentroDistribucion> buscarCentrosDistribucion(UUID id, String nombre, String ubicacion, Pageable pageable);
 
     CentroDistribucionConNodo buscarCentroDistribucionConNodo(UUID id);
 }

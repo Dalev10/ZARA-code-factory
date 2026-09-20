@@ -2,8 +2,9 @@ package com.codefactory.supplychain.inventario.application.port.in;
 
 import com.codefactory.supplychain.inventario.application.dto.BodegaTiendaConsulta;
 import com.codefactory.supplychain.inventario.domain.model.Nodo;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
-import java.util.List;
 import java.util.UUID;
 
 /**
@@ -17,7 +18,7 @@ public interface BodegaTiendaUseCase {
 
     BodegaTiendaConsulta consultarPorTiendaId(UUID tiendaId);
 
-    List<Nodo> listarTodas();
+    Page<Nodo> listarTodas(Pageable pageable);
 
     Nodo modificar(UUID id, UUID nuevaTiendaId);
 

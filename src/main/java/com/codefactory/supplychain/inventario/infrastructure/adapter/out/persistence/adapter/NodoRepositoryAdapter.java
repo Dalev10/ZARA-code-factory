@@ -6,9 +6,10 @@ import com.codefactory.supplychain.inventario.domain.model.TipoNodo;
 import com.codefactory.supplychain.inventario.infrastructure.adapter.out.persistence.mapper.NodoMapper;
 import com.codefactory.supplychain.inventario.infrastructure.adapter.out.persistence.repository.NodoJpaRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
 
-import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -43,8 +44,8 @@ public class NodoRepositoryAdapter implements NodoRepositoryPort {
     }
 
     @Override
-    public List<Nodo> listarPorTipo(TipoNodo tipo) {
-        return jpaRepository.findByTipo(tipo).stream().map(mapper::toDomain).toList();
+    public Page<Nodo> listarPorTipo(TipoNodo tipo, Pageable pageable) {
+        return jpaRepository.findByTipo(tipo, pageable).map(mapper::toDomain);
     }
 
     @Override

@@ -9,6 +9,7 @@ import org.springframework.boot.jdbc.test.autoconfigure.AutoConfigureTestDatabas
 import org.springframework.boot.jpa.test.autoconfigure.TestEntityManager;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.context.annotation.Import;
+import org.springframework.data.domain.Pageable;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
@@ -16,6 +17,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
  * Módulo: catalogo — Categoria/Template/Variante (FEAT-05).
@@ -38,7 +40,7 @@ class CategoriaPersistenceAdapterTest {
 
     @Test
     void guardaYRecuperaUnaCategoriaPorId() {
-        Categoria guardada = categoriaRepository.save(new Categoria("Calzado"));
+        Categoria guardada = categoriaRepository.save(Categoria.crear("Calzado"));
         entityManager.flush();
         entityManager.clear();
 
@@ -48,11 +50,12 @@ class CategoriaPersistenceAdapterTest {
 
     @Test
     void listarTodasIncluyeLasCategoriasGuardadas() {
-        categoriaRepository.save(new Categoria("Calzado"));
-        categoriaRepository.save(new Categoria("Ropa"));
+        categoriaRepository.save(Categoria.crear("Calzado"));
+        categoriaRepository.save(Categoria.crear("Ropa"));
         entityManager.flush();
 
-        assertThat(categoriaRepository.findAll()).extracting(Categoria::getNombre).contains("Calzado", "Ropa");
+        assertThat(categoriaRepository.findAll(Pageable.unpaged()))
+                .extracting(Categoria::getNombre).contains("Calzado", "Ropa");
     }
 
     @Test
@@ -62,12 +65,11 @@ class CategoriaPersistenceAdapterTest {
 
     @Test
     void guardarUnaCategoriaYaExistenteLaActualiza() {
-        Categoria creada = categoriaRepository.save(new Categoria("Calzado"));
+        Categoria creada = categoriaRepository.save(Categoria.crear("Calzado"));
         entityManager.flush();
         entityManager.clear();
 
-        creada.cambiarNombre("Calzado Deportivo");
-        categoriaRepository.save(creada);
+        categoriaRepository.save(creada.cambiarNombre("Calzado Deportivo"));
         entityManager.flush();
         entityManager.clear();
 
@@ -76,8 +78,19 @@ class CategoriaPersistenceAdapterTest {
     }
 
     @Test
+    void laBaseDeDatosRechazaNombresDuplicados() {
+        categoriaRepository.save(Categoria.crear("Categoria Duplicada"));
+        entityManager.flush();
+        entityManager.clear();
+
+        categoriaRepository.save(Categoria.crear("Categoria Duplicada"));
+
+        assertThatThrownBy(entityManager::flush).isInstanceOf(RuntimeException.class);
+    }
+
+    @Test
     void deleteByIdEliminaLaCategoria() {
-        Categoria creada = categoriaRepository.save(new Categoria("Descartable"));
+        Categoria creada = categoriaRepository.save(Categoria.crear("Descartable"));
         entityManager.flush();
         entityManager.clear();
 

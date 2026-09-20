@@ -7,6 +7,8 @@ import com.codefactory.supplychain.catalogo.domain.model.Categoria;
 import com.codefactory.supplychain.catalogo.domain.model.Template;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -36,7 +38,7 @@ class TemplateServiceTest {
 
     @Test
     void creaUnTemplateAsociadoAUnaCategoriaExistente() {
-        Categoria categoria = new Categoria("Calzado");
+        Categoria categoria = Categoria.crear("Calzado");
         when(categoriaRepository.findById(categoria.getId())).thenReturn(Optional.of(categoria));
         when(templateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
@@ -67,17 +69,18 @@ class TemplateServiceTest {
 
     @Test
     void listarDelegaAlRepositorio() {
-        Template template = new Template("Zapatilla X", "Verano", "ProveedorX", BigDecimal.TEN,
-                new Categoria("Calzado"));
-        when(templateRepository.findAll()).thenReturn(List.of(template));
+        Template template = Template.crear("Zapatilla X", "Verano", "ProveedorX", BigDecimal.TEN,
+                Categoria.crear("Calzado"));
+        Pageable pageable = Pageable.unpaged();
+        when(templateRepository.findAll(pageable)).thenReturn(new PageImpl<>(List.of(template)));
 
-        assertThat(servicio.listar()).containsExactly(template);
+        assertThat(servicio.listar(pageable)).containsExactly(template);
     }
 
     @Test
     void modificarActualizaLaInformacionEditableSinTocarLaCategoria() {
-        Categoria categoria = new Categoria("Calzado");
-        Template template = new Template("Zapatilla X", "Verano", "ProveedorX", BigDecimal.TEN, categoria);
+        Categoria categoria = Categoria.crear("Calzado");
+        Template template = Template.crear("Zapatilla X", "Verano", "ProveedorX", BigDecimal.TEN, categoria);
         when(templateRepository.findById(template.getId())).thenReturn(Optional.of(template));
         when(templateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 

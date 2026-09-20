@@ -6,9 +6,10 @@ import com.codefactory.supplychain.catalogo.domain.model.Template;
 import com.codefactory.supplychain.catalogo.infrastructure.adapter.out.persistence.entity.TemplateEntity;
 import com.codefactory.supplychain.catalogo.infrastructure.adapter.out.persistence.mapper.TemplatePersistenceMapper;
 import com.codefactory.supplychain.catalogo.infrastructure.adapter.out.persistence.repository.TemplateJpaRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 
-import java.util.List;
 import java.util.Optional;
 
 /**
@@ -41,10 +42,8 @@ public class TemplatePersistenceAdapter implements TemplateRepository {
     }
 
     @Override
-    public List<Template> findAll() {
-        return templateJpaRepository.findAll().stream()
-                .map(templatePersistenceMapper::toDomain)
-                .toList();
+    public Page<Template> findAll(Pageable pageable) {
+        return templateJpaRepository.findAll(pageable).map(templatePersistenceMapper::toDomain);
     }
 
     @Override

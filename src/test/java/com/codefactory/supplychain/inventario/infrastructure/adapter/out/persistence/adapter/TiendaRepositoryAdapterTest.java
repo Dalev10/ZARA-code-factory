@@ -10,6 +10,7 @@ import org.springframework.boot.jdbc.test.autoconfigure.AutoConfigureTestDatabas
 import org.springframework.boot.jpa.test.autoconfigure.TestEntityManager;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.context.annotation.Import;
+import org.springframework.data.domain.Pageable;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
@@ -54,7 +55,8 @@ class TiendaRepositoryAdapterTest {
         tiendaRepository.guardar(Tienda.crear("Tienda B", null));
         entityManager.flush();
 
-        assertThat(tiendaRepository.listarTodas()).extracting(Tienda::getNombre).contains("Tienda A", "Tienda B");
+        assertThat(tiendaRepository.listarTodas(Pageable.unpaged()))
+                .extracting(Tienda::getNombre).contains("Tienda A", "Tienda B");
     }
 
     @Test

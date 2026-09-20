@@ -8,10 +8,10 @@ import com.codefactory.supplychain.catalogo.application.port.out.TemplateReposit
 import com.codefactory.supplychain.catalogo.application.port.out.VarianteRepository;
 import com.codefactory.supplychain.catalogo.domain.model.Template;
 import com.codefactory.supplychain.catalogo.domain.model.Variante;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
 
 /**
  * Servicio de aplicación que implementa los casos de uso de Variante/SKU
@@ -22,8 +22,8 @@ import java.util.List;
  * <p>
  * NOTA sobre {@link #modificar(UUID, String, UUID, String, String)}: el modelo de
  * dominio {@link Variante} es inmutable (no expone setters ni métodos de
- * modificación; ver MODEL_DOMAIN_NOTES.md). Para no rediseñar el dominio
- * ya aprobado, la modificación se implementa reconstituyendo una nueva
+ * modificación). Para no rediseñar el dominio ya aprobado, la modificación
+ * se implementa reconstituyendo una nueva
  * instancia de {@code Variante} con el mismo id (usando el constructor de
  * reconstitución que el propio dominio ya expone para este fin) y
  * guardándola a través del puerto de salida.
@@ -63,8 +63,8 @@ public class VarianteService implements VarianteUseCase {
     }
 
     @Override
-    public List<Variante> listar() {
-        return varianteRepository.findAll();
+    public Page<Variante> listar(Pageable pageable) {
+        return varianteRepository.findAll(pageable);
     }
 
     @Override

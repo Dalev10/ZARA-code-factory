@@ -7,10 +7,11 @@ import com.codefactory.supplychain.inventario.infrastructure.adapter.out.persist
 import com.codefactory.supplychain.inventario.infrastructure.adapter.out.persistence.repository.CentroDistribucionJpaRepository;
 import com.codefactory.supplychain.inventario.infrastructure.adapter.out.persistence.specification.CentroDistribucionSpecification;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Component;
 
-import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -40,7 +41,7 @@ public class CentroDistribucionRepositoryAdapter implements CentroDistribucionRe
     }
 
     @Override
-    public List<CentroDistribucion> buscar(UUID id, String nombre, String ubicacion) {
+    public Page<CentroDistribucion> buscar(UUID id, String nombre, String ubicacion, Pageable pageable) {
         Specification<CentroDistribucionEntity> specification = null;
 
         if (id != null) {
@@ -56,7 +57,7 @@ public class CentroDistribucionRepositoryAdapter implements CentroDistribucionRe
             specification = specification == null ? ubicacionSpec : specification.and(ubicacionSpec);
         }
 
-        return jpaRepository.findAll(specification).stream().map(mapper::toDomain).toList();
+        return jpaRepository.findAll(specification, pageable).map(mapper::toDomain);
     }
 
     @Override

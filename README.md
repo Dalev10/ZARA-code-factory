@@ -67,6 +67,7 @@ verifica que las entidades coincidan con lo que Flyway ya aplicó, pero
 nunca modifica el esquema por su cuenta.
 
 La migración inicial (`V1__crear_esquema_inicial.sql`) cubre todas las
-entidades del ERD de negocio. El esquema del módulo `identity`
-(usuarios/autenticación) se agregará en una migración posterior, cuando
-ese módulo se diseñe en detalle.
+entidades del ERD de negocio, con UUID como identificador en todo el
+dominio de negocio. El esquema del módulo `identity` (usuarios/autenticación)
+se agrega en `V2` a `V8`; las migraciones posteriores (`V9` en adelante)
+extienden el esquema de negocio a medida que se desarrollan las features.

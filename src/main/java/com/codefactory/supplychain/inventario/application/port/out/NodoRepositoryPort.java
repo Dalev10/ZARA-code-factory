@@ -2,8 +2,9 @@ package com.codefactory.supplychain.inventario.application.port.out;
 
 import com.codefactory.supplychain.inventario.domain.model.Nodo;
 import com.codefactory.supplychain.inventario.domain.model.TipoNodo;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
-import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -20,7 +21,7 @@ public interface NodoRepositoryPort {
 
     Optional<Nodo> buscarPorTiendaYTipo(UUID tiendaId, TipoNodo tipo);
 
-    List<Nodo> listarPorTipo(TipoNodo tipo);
+    Page<Nodo> listarPorTipo(TipoNodo tipo, Pageable pageable);
 
     boolean existePorTiendaYTipo(UUID tiendaId, TipoNodo tipo);
 

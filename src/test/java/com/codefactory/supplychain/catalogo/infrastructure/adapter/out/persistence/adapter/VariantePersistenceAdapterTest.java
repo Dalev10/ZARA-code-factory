@@ -50,8 +50,8 @@ class VariantePersistenceAdapterTest {
     private TestEntityManager entityManager;
 
     private Template templatePersistido() {
-        Categoria categoria = categoriaRepository.save(new Categoria("Calzado"));
-        Template template = templateRepository.save(new Template("Zapatilla X", null, null, null, categoria));
+        Categoria categoria = categoriaRepository.save(Categoria.crear("Calzado"));
+        Template template = templateRepository.save(Template.crear("Zapatilla X", null, null, null, categoria));
         entityManager.flush();
         return template;
     }

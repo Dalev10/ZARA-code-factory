@@ -11,6 +11,8 @@ import com.codefactory.supplychain.inventario.domain.model.TipoNodo;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 import java.util.Optional;
@@ -85,6 +87,31 @@ class CentroDistribucionServiceTest {
     }
 
     @Test
+    void eliminarBorraElNodoAsociadoAntesQueElCd() {
+        CentroDistribucion cd = CentroDistribucion.crear("CD Principal", "Bogotá");
+        Nodo nodo = Nodo.crearParaCd(cd.getId());
+        when(centroDistribucionRepository.buscarPorId(cd.getId())).thenReturn(Optional.of(cd));
+        when(nodoRepositoryPort.buscarPorCdId(cd.getId())).thenReturn(Optional.of(nodo));
+
+        servicio.eliminarCentroDistribucion(cd.getId());
+
+        verify(nodoRepositoryPort).eliminar(nodo.getId());
+        verify(centroDistribucionRepository).eliminar(cd.getId());
+    }
+
+    @Test
+    void eliminarUnCdInexistenteLanzaExcepcionSinTocarNingunPuerto() {
+        UUID id = UUID.randomUUID();
+        when(centroDistribucionRepository.buscarPorId(id)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> servicio.eliminarCentroDistribucion(id))
+                .isInstanceOf(CentroDistribucionNoEncontradoException.class);
+
+        verify(nodoRepositoryPort, never()).eliminar(any());
+        verify(centroDistribucionRepository, never()).eliminar(any());
+    }
+
+    @Test
     void obtenerPorIdRechazaUnCdInexistente() {
         UUID id = UUID.randomUUID();
         when(centroDistribucionRepository.buscarPorId(id)).thenReturn(Optional.empty());
@@ -95,15 +122,18 @@ class CentroDistribucionServiceTest {
 
     @Test
     void buscarSinNingunParametroLanzaIllegalArgumentException() {
-        assertThatThrownBy(() -> servicio.buscarCentrosDistribucion(null, null, null))
+        Pageable pageable = Pageable.unpaged();
+        assertThatThrownBy(() -> servicio.buscarCentrosDistribucion(null, null, null, pageable))
                 .isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test
     void buscarConAlMenosUnParametroDelegaAlRepositorio() {
-        when(centroDistribucionRepository.buscar(null, "Principal", null)).thenReturn(List.of());
+        Pageable pageable = Pageable.unpaged();
+        when(centroDistribucionRepository.buscar(null, "Principal", null, pageable))
+                .thenReturn(new PageImpl<>(List.of()));
 
-        assertThat(servicio.buscarCentrosDistribucion(null, "Principal", null)).isEmpty();
+        assertThat(servicio.buscarCentrosDistribucion(null, "Principal", null, pageable)).isEmpty();
     }
 
     @Test

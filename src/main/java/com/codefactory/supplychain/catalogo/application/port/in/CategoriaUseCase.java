@@ -1,17 +1,17 @@
 package com.codefactory.supplychain.catalogo.application.port.in;
 
 import com.codefactory.supplychain.catalogo.domain.model.Categoria;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
-import java.util.List;
 import java.util.UUID;
 
 /**
  * Puerto de entrada (Ports and Adapters) que define los casos de uso
  * disponibles para Categoria (FEAT-05 / HU-15 a HU-18).
  * <p>
- * Será implementado por {@code CategoriaService} y, en una etapa
- * posterior, consumido por un Controller REST a través de DTOs. En esta
- * etapa no existe todavía ningún Controller.
+ * Implementado por {@code CategoriaService} y consumido por
+ * {@code CategoriaController} a través de DTOs.
  */
 public interface CategoriaUseCase {
 
@@ -29,9 +29,9 @@ public interface CategoriaUseCase {
     Categoria obtenerPorId(UUID id);
 
     /**
-     * Lista todas las Categorias existentes.
+     * Lista las Categorias existentes, paginadas.
      */
-    List<Categoria> listar();
+    Page<Categoria> listar(Pageable pageable);
 
     /**
      * Modifica el nombre de una Categoria existente.

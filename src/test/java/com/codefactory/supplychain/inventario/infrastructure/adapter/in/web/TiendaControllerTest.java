@@ -99,6 +99,31 @@ class TiendaControllerTest {
     }
 
     @Test
+    void listarPaginaLosResultados() throws Exception {
+        String token = loguearComoAdmin("admin-pagina-tiendas@ejemplo.com");
+        for (String nombre : new String[] {"Tienda Pag 1", "Tienda Pag 2", "Tienda Pag 3"}) {
+            mockMvc.perform(post("/api/v1/tiendas")
+                            .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content("""
+                                    {"nombre": "%s", "ubicacion": "Bogotá"}
+                                    """.formatted(nombre)))
+                    .andExpect(status().isCreated());
+        }
+
+        // No se asume que la tabla esté vacía (otros tests de esta misma clase
+        // también crean tiendas y no hay rollback entre métodos): solo se
+        // verifica que el tamaño de página se respeta y que el conteo total
+        // incluye, al menos, las 3 tiendas recién creadas.
+        mockMvc.perform(get("/api/v1/tiendas").param("page", "0").param("size", "2")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content.length()").value(2))
+                .andExpect(jsonPath("$.totalElements").value(org.hamcrest.Matchers.greaterThanOrEqualTo(3)))
+                .andExpect(jsonPath("$.size").value(2));
+    }
+
+    @Test
     void crearComoAdminDevuelve201ConEstadoActiva() throws Exception {
         String token = loguearComoAdmin("admin-crea-tienda@ejemplo.com");
 
@@ -211,5 +236,46 @@ class TiendaControllerTest {
                         .header(HttpHeaders.AUTHORIZATION, "Bearer " + token))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.estado").value("INACTIVA"));
+    }
+
+    @Test
+    void reactivarUnaTiendaDesactivadaLaVuelveActiva() throws Exception {
+        String token = loguearComoAdmin("admin-reactiva-tienda@ejemplo.com");
+        MvcResult creada = mockMvc.perform(post("/api/v1/tiendas")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"nombre": "Tienda A Reactivar", "ubicacion": "Bogotá"}
+                                """))
+                .andExpect(status().isCreated())
+                .andReturn();
+        String id = new ObjectMapper().readTree(creada.getResponse().getContentAsString()).get("id").asText();
+        mockMvc.perform(delete("/api/v1/tiendas/" + id)
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + token))
+                .andExpect(status().isNoContent());
+
+        mockMvc.perform(put("/api/v1/tiendas/" + id + "/activar")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.estado").value("ACTIVA"));
+    }
+
+    @Test
+    void reactivarUnaTiendaYaActivaEsIdempotente() throws Exception {
+        String token = loguearComoAdmin("admin-reactiva-tienda-idempotente@ejemplo.com");
+        MvcResult creada = mockMvc.perform(post("/api/v1/tiendas")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"nombre": "Tienda Ya Activa", "ubicacion": "Bogotá"}
+                                """))
+                .andExpect(status().isCreated())
+                .andReturn();
+        String id = new ObjectMapper().readTree(creada.getResponse().getContentAsString()).get("id").asText();
+
+        mockMvc.perform(put("/api/v1/tiendas/" + id + "/activar")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.estado").value("ACTIVA"));
     }
 }

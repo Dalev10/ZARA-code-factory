@@ -2,16 +2,15 @@ package com.codefactory.supplychain.catalogo.application.port.in;
 
 import java.util.UUID;
 import com.codefactory.supplychain.catalogo.domain.model.Variante;
-
-import java.util.List;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 /**
  * Puerto de entrada (Ports and Adapters) que define los casos de uso
  * disponibles para Variante / SKU (FEAT-05 / HU-15 a HU-18).
  * <p>
- * Será implementado por {@code VarianteService} y, en una etapa
- * posterior, consumido por un Controller REST a través de DTOs. En esta
- * etapa no existe todavía ningún Controller.
+ * Implementado por {@code VarianteService} y consumido por
+ * {@code VarianteController} a través de DTOs.
  */
 public interface VarianteUseCase {
 
@@ -44,9 +43,9 @@ public interface VarianteUseCase {
     Variante obtenerPorSku(String sku);
 
     /**
-     * Lista todas las Variantes existentes.
+     * Lista las Variantes existentes, paginadas.
      */
-    List<Variante> listar();
+    Page<Variante> listar(Pageable pageable);
 
     /**
      * Modifica el sku, el Template, la talla y/o el color de una
@@ -58,7 +57,7 @@ public interface VarianteUseCase {
      * reconstituyendo una nueva instancia con el mismo id y los nuevos
      * valores, y guardándola a través del puerto de salida — el mismo
      * patrón que ya usa la persistencia existente para reconstituir
-     * entidades. Ver MODEL_DOMAIN_NOTES.md.
+     * entidades.
      *
      * @throws com.codefactory.supplychain.catalogo.application.exception.CatalogoRecursoNoEncontradoException
      *         si no existe una Variante con ese id, o si el Template

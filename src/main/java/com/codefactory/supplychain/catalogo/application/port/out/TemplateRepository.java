@@ -2,8 +2,9 @@ package com.codefactory.supplychain.catalogo.application.port.out;
 
 import java.util.UUID;
 import com.codefactory.supplychain.catalogo.domain.model.Template;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
-import java.util.List;
 import java.util.Optional;
 
 /**
@@ -32,9 +33,9 @@ public interface TemplateRepository {
     Optional<Template> findById(UUID id);
 
     /**
-     * Obtiene los Templates existentes.
+     * Obtiene los Templates existentes, paginados.
      */
-    List<Template> findAll();
+    Page<Template> findAll(Pageable pageable);
 
     /**
      * Comprueba si existe un Template con el identificador dado.

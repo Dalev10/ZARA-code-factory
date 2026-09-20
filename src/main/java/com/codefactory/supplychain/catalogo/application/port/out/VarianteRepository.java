@@ -2,8 +2,9 @@ package com.codefactory.supplychain.catalogo.application.port.out;
 
 import java.util.UUID;
 import com.codefactory.supplychain.catalogo.domain.model.Variante;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
-import java.util.List;
 import java.util.Optional;
 
 /**
@@ -37,9 +38,9 @@ public interface VarianteRepository {
     Optional<Variante> findBySku(String sku);
 
     /**
-     * Obtiene las Variantes existentes.
+     * Obtiene las Variantes existentes, paginadas.
      */
-    List<Variante> findAll();
+    Page<Variante> findAll(Pageable pageable);
 
     /**
      * Comprueba si existe una Variante con el identificador dado.

@@ -16,6 +16,8 @@ import com.codefactory.supplychain.inventario.domain.model.TipoNodo;
 import com.codefactory.supplychain.inventario.domain.model.Tienda;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 
 import java.time.Instant;
 import java.util.List;
@@ -134,9 +136,11 @@ class BodegaTiendaServiceTest {
     @Test
     void listarTodasDelegaAlPuertoFiltrandoPorTipo() {
         Nodo nodo = Nodo.crearParaTienda(UUID.randomUUID(), TipoNodo.BODEGA_TIENDA);
-        when(nodoRepositoryPort.listarPorTipo(TipoNodo.BODEGA_TIENDA)).thenReturn(List.of(nodo));
+        Pageable pageable = Pageable.unpaged();
+        when(nodoRepositoryPort.listarPorTipo(TipoNodo.BODEGA_TIENDA, pageable))
+                .thenReturn(new PageImpl<>(List.of(nodo)));
 
-        assertThat(servicio.listarTodas()).containsExactly(nodo);
+        assertThat(servicio.listarTodas(pageable)).containsExactly(nodo);
     }
 
     @Test

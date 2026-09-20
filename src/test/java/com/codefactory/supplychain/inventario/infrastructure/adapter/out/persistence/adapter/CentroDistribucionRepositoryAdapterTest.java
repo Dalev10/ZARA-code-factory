@@ -9,6 +9,7 @@ import org.springframework.boot.jdbc.test.autoconfigure.AutoConfigureTestDatabas
 import org.springframework.boot.jpa.test.autoconfigure.TestEntityManager;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.context.annotation.Import;
+import org.springframework.data.domain.Pageable;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
@@ -16,6 +17,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
  * Módulo: inventario — Red de nodos (CD, Tienda/Almacén, Bodega_Tienda) e inventario polimórfico sobre ellos.
@@ -61,7 +63,7 @@ class CentroDistribucionRepositoryAdapterTest {
         entityManager.flush();
         entityManager.clear();
 
-        assertThat(centroDistribucionRepository.buscar(null, "norte", null))
+        assertThat(centroDistribucionRepository.buscar(null, "norte", null, Pageable.unpaged()))
                 .extracting(CentroDistribucion::getNombre).contains("CD Norte Grande");
     }
 
@@ -76,6 +78,17 @@ class CentroDistribucionRepositoryAdapterTest {
         entityManager.flush();
 
         assertThat(centroDistribucionRepository.buscarPorId(creado.getId())).isEmpty();
+    }
+
+    @Test
+    void laBaseDeDatosRechazaNombresDuplicados() {
+        centroDistribucionRepository.guardar(CentroDistribucion.crear("CD Duplicado Constraint", null));
+        entityManager.flush();
+        entityManager.clear();
+
+        centroDistribucionRepository.guardar(CentroDistribucion.crear("CD Duplicado Constraint", null));
+
+        assertThatThrownBy(entityManager::flush).isInstanceOf(RuntimeException.class);
     }
 
     @Test

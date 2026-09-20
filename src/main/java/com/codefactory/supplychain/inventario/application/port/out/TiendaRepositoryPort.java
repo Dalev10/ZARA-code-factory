@@ -1,8 +1,9 @@
 package com.codefactory.supplychain.inventario.application.port.out;
 
 import com.codefactory.supplychain.inventario.domain.model.Tienda;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
-import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -15,7 +16,7 @@ public interface TiendaRepositoryPort {
 
     Optional<Tienda> buscarPorId(UUID id);
 
-    List<Tienda> listarTodas();
+    Page<Tienda> listarTodas(Pageable pageable);
 
     boolean existePorNombre(String nombre);
 }

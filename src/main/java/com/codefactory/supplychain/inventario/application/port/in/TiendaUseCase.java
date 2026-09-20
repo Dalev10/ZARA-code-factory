@@ -1,8 +1,9 @@
 package com.codefactory.supplychain.inventario.application.port.in;
 
 import com.codefactory.supplychain.inventario.domain.model.Tienda;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
-import java.util.List;
 import java.util.UUID;
 
 /**
@@ -14,9 +15,11 @@ public interface TiendaUseCase {
 
     Tienda obtenerPorId(UUID id);
 
-    List<Tienda> listar();
+    Page<Tienda> listar(Pageable pageable);
 
     Tienda actualizar(UUID id, String nombre, String ubicacion);
 
     void desactivar(UUID id);
+
+    Tienda activar(UUID id);
 }

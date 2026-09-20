@@ -2,17 +2,17 @@ package com.codefactory.supplychain.catalogo.application.port.in;
 
 import java.util.UUID;
 import com.codefactory.supplychain.catalogo.domain.model.Template;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import java.math.BigDecimal;
-import java.util.List;
 
 /**
  * Puerto de entrada (Ports and Adapters) que define los casos de uso
  * disponibles para Template (FEAT-05 / HU-15 a HU-18).
  * <p>
- * Será implementado por {@code TemplateService} y, en una etapa
- * posterior, consumido por un Controller REST a través de DTOs. En esta
- * etapa no existe todavía ningún Controller.
+ * Implementado por {@code TemplateService} y consumido por
+ * {@code TemplateController} a través de DTOs.
  */
 public interface TemplateUseCase {
 
@@ -34,16 +34,16 @@ public interface TemplateUseCase {
     Template obtenerPorId(UUID id);
 
     /**
-     * Lista todos los Templates existentes.
+     * Lista los Templates existentes, paginados.
      */
-    List<Template> listar();
+    Page<Template> listar(Pageable pageable);
 
     /**
      * Modifica la información editable de un Template existente
      * (nombre, temporada, proveedor y precio base).
      * <p>
-     * La Categoria del Template no se reasigna aquí: el modelo de
-     * dominio la trata como inmutable (ver MODEL_DOMAIN_NOTES.md).
+     * La Categoria del Template no se reasigna aquí: no hay un requisito
+     * funcional que establezca que un Template pueda cambiar de Categoria.
      *
      * @throws com.codefactory.supplychain.catalogo.application.exception.CatalogoRecursoNoEncontradoException
      *         si no existe un Template con ese id.

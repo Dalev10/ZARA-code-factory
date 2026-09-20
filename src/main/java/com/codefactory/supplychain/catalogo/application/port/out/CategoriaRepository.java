@@ -1,8 +1,9 @@
 package com.codefactory.supplychain.catalogo.application.port.out;
 
 import com.codefactory.supplychain.catalogo.domain.model.Categoria;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
-import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -16,9 +17,11 @@ public interface CategoriaRepository {
 
     Optional<Categoria> findById(UUID id);
 
-    List<Categoria> findAll();
+    Page<Categoria> findAll(Pageable pageable);
 
     boolean existsById(UUID id);
+
+    boolean existsByNombre(String nombre);
 
     void deleteById(UUID id);
 }

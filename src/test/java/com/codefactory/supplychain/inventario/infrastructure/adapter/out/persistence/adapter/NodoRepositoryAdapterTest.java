@@ -13,6 +13,7 @@ import org.springframework.boot.jdbc.test.autoconfigure.AutoConfigureTestDatabas
 import org.springframework.boot.jpa.test.autoconfigure.TestEntityManager;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.context.annotation.Import;
+import org.springframework.data.domain.Pageable;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
@@ -21,6 +22,7 @@ import java.time.Instant;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
  * Módulo: inventario — Red de nodos (CD, Tienda/Almacén, Bodega_Tienda) e inventario polimórfico sobre ellos.
@@ -99,13 +101,25 @@ class NodoRepositoryAdapterTest {
         entityManager.flush();
         entityManager.clear();
 
-        assertThat(nodoRepository.listarPorTipo(TipoNodo.BODEGA_TIENDA))
+        assertThat(nodoRepository.listarPorTipo(TipoNodo.BODEGA_TIENDA, Pageable.unpaged()))
                 .allMatch(n -> n.getTipo() == TipoNodo.BODEGA_TIENDA);
     }
 
     @Test
     void existePorTiendaYTipoDevuelveFalseSiNoExiste() {
         assertThat(nodoRepository.existePorTiendaYTipo(UUID.randomUUID(), TipoNodo.ALMACEN)).isFalse();
+    }
+
+    @Test
+    void laBaseDeDatosRechazaDosBodegasParaLaMismaTienda() {
+        UUID tiendaId = persistirTienda("Tienda Nodo Test 5");
+        nodoRepository.guardar(Nodo.crearParaTienda(tiendaId, TipoNodo.BODEGA_TIENDA));
+        entityManager.flush();
+        entityManager.clear();
+
+        nodoRepository.guardar(Nodo.crearParaTienda(tiendaId, TipoNodo.BODEGA_TIENDA));
+
+        assertThatThrownBy(entityManager::flush).isInstanceOf(RuntimeException.class);
     }
 
     @Test

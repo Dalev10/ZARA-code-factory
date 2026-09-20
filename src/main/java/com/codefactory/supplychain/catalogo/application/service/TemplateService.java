@@ -7,11 +7,12 @@ import com.codefactory.supplychain.catalogo.application.port.out.CategoriaReposi
 import com.codefactory.supplychain.catalogo.application.port.out.TemplateRepository;
 import com.codefactory.supplychain.catalogo.domain.model.Categoria;
 import com.codefactory.supplychain.catalogo.domain.model.Template;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-import java.util.List;
 
 /**
  * Servicio de aplicación que implementa los casos de uso de Template
@@ -38,7 +39,7 @@ public class TemplateService implements TemplateUseCase {
     public Template crear(String nombre, String temporada, String proveedor,
                            BigDecimal precioBase, UUID categoriaId) {
         Categoria categoria = obtenerCategoriaExistente(categoriaId);
-        Template template = new Template(nombre, temporada, proveedor, precioBase, categoria);
+        Template template = Template.crear(nombre, temporada, proveedor, precioBase, categoria);
         return templateRepository.save(template);
     }
 
@@ -49,8 +50,8 @@ public class TemplateService implements TemplateUseCase {
     }
 
     @Override
-    public List<Template> listar() {
-        return templateRepository.findAll();
+    public Page<Template> listar(Pageable pageable) {
+        return templateRepository.findAll(pageable);
     }
 
     @Override
@@ -58,8 +59,7 @@ public class TemplateService implements TemplateUseCase {
     public Template modificar(UUID id, String nombre, String temporada,
                                String proveedor, BigDecimal precioBase) {
         Template template = obtenerPorId(id);
-        template.actualizarInformacion(nombre, temporada, proveedor, precioBase);
-        return templateRepository.save(template);
+        return templateRepository.save(template.actualizarInformacion(nombre, temporada, proveedor, precioBase));
     }
 
     @Override
@@ -68,13 +68,11 @@ public class TemplateService implements TemplateUseCase {
         if (!templateRepository.existsById(id)) {
             throw CatalogoRecursoNoEncontradoException.template(id);
         }
-        // NOTA: si el Template está referenciado por una o más Variante,
-        // el borrado físico puede violar la FK definida en PostgreSQL
-        // (template_id en la tabla variante, NOT NULL). No se implementa
-        // borrado lógico en esta etapa (ver PERSISTENCE_NOTES.md); si el
-        // repositorio actual no permite resolver este caso, la excepción
-        // de integridad referencial se propagará tal cual desde la capa
-        // de persistencia. Documentado en lugar de resuelto silenciosamente.
+        // Si el Template está referenciado por una o más Variante, el borrado
+        // físico viola la FK definida en PostgreSQL (template_id en la tabla
+        // variante, NOT NULL); no se implementa borrado lógico. La
+        // DataIntegrityViolationException resultante la traduce
+        // GlobalExceptionHandler a un 409 uniforme (HU-19).
         templateRepository.deleteById(id);
     }
 

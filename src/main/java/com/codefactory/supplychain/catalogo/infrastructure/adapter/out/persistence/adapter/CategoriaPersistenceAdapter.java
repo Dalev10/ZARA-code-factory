@@ -5,9 +5,10 @@ import com.codefactory.supplychain.catalogo.domain.model.Categoria;
 import com.codefactory.supplychain.catalogo.infrastructure.adapter.out.persistence.entity.CategoriaEntity;
 import com.codefactory.supplychain.catalogo.infrastructure.adapter.out.persistence.mapper.CategoriaPersistenceMapper;
 import com.codefactory.supplychain.catalogo.infrastructure.adapter.out.persistence.repository.CategoriaJpaRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 
-import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -41,15 +42,18 @@ public class CategoriaPersistenceAdapter implements CategoriaRepository {
     }
 
     @Override
-    public List<Categoria> findAll() {
-        return categoriaJpaRepository.findAll().stream()
-                .map(categoriaPersistenceMapper::toDomain)
-                .toList();
+    public Page<Categoria> findAll(Pageable pageable) {
+        return categoriaJpaRepository.findAll(pageable).map(categoriaPersistenceMapper::toDomain);
     }
 
     @Override
     public boolean existsById(UUID id) {
         return categoriaJpaRepository.existsById(id);
+    }
+
+    @Override
+    public boolean existsByNombre(String nombre) {
+        return categoriaJpaRepository.existsByNombre(nombre);
     }
 
     @Override

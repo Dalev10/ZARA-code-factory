@@ -6,9 +6,10 @@ import com.codefactory.supplychain.catalogo.domain.model.Variante;
 import com.codefactory.supplychain.catalogo.infrastructure.adapter.out.persistence.entity.VarianteEntity;
 import com.codefactory.supplychain.catalogo.infrastructure.adapter.out.persistence.mapper.VariantePersistenceMapper;
 import com.codefactory.supplychain.catalogo.infrastructure.adapter.out.persistence.repository.VarianteJpaRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 
-import java.util.List;
 import java.util.Optional;
 
 /**
@@ -54,10 +55,8 @@ public class VariantePersistenceAdapter implements VarianteRepository {
     }
 
     @Override
-    public List<Variante> findAll() {
-        return varianteJpaRepository.findAll().stream()
-                .map(variantePersistenceMapper::toDomain)
-                .toList();
+    public Page<Variante> findAll(Pageable pageable) {
+        return varianteJpaRepository.findAll(pageable).map(variantePersistenceMapper::toDomain);
     }
 
     @Override

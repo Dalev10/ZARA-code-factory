@@ -5,9 +5,10 @@ import com.codefactory.supplychain.inventario.domain.model.Tienda;
 import com.codefactory.supplychain.inventario.infrastructure.adapter.out.persistence.mapper.TiendaMapper;
 import com.codefactory.supplychain.inventario.infrastructure.adapter.out.persistence.repository.TiendaJpaRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
 
-import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -32,8 +33,8 @@ public class TiendaRepositoryAdapter implements TiendaRepositoryPort {
     }
 
     @Override
-    public List<Tienda> listarTodas() {
-        return jpaRepository.findAll().stream().map(mapper::toDomain).toList();
+    public Page<Tienda> listarTodas(Pageable pageable) {
+        return jpaRepository.findAll(pageable).map(mapper::toDomain);
     }
 
     @Override

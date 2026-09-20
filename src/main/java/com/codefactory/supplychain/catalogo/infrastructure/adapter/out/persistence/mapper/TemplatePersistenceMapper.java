@@ -44,7 +44,7 @@ public class TemplatePersistenceMapper {
             return null;
         }
         Categoria categoria = categoriaPersistenceMapper.toDomain(entity.getCategoria());
-        return new Template(
+        return Template.reconstruir(
                 entity.getId(),
                 entity.getNombre(),
                 entity.getTemporada(),
