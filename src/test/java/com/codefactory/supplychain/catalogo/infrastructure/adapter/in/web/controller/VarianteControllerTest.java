@@ -1,11 +1,15 @@
 package com.codefactory.supplychain.catalogo.infrastructure.adapter.in.web.controller;
 
 import com.codefactory.supplychain.identity.application.port.out.PasswordHasherPort;
+import com.codefactory.supplychain.identity.application.port.out.RolRepositoryPort;
 import com.codefactory.supplychain.identity.application.port.out.UsuarioRepositoryPort;
 import com.codefactory.supplychain.identity.domain.model.Email;
 import com.codefactory.supplychain.identity.domain.model.EstadoUsuario;
 import com.codefactory.supplychain.identity.domain.model.Password;
 import com.codefactory.supplychain.identity.domain.model.Usuario;
+import com.codefactory.supplychain.identity.infrastructure.adapter.out.persistence.entity.UsuarioRolEntity;
+import com.codefactory.supplychain.identity.infrastructure.adapter.out.persistence.entity.UsuarioRolId;
+import com.codefactory.supplychain.identity.infrastructure.adapter.out.persistence.repository.UsuarioRolJpaRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,7 +35,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 /**
  * Prueba de extremo a extremo de Variante (FEAT-05), incluyendo la
- * dependencia obligatoria con Template y la unicidad de SKU.
+ * dependencia obligatoria con Template, la unicidad de SKU y el guard de
+ * autorización por scope "catalogo:administrar" (HU-20).
  */
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -52,19 +57,40 @@ class VarianteControllerTest {
     @Autowired
     private PasswordHasherPort passwordHasherPort;
 
-    private String loguearUsuario(String email) throws Exception {
-        Usuario usuario = Usuario.reconstruir(UUID.randomUUID(), Email.de(email), "Usuario de Prueba",
-                passwordHasherPort.hashear(Password.de("contraseñaSegura123")), EstadoUsuario.ACTIVO, 0, null,
-                false, null, null, Instant.now(), Instant.now());
-        usuarioRepositoryPort.guardar(usuario);
+    @Autowired
+    private RolRepositoryPort rolRepositoryPort;
+
+    @Autowired
+    private UsuarioRolJpaRepository usuarioRolJpaRepository;
+
+    private String obtenerAccessToken(String email, String password) throws Exception {
         MvcResult login = mockMvc.perform(post("/api/v1/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
-                                {"email": "%s", "password": "contraseñaSegura123"}
-                                """.formatted(email)))
+                                {"email": "%s", "password": "%s"}
+                                """.formatted(email, password)))
                 .andExpect(status().isOk())
                 .andReturn();
         return new ObjectMapper().readTree(login.getResponse().getContentAsString()).get("accessToken").asText();
+    }
+
+    private Usuario crearUsuario(String email) {
+        Usuario usuario = Usuario.reconstruir(UUID.randomUUID(), Email.de(email), "Usuario de Prueba",
+                passwordHasherPort.hashear(Password.de("contraseñaSegura123")), EstadoUsuario.ACTIVO, 0, null,
+                false, null, null, Instant.now(), Instant.now());
+        return usuarioRepositoryPort.guardar(usuario);
+    }
+
+    private String loguearComoAdmin(String email) throws Exception {
+        Usuario usuario = crearUsuario(email);
+        UUID rolAdminId = rolRepositoryPort.buscarPorNombre("ADMIN").orElseThrow().getId();
+        usuarioRolJpaRepository.save(new UsuarioRolEntity(new UsuarioRolId(usuario.getId(), rolAdminId)));
+        return obtenerAccessToken(email, "contraseñaSegura123");
+    }
+
+    private String loguearComoUsuarioComun(String email) throws Exception {
+        crearUsuario(email);
+        return obtenerAccessToken(email, "contraseñaSegura123");
     }
 
     private String crearCategoria(String token, String nombre) throws Exception {
@@ -92,8 +118,24 @@ class VarianteControllerTest {
     }
 
     @Test
+    void crearComoUsuarioSinScopeSeRechazaCon403() throws Exception {
+        String tokenAdmin = loguearComoAdmin("admin-crea-template-para-403-variante@ejemplo.com");
+        String categoriaId = crearCategoria(tokenAdmin, "Categoria Para 403 Variante");
+        String templateId = crearTemplate(tokenAdmin, "Template Para 403 Variante", categoriaId);
+        String tokenComun = loguearComoUsuarioComun("usuario-comun-variante@ejemplo.com");
+
+        mockMvc.perform(post("/api/v1/variantes")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + tokenComun)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"sku": "SKU-RECHAZADA", "templateId": "%s"}
+                                """.formatted(templateId)))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
     void crearUnaVarianteConTemplateValidoDevuelve201() throws Exception {
-        String token = loguearUsuario("usuario-crea-variante@ejemplo.com");
+        String token = loguearComoAdmin("usuario-crea-variante@ejemplo.com");
         String categoriaId = crearCategoria(token, "Categoria Variante");
         String templateId = crearTemplate(token, "Template Variante", categoriaId);
 
@@ -109,7 +151,7 @@ class VarianteControllerTest {
 
     @Test
     void crearConTemplateInexistenteDevuelve404() throws Exception {
-        String token = loguearUsuario("usuario-variante-template-404@ejemplo.com");
+        String token = loguearComoAdmin("usuario-variante-template-404@ejemplo.com");
 
         mockMvc.perform(post("/api/v1/variantes")
                         .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
@@ -122,7 +164,7 @@ class VarianteControllerTest {
 
     @Test
     void crearConSkuDuplicadoDevuelve409() throws Exception {
-        String token = loguearUsuario("usuario-variante-sku-duplicado@ejemplo.com");
+        String token = loguearComoAdmin("usuario-variante-sku-duplicado@ejemplo.com");
         String categoriaId = crearCategoria(token, "Categoria Sku Duplicado");
         String templateId = crearTemplate(token, "Template Sku Duplicado", categoriaId);
 
@@ -145,7 +187,7 @@ class VarianteControllerTest {
 
     @Test
     void obtenerPorSkuDevuelveLaVariante() throws Exception {
-        String token = loguearUsuario("usuario-variante-por-sku@ejemplo.com");
+        String token = loguearComoAdmin("usuario-variante-por-sku@ejemplo.com");
         String categoriaId = crearCategoria(token, "Categoria Por Sku");
         String templateId = crearTemplate(token, "Template Por Sku", categoriaId);
         mockMvc.perform(post("/api/v1/variantes")
@@ -164,7 +206,7 @@ class VarianteControllerTest {
 
     @Test
     void obtenerUnaVarianteInexistenteDevuelve404() throws Exception {
-        String token = loguearUsuario("usuario-variante-404@ejemplo.com");
+        String token = loguearComoAdmin("usuario-variante-404@ejemplo.com");
 
         mockMvc.perform(get("/api/v1/variantes/" + UUID.randomUUID())
                         .header(HttpHeaders.AUTHORIZATION, "Bearer " + token))

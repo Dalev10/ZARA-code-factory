@@ -1,11 +1,15 @@
 package com.codefactory.supplychain.catalogo.infrastructure.adapter.in.web.controller;
 
 import com.codefactory.supplychain.identity.application.port.out.PasswordHasherPort;
+import com.codefactory.supplychain.identity.application.port.out.RolRepositoryPort;
 import com.codefactory.supplychain.identity.application.port.out.UsuarioRepositoryPort;
 import com.codefactory.supplychain.identity.domain.model.Email;
 import com.codefactory.supplychain.identity.domain.model.EstadoUsuario;
 import com.codefactory.supplychain.identity.domain.model.Password;
 import com.codefactory.supplychain.identity.domain.model.Usuario;
+import com.codefactory.supplychain.identity.infrastructure.adapter.out.persistence.entity.UsuarioRolEntity;
+import com.codefactory.supplychain.identity.infrastructure.adapter.out.persistence.entity.UsuarioRolId;
+import com.codefactory.supplychain.identity.infrastructure.adapter.out.persistence.repository.UsuarioRolJpaRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,8 +36,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
- * Prueba de extremo a extremo de Categoria (FEAT-05). Sin guard de scope
- * (no está en alcance de este refactor); solo requiere autenticación.
+ * Prueba de extremo a extremo de Categoria (FEAT-05), incluyendo el guard de
+ * autorización por scope "catalogo:administrar" (HU-20).
  */
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -54,24 +58,45 @@ class CategoriaControllerTest {
     @Autowired
     private PasswordHasherPort passwordHasherPort;
 
-    private String loguearUsuario(String email) throws Exception {
-        Usuario usuario = Usuario.reconstruir(UUID.randomUUID(), Email.de(email), "Usuario de Prueba",
-                passwordHasherPort.hashear(Password.de("contraseñaSegura123")), EstadoUsuario.ACTIVO, 0, null,
-                false, null, null, Instant.now(), Instant.now());
-        usuarioRepositoryPort.guardar(usuario);
+    @Autowired
+    private RolRepositoryPort rolRepositoryPort;
+
+    @Autowired
+    private UsuarioRolJpaRepository usuarioRolJpaRepository;
+
+    private String obtenerAccessToken(String email, String password) throws Exception {
         MvcResult login = mockMvc.perform(post("/api/v1/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
-                                {"email": "%s", "password": "contraseñaSegura123"}
-                                """.formatted(email)))
+                                {"email": "%s", "password": "%s"}
+                                """.formatted(email, password)))
                 .andExpect(status().isOk())
                 .andReturn();
         return new ObjectMapper().readTree(login.getResponse().getContentAsString()).get("accessToken").asText();
     }
 
+    private Usuario crearUsuario(String email) {
+        Usuario usuario = Usuario.reconstruir(UUID.randomUUID(), Email.de(email), "Usuario de Prueba",
+                passwordHasherPort.hashear(Password.de("contraseñaSegura123")), EstadoUsuario.ACTIVO, 0, null,
+                false, null, null, Instant.now(), Instant.now());
+        return usuarioRepositoryPort.guardar(usuario);
+    }
+
+    private String loguearComoAdmin(String email) throws Exception {
+        Usuario usuario = crearUsuario(email);
+        UUID rolAdminId = rolRepositoryPort.buscarPorNombre("ADMIN").orElseThrow().getId();
+        usuarioRolJpaRepository.save(new UsuarioRolEntity(new UsuarioRolId(usuario.getId(), rolAdminId)));
+        return obtenerAccessToken(email, "contraseñaSegura123");
+    }
+
+    private String loguearComoUsuarioComun(String email) throws Exception {
+        crearUsuario(email);
+        return obtenerAccessToken(email, "contraseñaSegura123");
+    }
+
     @Test
     void crearUnaCategoriaDevuelve201() throws Exception {
-        String token = loguearUsuario("usuario-crea-categoria@ejemplo.com");
+        String token = loguearComoAdmin("usuario-crea-categoria@ejemplo.com");
 
         mockMvc.perform(post("/api/v1/categorias")
                         .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
@@ -82,6 +107,19 @@ class CategoriaControllerTest {
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.nombre").value("Calzado"))
                 .andExpect(jsonPath("$.id").exists());
+    }
+
+    @Test
+    void crearComoUsuarioSinScopeSeRechazaCon403() throws Exception {
+        String token = loguearComoUsuarioComun("usuario-comun-categoria@ejemplo.com");
+
+        mockMvc.perform(post("/api/v1/categorias")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"nombre": "Categoria Rechazada"}
+                                """))
+                .andExpect(status().isForbidden());
     }
 
     @Test
@@ -96,7 +134,7 @@ class CategoriaControllerTest {
 
     @Test
     void crearConNombreVacioDevuelve400() throws Exception {
-        String token = loguearUsuario("usuario-categoria-invalida@ejemplo.com");
+        String token = loguearComoAdmin("usuario-categoria-invalida@ejemplo.com");
 
         mockMvc.perform(post("/api/v1/categorias")
                         .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
@@ -109,7 +147,7 @@ class CategoriaControllerTest {
 
     @Test
     void obtenerUnaCategoriaInexistenteDevuelve404() throws Exception {
-        String token = loguearUsuario("usuario-categoria-404@ejemplo.com");
+        String token = loguearComoAdmin("usuario-categoria-404@ejemplo.com");
 
         mockMvc.perform(get("/api/v1/categorias/" + UUID.randomUUID())
                         .header(HttpHeaders.AUTHORIZATION, "Bearer " + token))
@@ -118,7 +156,7 @@ class CategoriaControllerTest {
 
     @Test
     void modificarYLuegoEliminarUnaCategoria() throws Exception {
-        String token = loguearUsuario("usuario-modifica-categoria@ejemplo.com");
+        String token = loguearComoAdmin("usuario-modifica-categoria@ejemplo.com");
         MvcResult creada = mockMvc.perform(post("/api/v1/categorias")
                         .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -149,7 +187,7 @@ class CategoriaControllerTest {
 
     @Test
     void eliminarUnaCategoriaConTemplatesAsociadosDevuelve409() throws Exception {
-        String token = loguearUsuario("usuario-categoria-con-templates@ejemplo.com");
+        String token = loguearComoAdmin("usuario-categoria-con-templates@ejemplo.com");
         MvcResult categoria = mockMvc.perform(post("/api/v1/categorias")
                         .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
                         .contentType(MediaType.APPLICATION_JSON)

@@ -9,6 +9,7 @@ import com.codefactory.supplychain.catalogo.infrastructure.adapter.in.web.mapper
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -29,6 +30,7 @@ import java.util.List;
  */
 @RestController
 @RequestMapping("/api/v1/variantes")
+@PreAuthorize("hasAuthority('catalogo:administrar')")
 public class VarianteController {
 
     private final VarianteUseCase varianteUseCase;

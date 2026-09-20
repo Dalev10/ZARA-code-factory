@@ -1,11 +1,15 @@
 package com.codefactory.supplychain.inventario.infrastructure.adapter.in.web;
 
 import com.codefactory.supplychain.identity.application.port.out.PasswordHasherPort;
+import com.codefactory.supplychain.identity.application.port.out.RolRepositoryPort;
 import com.codefactory.supplychain.identity.application.port.out.UsuarioRepositoryPort;
 import com.codefactory.supplychain.identity.domain.model.Email;
 import com.codefactory.supplychain.identity.domain.model.EstadoUsuario;
 import com.codefactory.supplychain.identity.domain.model.Password;
 import com.codefactory.supplychain.identity.domain.model.Usuario;
+import com.codefactory.supplychain.identity.infrastructure.adapter.out.persistence.entity.UsuarioRolEntity;
+import com.codefactory.supplychain.identity.infrastructure.adapter.out.persistence.entity.UsuarioRolId;
+import com.codefactory.supplychain.identity.infrastructure.adapter.out.persistence.repository.UsuarioRolJpaRepository;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
@@ -32,12 +36,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
- * Prueba de extremo a extremo de CentroDistribucion. No tiene guard de
- * "@PreAuthorize" (deferido a una futura remediación de FEAT-04, tal como se
- * decidió explícitamente en la auditoría): cualquier usuario autenticado
- * puede usar estos endpoints. El bug conocido de DELETE (huérfana el Nodo y
- * genera un 400 por violación de FK en vez de eliminar limpiamente) se deja
- * intacto a propósito y se verifica aquí que sigue comportándose igual.
+ * Prueba de extremo a extremo de CentroDistribucion, incluyendo el guard de
+ * autorización por scope "cd:administrar" (HU-20). El bug conocido de DELETE
+ * (huérfana el Nodo asociado) se deja intacto a propósito — pertenece a
+ * HU-22 — y se verifica aquí que sigue comportándose igual.
  */
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -58,6 +60,12 @@ class CentroDistribucionControllerTest {
     @Autowired
     private PasswordHasherPort passwordHasherPort;
 
+    @Autowired
+    private RolRepositoryPort rolRepositoryPort;
+
+    @Autowired
+    private UsuarioRolJpaRepository usuarioRolJpaRepository;
+
     private String obtenerAccessToken(String email, String password) throws Exception {
         MvcResult login = mockMvc.perform(post("/api/v1/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -70,17 +78,41 @@ class CentroDistribucionControllerTest {
         return body.get("accessToken").asText();
     }
 
-    private String loguearUsuario(String email) throws Exception {
+    private Usuario crearUsuario(String email) {
         Usuario usuario = Usuario.reconstruir(UUID.randomUUID(), Email.de(email), "Usuario de Prueba",
                 passwordHasherPort.hashear(Password.de("contraseñaSegura123")), EstadoUsuario.ACTIVO, 0, null,
                 false, null, null, Instant.now(), Instant.now());
-        usuarioRepositoryPort.guardar(usuario);
+        return usuarioRepositoryPort.guardar(usuario);
+    }
+
+    private String loguearComoAdmin(String email) throws Exception {
+        Usuario usuario = crearUsuario(email);
+        UUID rolAdminId = rolRepositoryPort.buscarPorNombre("ADMIN").orElseThrow().getId();
+        usuarioRolJpaRepository.save(new UsuarioRolEntity(new UsuarioRolId(usuario.getId(), rolAdminId)));
+        return obtenerAccessToken(email, "contraseñaSegura123");
+    }
+
+    private String loguearComoUsuarioComun(String email) throws Exception {
+        crearUsuario(email);
         return obtenerAccessToken(email, "contraseñaSegura123");
     }
 
     @Test
+    void crearComoUsuarioSinScopeSeRechazaCon403() throws Exception {
+        String token = loguearComoUsuarioComun("usuario-comun-cd@ejemplo.com");
+
+        mockMvc.perform(post("/api/v1/centros-distribucion")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"nombre": "CD Rechazado", "ubicacion": "Test"}
+                                """))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
     void crearUnCdDevuelve201YProvisionaSuNodo() throws Exception {
-        String token = loguearUsuario("usuario-crea-cd@ejemplo.com");
+        String token = loguearComoAdmin("usuario-crea-cd@ejemplo.com");
 
         MvcResult creado = mockMvc.perform(post("/api/v1/centros-distribucion")
                         .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
@@ -102,7 +134,7 @@ class CentroDistribucionControllerTest {
 
     @Test
     void crearConNombreDuplicadoDevuelveBadRequestPorLaDeudaDeStatusCodeDeferida() throws Exception {
-        String token = loguearUsuario("usuario-duplica-cd@ejemplo.com");
+        String token = loguearComoAdmin("usuario-duplica-cd@ejemplo.com");
         mockMvc.perform(post("/api/v1/centros-distribucion")
                         .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -125,7 +157,7 @@ class CentroDistribucionControllerTest {
 
     @Test
     void consultarUnCdInexistenteDevuelveBadRequestPorLaDeudaDeStatusCodeDeferida() throws Exception {
-        String token = loguearUsuario("usuario-cd-no-encontrado@ejemplo.com");
+        String token = loguearComoAdmin("usuario-cd-no-encontrado@ejemplo.com");
 
         // Comportamiento heredado y deliberadamente sin corregir en este refactor:
         // CentroDistribucionNoEncontradaException extiende ReglaDeNegocioException (400),
@@ -137,7 +169,7 @@ class CentroDistribucionControllerTest {
 
     @Test
     void listarConFiltroPorNombreParcial() throws Exception {
-        String token = loguearUsuario("usuario-filtra-cd@ejemplo.com");
+        String token = loguearComoAdmin("usuario-filtra-cd@ejemplo.com");
         mockMvc.perform(post("/api/v1/centros-distribucion")
                         .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -154,7 +186,7 @@ class CentroDistribucionControllerTest {
 
     @Test
     void eliminarUnCdConNodoAsociadoDevuelve409EnVezDeUnErrorSinManejar() throws Exception {
-        String token = loguearUsuario("usuario-elimina-cd-huerfano@ejemplo.com");
+        String token = loguearComoAdmin("usuario-elimina-cd-huerfano@ejemplo.com");
         MvcResult creado = mockMvc.perform(post("/api/v1/centros-distribucion")
                         .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
                         .contentType(MediaType.APPLICATION_JSON)
