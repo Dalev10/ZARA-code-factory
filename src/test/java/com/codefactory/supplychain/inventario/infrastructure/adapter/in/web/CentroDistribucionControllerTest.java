@@ -179,6 +179,32 @@ class CentroDistribucionControllerTest {
     }
 
     @Test
+    void listarSinFiltrosFuncionaComoGetAll() throws Exception {
+        String token = loguearComoAdmin("usuario-lista-todos-cd@ejemplo.com");
+        mockMvc.perform(post("/api/v1/centros-distribucion")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"nombre": "CD Sin Filtros Http", "ubicacion": "Medellín"}
+                                """))
+                .andExpect(status().isCreated());
+
+        mockMvc.perform(get("/api/v1/centros-distribucion")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content").isNotEmpty());
+    }
+
+    @Test
+    void listarConSortInvalidoDevuelve400EnVezDe500() throws Exception {
+        String token = loguearComoAdmin("usuario-sort-invalido-cd@ejemplo.com");
+
+        mockMvc.perform(get("/api/v1/centros-distribucion").param("sort", "[]")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + token))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
     void eliminarUnCdConNodoAsociadoDevuelve204YEliminaElNodo() throws Exception {
         String token = loguearComoAdmin("usuario-elimina-cd-huerfano@ejemplo.com");
         MvcResult creado = mockMvc.perform(post("/api/v1/centros-distribucion")

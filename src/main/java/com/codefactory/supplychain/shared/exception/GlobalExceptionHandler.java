@@ -2,6 +2,7 @@ package com.codefactory.supplychain.shared.exception;
 
 import com.codefactory.supplychain.shared.dto.ErrorResponse;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.dao.InvalidDataAccessApiUsageException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
@@ -46,6 +47,12 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.CONFLICT)
                 .body(new ErrorResponse("No se puede completar la operación: el recurso está siendo "
                         + "referenciado por otro registro del sistema"));
+    }
+
+    @ExceptionHandler(InvalidDataAccessApiUsageException.class)
+    public ResponseEntity<ErrorResponse> handleUsoInvalidoDeAccesoADatos(InvalidDataAccessApiUsageException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(new ErrorResponse("Los parámetros de paginación u ordenamiento son inválidos"));
     }
 
     @ExceptionHandler(AccessDeniedException.class)

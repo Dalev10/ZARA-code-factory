@@ -121,10 +121,13 @@ class CentroDistribucionServiceTest {
     }
 
     @Test
-    void buscarSinNingunParametroLanzaIllegalArgumentException() {
+    void buscarSinNingunParametroFuncionaComoGetAllYDelegaAlRepositorio() {
         Pageable pageable = Pageable.unpaged();
-        assertThatThrownBy(() -> servicio.buscarCentrosDistribucion(null, null, null, pageable))
-                .isInstanceOf(IllegalArgumentException.class);
+        CentroDistribucion cd = CentroDistribucion.crear("CD Principal", "Bogotá");
+        when(centroDistribucionRepository.buscar(null, null, null, pageable))
+                .thenReturn(new PageImpl<>(List.of(cd)));
+
+        assertThat(servicio.buscarCentrosDistribucion(null, null, null, pageable)).containsExactly(cd);
     }
 
     @Test

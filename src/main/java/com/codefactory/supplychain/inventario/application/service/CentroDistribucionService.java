@@ -81,10 +81,6 @@ public class CentroDistribucionService implements CentroDistribucionUseCase {
     @Override
     public Page<CentroDistribucion> buscarCentrosDistribucion(UUID id, String nombre, String ubicacion,
                                                                Pageable pageable) {
-        if (id == null && (nombre == null || nombre.isBlank()) && (ubicacion == null || ubicacion.isBlank())) {
-            throw new IllegalArgumentException(
-                    "Debe proporcionar al menos un parámetro de búsqueda (id, nombre o ubicación).");
-        }
         return centroDistribucionRepository.buscar(id, nombre, ubicacion, pageable);
     }
 

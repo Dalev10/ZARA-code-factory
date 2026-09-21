@@ -95,4 +95,16 @@ class CentroDistribucionRepositoryAdapterTest {
     void buscarPorIdInexistenteDevuelveVacio() {
         assertThat(centroDistribucionRepository.buscarPorId(UUID.randomUUID())).isEmpty();
     }
+
+    @Test
+    void buscarSinFiltrosDevuelveTodosLosCd() {
+        centroDistribucionRepository.guardar(CentroDistribucion.crear("CD Sin Filtro Uno", "Bogotá"));
+        centroDistribucionRepository.guardar(CentroDistribucion.crear("CD Sin Filtro Dos", "Cali"));
+        entityManager.flush();
+        entityManager.clear();
+
+        assertThat(centroDistribucionRepository.buscar(null, null, null, Pageable.unpaged()))
+                .extracting(CentroDistribucion::getNombre)
+                .contains("CD Sin Filtro Uno", "CD Sin Filtro Dos");
+    }
 }
