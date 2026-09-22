@@ -24,6 +24,13 @@ spring:
     url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/supplychain_local}
     username: ${SPRING_DATASOURCE_USERNAME:supplychain_admin}
     password: ${SPRING_DATASOURCE_PASSWORD:supplychain_password}
+    hikari:
+      # El pooler de Supabase (Supavisor, modo session) tiene un límite de
+      # conexiones simultáneas por proyecto compartido entre todo lo que se
+      # conecte; con un solo Web Service corriendo, no hace falta el máximo
+      # de HikariCP (10) — 5 alcanza y deja margen para otros clientes
+      # (Studio, scripts, etc.) sin agotar el pool del lado de Supabase.
+      maximum-pool-size: ${DB_POOL_MAX_SIZE:5}
 
   jpa:
     # "validate": Hibernate verifica que las entidades @Entity coincidan con el
