@@ -19,8 +19,9 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
  * autenticación, MFA y tokens vive en identity/application/service, no acoplada
  * a este framework.
  *
- * Los endpoints de auth (login/refresh/logout) y Swagger quedan públicos;
- * CUALQUIER OTRO endpoint exige un JWT válido (autenticación). "Qué puede hacer"
+ * Los endpoints de auth (login/refresh/logout), Swagger y el health check de
+ * Actuator quedan públicos; CUALQUIER OTRO endpoint exige un JWT válido
+ * (autenticación). "Qué puede hacer"
  * un usuario ya autenticado (autorización) es responsabilidad de cada controller
  * vía @PreAuthorize("hasAuthority('scope:codigo')") — ver JwtAuthenticationFilter,
  * que resuelve esas autoridades desde los scopes reales del usuario (HU-11).
@@ -54,6 +55,7 @@ public class SecurityConfig {
                                 "/api/v1/auth/refresh", "/api/v1/auth/logout")
                         .permitAll()
                         .requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**").permitAll()
+                        .requestMatchers("/actuator/health").permitAll()
                         .anyRequest().authenticated())
                 .build();
     }
