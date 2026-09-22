@@ -1,0 +1,23 @@
+# No aporta nada dentro de la imagen y agranda el contexto de build
+# innecesariamente (Dockerfile ya copia .mvn/, mvnw, pom.xml y src/ a mano).
+target/
+*.class
+
+.git/
+.github/
+
+.idea/
+*.iml
+.vscode/
+.settings/
+.classpath
+.project
+
+.DS_Store
+Thumbs.db
+
+# Nunca debe llegar a la imagen: los secretos reales se inyectan como
+# variables de entorno en el proveedor de hosting, no se hornean en la imagen.
+.env
+
+docs/
