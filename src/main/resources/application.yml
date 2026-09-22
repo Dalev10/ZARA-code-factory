@@ -28,6 +28,9 @@ spring:
     baseline-on-migrate: false
 
 app:
+  cors:
+    # Lista separada por comas. No usar "*" porque refresh/logout usan cookies.
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:8443}
   security:
     jwt:
       # Sin valor por defecto a propósito: un secreto de firma JWT nunca debe
