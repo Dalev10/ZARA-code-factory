@@ -141,7 +141,7 @@ class AuthControllerTest {
         assertThat(setCookie).contains("refresh_token=");
         assertThat(setCookie).contains("HttpOnly");
         assertThat(setCookie).contains("Secure");
-        assertThat(setCookie).contains("SameSite=Strict");
+        assertThat(setCookie).contains("SameSite=None");
         assertThat(setCookie).contains("Path=/api/v1/auth");
 
         // El refresh token no debe filtrarse en el cuerpo de la respuesta.
