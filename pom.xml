@@ -37,6 +37,17 @@
         </dependency>
 
         <!-- ============================================================
+             Actuator — expone /actuator/health, que los proveedores de
+             hosting (Render, etc.) usan como health check para saber si el
+             contenedor está listo para recibir tráfico. Público a propósito
+             (ver SecurityConfig); no se exponen otros endpoints de Actuator.
+             ============================================================ -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-actuator</artifactId>
+        </dependency>
+
+        <!-- ============================================================
              Persistencia — PostgreSQL vía Spring Data JPA
              ============================================================ -->
         <dependency>

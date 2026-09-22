@@ -16,5 +16,9 @@ FROM eclipse-temurin:21-jre-alpine
 WORKDIR /app
 COPY --from=build /app/target/*.jar app.jar
 
+# Documentativo: en local/docker-compose la app escucha en 8080 (no se define
+# PORT). En Render, la plataforma inyecta su propia variable de entorno PORT
+# en el contenedor y la app la respeta (server.port=${PORT:8080} en
+# application.yml) — el puerto real en ese caso NO es este 8080.
 EXPOSE 8080
 ENTRYPOINT ["java", "-jar", "app.jar"]

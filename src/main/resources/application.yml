@@ -1,5 +1,20 @@
 server:
-  port: 8080
+  # Render (y la mayoría de los hosts) inyectan su propio puerto vía la
+  # variable de entorno PORT y esperan que el proceso escuche justo ahí; en
+  # local/docker-compose no se define, así que cae al 8080 de siempre.
+  port: ${PORT:8080}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        # Solo "health": no se expone ningún otro endpoint de Actuator
+        # (env, beans, etc.) — este es público (ver SecurityConfig) porque
+        # los health checks del proveedor de hosting no llevan JWT.
+        include: health
+  endpoint:
+    health:
+      show-details: never
 
 spring:
   application:
