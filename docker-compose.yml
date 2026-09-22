@@ -1,0 +1,50 @@
+services:
+  # Base de datos PostgreSQL
+  db:
+    image: postgres:16-alpine
+    container_name: supplychain_db
+    restart: always
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
+    ports:
+      - "${POSTGRES_PORT:-5433}:5432"
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    networks:
+      - supplychain_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  # Backend Spring Boot (monolito modular)
+  api:
+    build: .
+    container_name: supplychain_api
+    restart: on-failure
+    ports:
+      - "${API_PORT:-8080}:${API_PORT:-8080}"
+    environment:
+      - SERVER_PORT=${API_PORT:-8080}
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://db:5432/${POSTGRES_DB}
+      - SPRING_DATASOURCE_USERNAME=${POSTGRES_USER}
+      - SPRING_DATASOURCE_PASSWORD=${POSTGRES_PASSWORD}
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=${SPRING_JPA_HIBERNATE_DDL_AUTO:-validate}
+      - JWT_SECRET=${JWT_SECRET}
+      - MFA_ENCRYPTION_KEY=${MFA_ENCRYPTION_KEY}
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - supplychain_network
+
+volumes:
+  pg_data:
+
+networks:
+  supplychain_network:
+    driver: bridge

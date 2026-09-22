@@ -1,0 +1,276 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>4.1.1</version>
+        <relativePath/>
+    </parent>
+
+    <groupId>com.codefactory.supplychain</groupId>
+    <artifactId>supply-chain-mvp</artifactId>
+    <version>0.1.0-SNAPSHOT</version>
+    <name>supply-chain-mvp</name>
+    <description>
+        MVP de planificacion de cadena de suministro retail.
+        Monolito modular con arquitectura hexagonal por modulo, expuesto via API REST.
+    </description>
+
+    <properties>
+        <java.version>21</java.version>
+    </properties>
+
+    <dependencies>
+
+        <!-- ============================================================
+             Web / API REST
+             Nota: en Spring Boot 4.x el starter "web" fue renombrado a
+             "webmvc" como parte de la modularizacion del framework.
+             ============================================================ -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-webmvc</artifactId>
+        </dependency>
+
+        <!-- ============================================================
+             Persistencia — PostgreSQL vía Spring Data JPA
+             ============================================================ -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-jpa</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.postgresql</groupId>
+            <artifactId>postgresql</artifactId>
+            <scope>runtime</scope>
+        </dependency>
+
+        <!-- ============================================================
+             Migraciones de esquema versionadas (reemplaza ddl-auto=update)
+             En Spring Boot 4.x, Flyway requiere el starter dedicado MÁS
+             el módulo específico del motor de base de datos por separado
+             (desde Flyway 9.x, el soporte por motor se movió fuera de
+             flyway-core).
+             ============================================================ -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-flyway</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.flywaydb</groupId>
+            <artifactId>flyway-database-postgresql</artifactId>
+        </dependency>
+
+        <!-- ============================================================
+             Validación de entrada en los adaptadores REST
+             ============================================================ -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-validation</artifactId>
+        </dependency>
+
+        <!-- ============================================================
+             Seguridad — usada solo como infraestructura (SecurityFilterChain,
+             PasswordEncoder). La lógica de negocio de autenticación/MFA/tokens
+             vive en identity/application/service, no acoplada a este framework.
+             ============================================================ -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-security</artifactId>
+        </dependency>
+
+        <!-- ============================================================
+             Documentación interactiva de la API (Swagger UI) para probar
+             los endpoints manualmente en localhost durante el desarrollo.
+             ============================================================ -->
+        <dependency>
+            <groupId>org.springdoc</groupId>
+            <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+            <version>3.0.3</version>
+        </dependency>
+
+        <!-- ============================================================
+             JWT — access tokens firmados (HS256). jjwt-jackson usa su propio
+             ObjectMapper interno de Jackson 2.x clásico (com.fasterxml), no
+             el JsonMapper de Jackson 3.x que Boot 4.1.1 registra por defecto,
+             así que no hay conflicto entre ambos.
+             ============================================================ -->
+        <dependency>
+            <groupId>io.jsonwebtoken</groupId>
+            <artifactId>jjwt-api</artifactId>
+            <version>0.12.3</version>
+        </dependency>
+        <dependency>
+            <groupId>io.jsonwebtoken</groupId>
+            <artifactId>jjwt-impl</artifactId>
+            <version>0.12.3</version>
+            <scope>runtime</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.jsonwebtoken</groupId>
+            <artifactId>jjwt-jackson</artifactId>
+            <version>0.12.3</version>
+            <scope>runtime</scope>
+        </dependency>
+
+        <!-- ============================================================
+             MFA TOTP (RFC 6238) — genera/verifica códigos de 6 dígitos
+             compatibles con Google Authenticator/Authy, y renderiza el QR
+             (usa ZXing internamente) para escanear el secreto.
+             ============================================================ -->
+        <dependency>
+            <groupId>dev.samstevens.totp</groupId>
+            <artifactId>totp</artifactId>
+            <version>1.7.1</version>
+        </dependency>
+
+        <!-- ============================================================
+             Utilidades de desarrollo (reduce boilerplate en entidades/DTOs)
+             ============================================================ -->
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <optional>true</optional>
+        </dependency>
+
+        <!-- ============================================================
+             Pruebas — cada starter principal trae su companion "-test"
+             en Spring Boot 4.x
+             ============================================================ -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-webmvc-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-jpa-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <!-- ============================================================
+             Testcontainers — levanta un Postgres real (efímero, vía Docker)
+             para los tests de repositorio, en vez de un H2 embebido que no
+             refleja fielmente las migraciones de Flyway (gen_random_uuid(),
+             triggers, CHECK constraints, etc.)
+             ============================================================ -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-testcontainers</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>testcontainers-postgresql</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>testcontainers-junit-jupiter</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+                <configuration>
+                    <excludes>
+                        <exclude>
+                            <groupId>org.projectlombok</groupId>
+                            <artifactId>lombok</artifactId>
+                        </exclude>
+                    </excludes>
+                </configuration>
+            </plugin>
+
+            <!-- ============================================================
+                 HU-27: cobertura de tests (JaCoCo). Genera el reporte HTML en
+                 target/site/jacoco/index.html en cada "mvn verify", y falla
+                 el build si la cobertura de línea del proyecto cae por debajo
+                 del piso configurado. El umbral (85%) se calibró contra la
+                 cobertura real medida al agregar este gate (~92.7%), dejando
+                 margen para trabajo futuro sin ser un piso trivial de cumplir.
+                 No cubre clase por clase todavía, solo el total del proyecto.
+                 ============================================================ -->
+            <plugin>
+                <groupId>org.jacoco</groupId>
+                <artifactId>jacoco-maven-plugin</artifactId>
+                <version>0.8.12</version>
+                <executions>
+                    <execution>
+                        <id>prepare-agent</id>
+                        <goals>
+                            <goal>prepare-agent</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>report</id>
+                        <phase>test</phase>
+                        <goals>
+                            <goal>report</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>check</id>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>check</goal>
+                        </goals>
+                        <configuration>
+                            <rules>
+                                <rule>
+                                    <element>BUNDLE</element>
+                                    <limits>
+                                        <limit>
+                                            <counter>LINE</counter>
+                                            <value>COVEREDRATIO</value>
+                                            <minimum>0.85</minimum>
+                                        </limit>
+                                    </limits>
+                                </rule>
+                            </rules>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <!-- ============================================================
+                 HU-27: linter estático (Checkstyle). Corre en "mvn verify" y
+                 publica el reporte en target/checkstyle-result.xml, pero
+                 todavía NO rompe el build (failOnViolation=false): esta base
+                 de código nunca pasó por un linter, así que primero hay que
+                 medir el volumen real de violaciones antes de decidir qué
+                 reglas conviene exigir de forma obligatoria.
+                 ============================================================ -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-checkstyle-plugin</artifactId>
+                <version>3.6.0</version>
+                <configuration>
+                    <configLocation>google_checks.xml</configLocation>
+                    <failOnViolation>false</failOnViolation>
+                    <violationSeverity>warning</violationSeverity>
+                    <consoleOutput>true</consoleOutput>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>checkstyle-check</id>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>check</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+
+</project>

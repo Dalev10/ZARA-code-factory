@@ -1,0 +1,444 @@
+package com.codefactory.supplychain.identity.infrastructure.adapter.in.web;
+
+import com.codefactory.supplychain.identity.application.port.out.CodigoRespaldoRepositoryPort;
+import com.codefactory.supplychain.identity.application.port.out.PasswordHasherPort;
+import com.codefactory.supplychain.identity.application.port.out.SecretEncryptorPort;
+import com.codefactory.supplychain.identity.application.port.out.UsuarioRepositoryPort;
+import com.codefactory.supplychain.identity.domain.model.CodigoRespaldo;
+import com.codefactory.supplychain.identity.domain.model.Email;
+import com.codefactory.supplychain.identity.domain.model.EstadoUsuario;
+import com.codefactory.supplychain.identity.domain.model.Password;
+import com.codefactory.supplychain.identity.domain.model.Usuario;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import dev.samstevens.totp.code.DefaultCodeGenerator;
+import dev.samstevens.totp.time.SystemTimeProvider;
+import jakarta.servlet.http.Cookie;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.http.MediaType;
+import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.web.servlet.MvcResult;
+import org.testcontainers.containers.PostgreSQLContainer;
+import org.testcontainers.junit.jupiter.Container;
+import org.testcontainers.junit.jupiter.Testcontainers;
+
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.nio.charset.StandardCharsets;
+import java.time.Instant;
+import java.util.UUID;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+/**
+ * Prueba de extremo a extremo del login: HTTP -> caso de uso -> emisión de JWT ->
+ * persistencia del refresh token en Postgres real (Testcontainers) -> cookie HttpOnly.
+ *
+ * @ActiveProfiles("test") carga application-test.yml (secreto JWT fijo de test).
+ *
+ * Módulo: identity — Gestión de usuarios y autenticación (transversal, no forma parte del ERD de negocio)
+ */
+@SpringBootTest
+@AutoConfigureMockMvc
+@ActiveProfiles("test")
+@Testcontainers
+class AuthControllerTest {
+
+    @Container
+    @ServiceConnection
+    static final PostgreSQLContainer<?> POSTGRES = new PostgreSQLContainer<>("postgres:16-alpine");
+
+    @Autowired
+    private org.springframework.test.web.servlet.MockMvc mockMvc;
+
+    @Autowired
+    private UsuarioRepositoryPort usuarioRepositoryPort;
+
+    @Autowired
+    private PasswordHasherPort passwordHasherPort;
+
+    @Autowired
+    private SecretEncryptorPort secretEncryptorPort;
+
+    @Autowired
+    private CodigoRespaldoRepositoryPort codigoRespaldoRepositoryPort;
+
+    private Usuario crearUsuario(String email, String passwordCruda, EstadoUsuario estado) {
+        Usuario usuario = Usuario.reconstruir(
+                UUID.randomUUID(),
+                Email.de(email),
+                "Usuario de Prueba",
+                passwordHasherPort.hashear(Password.de(passwordCruda)),
+                estado,
+                0,
+                null,
+                false,
+                null,
+                null,
+                Instant.now(),
+                Instant.now());
+        return usuarioRepositoryPort.guardar(usuario);
+    }
+
+    private static final String SECRETO_TOTP_DE_PRUEBA = "JBSWY3DPEHPK3PXP";
+
+    private Usuario crearUsuarioConMfaHabilitado(String email, String passwordCruda) {
+        Usuario usuario = Usuario.reconstruir(
+                UUID.randomUUID(),
+                Email.de(email),
+                "Usuario con MFA",
+                passwordHasherPort.hashear(Password.de(passwordCruda)),
+                EstadoUsuario.ACTIVO,
+                0,
+                null,
+                true,
+                secretEncryptorPort.encriptar(SECRETO_TOTP_DE_PRUEBA),
+                null,
+                Instant.now(),
+                Instant.now());
+        return usuarioRepositoryPort.guardar(usuario);
+    }
+
+    private static String codigoTotpValido() throws Exception {
+        return new DefaultCodeGenerator().generate(SECRETO_TOTP_DE_PRUEBA, new SystemTimeProvider().getTime() / 30);
+    }
+
+    private static String sha256Hex(String valor) {
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            byte[] hash = digest.digest(valor.getBytes(StandardCharsets.UTF_8));
+            StringBuilder hex = new StringBuilder(hash.length * 2);
+            for (byte b : hash) {
+                hex.append(String.format("%02x", b));
+            }
+            return hex.toString();
+        } catch (NoSuchAlgorithmException e) {
+            throw new IllegalStateException(e);
+        }
+    }
+
+    @Test
+    void loginExitosoDevuelveAccessTokenYCookieDeRefreshToken() throws Exception {
+        crearUsuario("login-ok@ejemplo.com", "contraseñaSegura123", EstadoUsuario.ACTIVO);
+
+        MvcResult resultado = mockMvc.perform(post("/api/v1/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(loginJson("login-ok@ejemplo.com", "contraseñaSegura123")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.accessToken").exists())
+                .andExpect(jsonPath("$.usuario.email").value("login-ok@ejemplo.com"))
+                .andReturn();
+
+        String setCookie = resultado.getResponse().getHeader("Set-Cookie");
+        assertThat(setCookie).isNotNull();
+        assertThat(setCookie).contains("refresh_token=");
+        assertThat(setCookie).contains("HttpOnly");
+        assertThat(setCookie).contains("Secure");
+        assertThat(setCookie).contains("SameSite=Strict");
+        assertThat(setCookie).contains("Path=/api/v1/auth");
+
+        // El refresh token no debe filtrarse en el cuerpo de la respuesta.
+        assertThat(resultado.getResponse().getContentAsString()).doesNotContain("refreshToken");
+    }
+
+    @Test
+    void rechazaPasswordIncorrectaCon401() throws Exception {
+        crearUsuario("login-mal@ejemplo.com", "contraseñaSegura123", EstadoUsuario.ACTIVO);
+
+        mockMvc.perform(post("/api/v1/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(loginJson("login-mal@ejemplo.com", "contraseñaIncorrecta")))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.mensaje").value("Credenciales inválidas"));
+    }
+
+    @Test
+    void rechazaEmailInexistenteCon401() throws Exception {
+        mockMvc.perform(post("/api/v1/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(loginJson("no-existe@ejemplo.com", "cualquierContraseña123")))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void rechazaCuentaBloqueadaCon401YMensajeGenerico() throws Exception {
+        crearUsuario("bloqueado@ejemplo.com", "contraseñaSegura123", EstadoUsuario.BLOQUEADO);
+
+        mockMvc.perform(post("/api/v1/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(loginJson("bloqueado@ejemplo.com", "contraseñaSegura123")))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.mensaje").value("Credenciales inválidas"));
+    }
+
+    @Test
+    void alTercerIntentoFallidoQuedaBloqueadaYRechazaAunConLaPasswordCorrecta() throws Exception {
+        crearUsuario("fuerza-bruta@ejemplo.com", "contraseñaSegura123", EstadoUsuario.ACTIVO);
+
+        for (int intento = 1; intento <= 3; intento++) {
+            mockMvc.perform(post("/api/v1/auth/login")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(loginJson("fuerza-bruta@ejemplo.com", "incorrecta")))
+                    .andExpect(status().isUnauthorized());
+        }
+
+        // Al 3er fallo ya debería estar bloqueada temporalmente (curva: 3 -> 1 minuto),
+        // así que ni siquiera la contraseña correcta debería dejarla entrar ahora.
+        mockMvc.perform(post("/api/v1/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(loginJson("fuerza-bruta@ejemplo.com", "contraseñaSegura123")))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.mensaje").value("Credenciales inválidas"));
+    }
+
+    @Test
+    void unLoginExitosoReseteaElContadorTrasIntentosFallidosPreviosSinLlegarAlUmbral() throws Exception {
+        crearUsuario("recupera@ejemplo.com", "contraseñaSegura123", EstadoUsuario.ACTIVO);
+
+        // 2 fallos consecutivos: todavía por debajo del umbral de bloqueo (3).
+        for (int intento = 1; intento <= 2; intento++) {
+            mockMvc.perform(post("/api/v1/auth/login")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(loginJson("recupera@ejemplo.com", "incorrecta")))
+                    .andExpect(status().isUnauthorized());
+        }
+
+        mockMvc.perform(post("/api/v1/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(loginJson("recupera@ejemplo.com", "contraseñaSegura123")))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void refrescarConElTokenVigenteDevuelveAccessNuevoYRotaLaCookie() throws Exception {
+        crearUsuario("refresca@ejemplo.com", "contraseñaSegura123", EstadoUsuario.ACTIVO);
+        MvcResult login = mockMvc.perform(post("/api/v1/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(loginJson("refresca@ejemplo.com", "contraseñaSegura123")))
+                .andExpect(status().isOk())
+                .andReturn();
+        String refreshTokenOriginal = extraerValorCookie(login);
+
+        MvcResult refresh = mockMvc.perform(post("/api/v1/auth/refresh")
+                        .cookie(new Cookie("refresh_token", refreshTokenOriginal)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.accessToken").exists())
+                .andReturn();
+
+        String refreshTokenNuevo = extraerValorCookie(refresh);
+        assertThat(refreshTokenNuevo).isNotEqualTo(refreshTokenOriginal);
+    }
+
+    @Test
+    void reusarUnRefreshTokenYaRotadoSeRechazaYRevocaLaFamiliaCompleta() throws Exception {
+        crearUsuario("robado@ejemplo.com", "contraseñaSegura123", EstadoUsuario.ACTIVO);
+        MvcResult login = mockMvc.perform(post("/api/v1/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(loginJson("robado@ejemplo.com", "contraseñaSegura123")))
+                .andExpect(status().isOk())
+                .andReturn();
+        String refreshTokenOriginal = extraerValorCookie(login);
+
+        // Primer refresh: legítimo, rota el token.
+        MvcResult primerRefresh = mockMvc.perform(post("/api/v1/auth/refresh")
+                        .cookie(new Cookie("refresh_token", refreshTokenOriginal)))
+                .andExpect(status().isOk())
+                .andReturn();
+        String refreshTokenRotado = extraerValorCookie(primerRefresh);
+
+        // Alguien vuelve a presentar el token YA rotado (ej. interceptado antes de la
+        // rotación legítima) -> se detecta el reuse y se rechaza.
+        mockMvc.perform(post("/api/v1/auth/refresh")
+                        .cookie(new Cookie("refresh_token", refreshTokenOriginal)))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.mensaje").value("Sesión inválida o expirada"));
+
+        // La detección de reuse revoca TODA la familia: incluso el token rotado
+        // legítimamente (refreshTokenRotado) queda invalidado.
+        mockMvc.perform(post("/api/v1/auth/refresh")
+                        .cookie(new Cookie("refresh_token", refreshTokenRotado)))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void refrescarSinCookieSeRechaza() throws Exception {
+        mockMvc.perform(post("/api/v1/auth/refresh"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void logoutRevocaElRefreshTokenYLimpiaLaCookie() throws Exception {
+        crearUsuario("logout@ejemplo.com", "contraseñaSegura123", EstadoUsuario.ACTIVO);
+        MvcResult login = mockMvc.perform(post("/api/v1/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(loginJson("logout@ejemplo.com", "contraseñaSegura123")))
+                .andExpect(status().isOk())
+                .andReturn();
+        String refreshToken = extraerValorCookie(login);
+
+        MvcResult logout = mockMvc.perform(post("/api/v1/auth/logout")
+                        .cookie(new Cookie("refresh_token", refreshToken)))
+                .andExpect(status().isNoContent())
+                .andReturn();
+
+        String setCookie = logout.getResponse().getHeader("Set-Cookie");
+        assertThat(setCookie).isNotNull();
+        assertThat(setCookie).containsAnyOf("Max-Age=0", "Max-Age=0;");
+
+        // El refresh token quedó revocado: ya no sirve para refrescar.
+        mockMvc.perform(post("/api/v1/auth/refresh")
+                        .cookie(new Cookie("refresh_token", refreshToken)))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void logoutSinCookieResponde204SinFallar() throws Exception {
+        mockMvc.perform(post("/api/v1/auth/logout"))
+                .andExpect(status().isNoContent());
+    }
+
+    @Test
+    void logoutConUnTokenYaRevocadoSigueRespondiendo204() throws Exception {
+        crearUsuario("logout-doble@ejemplo.com", "contraseñaSegura123", EstadoUsuario.ACTIVO);
+        MvcResult login = mockMvc.perform(post("/api/v1/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(loginJson("logout-doble@ejemplo.com", "contraseñaSegura123")))
+                .andExpect(status().isOk())
+                .andReturn();
+        String refreshToken = extraerValorCookie(login);
+
+        mockMvc.perform(post("/api/v1/auth/logout")
+                        .cookie(new Cookie("refresh_token", refreshToken)))
+                .andExpect(status().isNoContent());
+
+        // Segundo logout con el mismo token (ya revocado): sigue siendo idempotente.
+        mockMvc.perform(post("/api/v1/auth/logout")
+                        .cookie(new Cookie("refresh_token", refreshToken)))
+                .andExpect(status().isNoContent());
+    }
+
+    @Test
+    void loginConMfaHabilitadoDevuelveDesafioSinCookieNiAccessToken() throws Exception {
+        crearUsuarioConMfaHabilitado("login-mfa@ejemplo.com", "contraseñaSegura123");
+
+        MvcResult resultado = mockMvc.perform(post("/api/v1/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(loginJson("login-mfa@ejemplo.com", "contraseñaSegura123")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.mfaRequerido").value(true))
+                .andExpect(jsonPath("$.mfaChallengeToken").isNotEmpty())
+                .andExpect(jsonPath("$.accessToken").doesNotExist())
+                .andExpect(jsonPath("$.usuario").doesNotExist())
+                .andReturn();
+
+        assertThat(resultado.getResponse().getHeader("Set-Cookie")).isNull();
+    }
+
+    @Test
+    void completarLoginMfaConCodigoTotpValidoEmiteTokens() throws Exception {
+        crearUsuarioConMfaHabilitado("mfa-totp@ejemplo.com", "contraseñaSegura123");
+
+        String desafio = obtenerChallengeToken("mfa-totp@ejemplo.com", "contraseñaSegura123");
+
+        MvcResult resultado = mockMvc.perform(post("/api/v1/auth/login/mfa")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"mfaChallengeToken": "%s", "codigo": "%s"}
+                                """.formatted(desafio, codigoTotpValido())))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.mfaRequerido").value(false))
+                .andExpect(jsonPath("$.accessToken").isNotEmpty())
+                .andExpect(jsonPath("$.usuario.email").value("mfa-totp@ejemplo.com"))
+                .andReturn();
+
+        String setCookie = resultado.getResponse().getHeader("Set-Cookie");
+        assertThat(setCookie).isNotNull();
+        assertThat(setCookie).contains("refresh_token=");
+    }
+
+    @Test
+    void completarLoginMfaConCodigoIncorrectoSeRechazaCon400() throws Exception {
+        crearUsuarioConMfaHabilitado("mfa-codigo-malo@ejemplo.com", "contraseñaSegura123");
+
+        String desafio = obtenerChallengeToken("mfa-codigo-malo@ejemplo.com", "contraseñaSegura123");
+
+        mockMvc.perform(post("/api/v1/auth/login/mfa")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"mfaChallengeToken": "%s", "codigo": "000000"}
+                                """.formatted(desafio)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.mensaje").value("El código ingresado no es válido"));
+    }
+
+    @Test
+    void completarLoginMfaConTokenDeDesafioInvalidoSeRechazaCon401() throws Exception {
+        mockMvc.perform(post("/api/v1/auth/login/mfa")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"mfaChallengeToken": "token-inventado", "codigo": "123456"}
+                                """))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.mensaje").value("Sesión inválida o expirada"));
+    }
+
+    @Test
+    void completarLoginMfaConCodigoDeRespaldoLoConsumeYNoPermiteReusarlo() throws Exception {
+        Usuario usuario = crearUsuarioConMfaHabilitado("mfa-respaldo@ejemplo.com", "contraseñaSegura123");
+        String codigoPlano = "ABCD2345";
+        codigoRespaldoRepositoryPort.guardarTodos(
+                java.util.List.of(CodigoRespaldo.crear(usuario.getId(), sha256Hex(codigoPlano), Instant.now())));
+
+        String primerDesafio = obtenerChallengeToken("mfa-respaldo@ejemplo.com", "contraseñaSegura123");
+        mockMvc.perform(post("/api/v1/auth/login/mfa")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"mfaChallengeToken": "%s", "codigo": "%s"}
+                                """.formatted(primerDesafio, codigoPlano)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.accessToken").isNotEmpty());
+
+        // El mismo código de respaldo ya usado no debe volver a servir.
+        String segundoDesafio = obtenerChallengeToken("mfa-respaldo@ejemplo.com", "contraseñaSegura123");
+        mockMvc.perform(post("/api/v1/auth/login/mfa")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"mfaChallengeToken": "%s", "codigo": "%s"}
+                                """.formatted(segundoDesafio, codigoPlano)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.mensaje").value("El código ingresado no es válido"));
+    }
+
+    private String obtenerChallengeToken(String email, String password) throws Exception {
+        MvcResult login = mockMvc.perform(post("/api/v1/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(loginJson(email, password)))
+                .andExpect(status().isOk())
+                .andReturn();
+        JsonNode body = new ObjectMapper().readTree(login.getResponse().getContentAsString());
+        return body.get("mfaChallengeToken").asText();
+    }
+
+    private static String extraerValorCookie(MvcResult resultado) {
+        String setCookie = resultado.getResponse().getHeader("Set-Cookie");
+        assertThat(setCookie).isNotNull();
+        String parteValor = setCookie.split(";", 2)[0];
+        return parteValor.substring(parteValor.indexOf('=') + 1);
+    }
+
+    private static String loginJson(String email, String password) {
+        return """
+                {
+                  "email": "%s",
+                  "password": "%s"
+                }
+                """.formatted(email, password);
+    }
+}

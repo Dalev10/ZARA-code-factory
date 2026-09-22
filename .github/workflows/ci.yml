@@ -1,0 +1,46 @@
+name: CI
+
+# Se ejecuta en cada Pull Request hacia main o develop 
+# y también en cada push directo a esas ramas como
+# confirmación adicional.
+on:
+  pull_request:
+    branches:
+      - main
+      - develop
+  push:
+    branches:
+      - main
+      - develop
+
+jobs:
+  build:
+    name: Build y verificación (JDK 21)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Descargar el código
+        uses: actions/checkout@v4
+
+      - name: Configurar JDK 21 (Temurin)
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+          cache: maven
+
+      - name: Dar permisos de ejecución al Maven Wrapper
+        run: chmod +x mvnw
+
+      # Los tests de repositorio (identity) usan Testcontainers para levantar
+      # un Postgres real y correr las migraciones de Flyway contra él. No se
+      # necesita un "services: postgres:" aparte: Testcontainers gestiona su
+      # propio contenedor efímero usando el daemon de Docker que ya viene
+      # preinstalado en los runners de GitHub Actions (ubuntu-latest).
+      #
+      # "verify" también corre los gates de calidad agregados en HU-27:
+      # JaCoCo falla el build si la cobertura de línea del proyecto cae por
+      # debajo del 85%, y Checkstyle publica su reporte sin romper el build
+      # todavía (failOnViolation=false) hasta que se cure el ruleset.
+      - name: Compilar y verificar
+        run: ./mvnw -B clean verify

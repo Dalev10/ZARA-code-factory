@@ -1,0 +1,27 @@
+package com.codefactory.supplychain.catalogo.application.port.out;
+
+import com.codefactory.supplychain.catalogo.domain.model.Categoria;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+
+import java.util.Optional;
+import java.util.UUID;
+
+/**
+ * Puerto de salida (Ports and Adapters) que define el contrato de
+ * persistencia para {@link Categoria}.
+ */
+public interface CategoriaRepository {
+
+    Categoria save(Categoria categoria);
+
+    Optional<Categoria> findById(UUID id);
+
+    Page<Categoria> findAll(Pageable pageable);
+
+    boolean existsById(UUID id);
+
+    boolean existsByNombre(String nombre);
+
+    void deleteById(UUID id);
+}
