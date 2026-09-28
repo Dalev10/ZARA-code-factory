@@ -392,7 +392,7 @@ def main():
 <body>
 <header class="top">
   <h1>Equipo de Calidad: Casos de prueba: Caso ZARA Code Factory</h1>
-  <p class="sub">Sprint 1 — EAP01FE — Sistema de Optimización de Cadena de Suministro</p>
+  <p class="sub">Equipo EAP01FE — Sistema de Optimización de Cadena de Suministro</p>
   <p class="meta">Generado automáticamente el {fecha} · fuente: Casos_de_Prueba_-_Sprint__1_EAP01FE.docx</p>
 </header>
 <main>
