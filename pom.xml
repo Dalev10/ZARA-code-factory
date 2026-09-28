@@ -185,6 +185,46 @@
             <scope>test</scope>
         </dependency>
 
+        <!-- ============================================================
+             Pruebas QA: REST Assured — cliente HTTP para las pruebas funcionales/API
+             de aceptación de Sprint 1 
+             ============================================================ -->
+        <dependency>
+            <groupId>io.rest-assured</groupId>
+            <artifactId>rest-assured</artifactId>
+            <version>5.5.1</version>
+            <scope>test</scope>
+        </dependency>
+
+        <!-- ============================================================
+             Pruebas QA: REST Assured 5.5.1 fue construido contra Groovy 4.0.22 (usa su
+             motor HTTPBuilder internamente vía Groovy dinámico). El BOM de
+             spring-boot-dependencies:4.1.1 importa groovy-bom en la versión
+             5.0.8 y esa versión GANA por dependencyManagement sobre lo que
+             rest-assured pide transitivamente — mezclar Groovy 5.x con el
+             engine de rest-assured revienta con NullPointerException dentro
+             de ClosureMetaClass en cualquier request HTTP. Se fija acá la
+             versión que rest-assured realmente espera, solo para test.
+             ============================================================ -->
+        <dependency>
+            <groupId>org.apache.groovy</groupId>
+            <artifactId>groovy</artifactId>
+            <version>4.0.22</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.groovy</groupId>
+            <artifactId>groovy-xml</artifactId>
+            <version>4.0.22</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.groovy</groupId>
+            <artifactId>groovy-json</artifactId>
+            <version>4.0.22</version>
+            <scope>test</scope>
+        </dependency>
+
     </dependencies>
 
     <build>
@@ -283,5 +323,77 @@
             </plugin>
         </plugins>
     </build>
+
+    <!-- ================================================================
+         Profile dedicado a los 56 casos de prueba del documento
+         "Casos_de_Prueba_-_Sprint__1_EAP01FE.docx" (HU-01 a HU-18),
+         implementados como pruebas JUnit 5 + REST Assured en
+         src/test/java/.../qa/*IT.java.
+
+         Completamente aislado de "mvn test"/"mvn verify" normales:
+         - Solo corre con "-Pcasos-qa-sprint1" explícito.
+         - Usa maven-failsafe-plugin (no surefire), que por convención
+           SOLO recoge clases *IT.java — nunca las *Test.java de la
+           suite de desarrollo (413 pruebas).
+         - Además se salta explícitamente surefire/jacoco/checkstyle,
+           para que el comando sea rápido y se enfoque solo en estos
+           56 casos.
+
+         Uso: ./mvnw verify -q -Pcasos-qa-sprint1
+         Reporte legible al final en: target/reports/casos-prueba-sprint1.html
+         ================================================================ -->
+    <profiles>
+        <profile>
+            <id>casos-qa-sprint1</id>
+            <properties>
+                <surefire.skip>true</surefire.skip>
+                <jacoco.skip>true</jacoco.skip>
+                <checkstyle.skip>true</checkstyle.skip>
+            </properties>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-failsafe-plugin</artifactId>
+                        <version>3.5.6</version>
+                        <configuration>
+                            <!-- Sin esto, failsafe:verify aborta el build en el primer caso
+                                 rechazado (defecto real) y el plugin de reporte, que corre
+                                 después en esta misma fase, nunca llega a ejecutarse. Las
+                                 fallas quedan igual documentadas en el reporte HTML. -->
+                            <testFailureIgnore>true</testFailureIgnore>
+                        </configuration>
+                        <executions>
+                            <execution>
+                                <goals>
+                                    <goal>integration-test</goal>
+                                    <goal>verify</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-surefire-report-plugin</artifactId>
+                        <version>3.5.6</version>
+                        <executions>
+                            <execution>
+                                <id>reporte-casos-qa-sprint1</id>
+                                <phase>verify</phase>
+                                <goals>
+                                    <goal>failsafe-report-only</goal>
+                                </goals>
+                                <configuration>
+                                    <outputDirectory>${project.build.directory}/reports</outputDirectory>
+                                    <outputName>casos-prueba-sprint1</outputName>
+                                    <title>Casos de Prueba Sprint 1 — EAP01FE</title>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
 
 </project>
