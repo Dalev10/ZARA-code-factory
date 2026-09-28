@@ -326,20 +326,6 @@
 
     <!-- ================================================================
          Profile dedicado a los 56 casos de prueba del documento
-         "Casos_de_Prueba_-_Sprint__1_EAP01FE.docx" (HU-01 a HU-18),
-         implementados como pruebas JUnit 5 + REST Assured en
-         src/test/java/.../qa/*IT.java.
-
-         Completamente aislado de "mvn test"/"mvn verify" normales:
-         - Solo corre con "-Pcasos-qa-sprint1" explícito.
-         - Usa maven-failsafe-plugin (no surefire), que por convención
-           SOLO recoge clases *IT.java — nunca las *Test.java de la
-           suite de desarrollo (413 pruebas).
-         - Además se salta explícitamente surefire/jacoco/checkstyle,
-           para que el comando sea rápido y se enfoque solo en estos
-           56 casos.
-
-         Uso: ./mvnw verify -q -Pcasos-qa-sprint1
          Reporte legible al final en: target/reports/casos-prueba-sprint1.html
          ================================================================ -->
     <profiles>
@@ -357,10 +343,6 @@
                         <artifactId>maven-failsafe-plugin</artifactId>
                         <version>3.5.6</version>
                         <configuration>
-                            <!-- Sin esto, failsafe:verify aborta el build en el primer caso
-                                 rechazado (defecto real) y el plugin de reporte, que corre
-                                 después en esta misma fase, nunca llega a ejecutarse. Las
-                                 fallas quedan igual documentadas en el reporte HTML. -->
                             <testFailureIgnore>true</testFailureIgnore>
                         </configuration>
                         <executions>
@@ -372,21 +354,30 @@
                             </execution>
                         </executions>
                     </plugin>
+                    <!-- ============================================================
+                         Reporte propio (no el genérico de maven-surefire-report-plugin):
+                         lee target/failsafe-reports/*.xml + tools/qa/casos_metadata.json
+                         y genera un único HTML con resumen, sección de bugs y detalle
+                         por caso (petición/respuesta) al hacer clic. Requiere python3
+                         (sin dependencias extra, solo librería estándar).
+                         ============================================================ -->
                     <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-surefire-report-plugin</artifactId>
-                        <version>3.5.6</version>
+                        <groupId>org.codehaus.mojo</groupId>
+                        <artifactId>exec-maven-plugin</artifactId>
+                        <version>3.5.0</version>
                         <executions>
                             <execution>
                                 <id>reporte-casos-qa-sprint1</id>
                                 <phase>verify</phase>
                                 <goals>
-                                    <goal>failsafe-report-only</goal>
+                                    <goal>exec</goal>
                                 </goals>
                                 <configuration>
-                                    <outputDirectory>${project.build.directory}/reports</outputDirectory>
-                                    <outputName>casos-prueba-sprint1</outputName>
-                                    <title>Casos de Prueba Sprint 1 — EAP01FE</title>
+                                    <executable>python3</executable>
+                                    <arguments>
+                                        <argument>${project.basedir}/tools/qa/generar_reporte_casos_prueba.py</argument>
+                                        <argument>${project.build.directory}</argument>
+                                    </arguments>
                                 </configuration>
                             </execution>
                         </executions>

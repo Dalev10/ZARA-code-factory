@@ -1,7 +1,12 @@
 package com.codefactory.supplychain.qa;
 
 import io.restassured.RestAssured;
+import io.restassured.filter.log.LogDetail;
+import io.restassured.filter.log.RequestLoggingFilter;
+import io.restassured.filter.log.ResponseLoggingFilter;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.TestInfo;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.test.context.ActiveProfiles;
@@ -15,29 +20,7 @@ import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.equalTo;
 
 /**
- * Base común de los 56 casos de prueba de Sprint 1 (HU-01 a HU-18), tal como
- * están documentados en «Casos_de_Prueba_-_Sprint__1_EAP01FE.docx». Cada
- * subclase de este paquete {@code qa} representa una historia de usuario
- * (una clase = una sección del documento) y cada método {@code @Test}
- * representa exactamente un CP-ID de ese documento — el nombre del método y
- * el {@code @DisplayName} citan el identificador tal cual aparece ahí, para
- * que el reporte final sea trazable caso por caso.
- *
- * <p>A diferencia de los *ControllerTest de MockMvc del resto del proyecto
- * (pruebas de integración en el sentido del Plan de Aseguramiento §5.5),
- * estas pruebas usan REST Assured contra un servidor HTTP real
- * (RANDOM_PORT), porque documentan específicamente las «Pruebas
- * funcionales/API» que ese mismo plan describe como una categoría separada.
- *
- * <p>El contenedor de PostgreSQL se levanta una sola vez para todas las
- * subclases (patrón "singleton container" de Testcontainers: se arranca a
- * mano en un bloque estático y nunca se detiene explícitamente, en vez de
- * usar {@code @Container}, que reiniciaría uno nuevo por cada clase). Esto
- * es intencional: varios casos dependen de datos creados por casos
- * anteriores dentro de la misma historia (p. ej. HU-04 consulta la Tienda
- * que HU-03 registró), así que todas las clases comparten una única base de
- * datos con las migraciones de Flyway ya aplicadas (incluye el usuario
- * administrador semilla de V4 y los scopes de V8/V10/V11).
+ * Base común de los 56 casos de prueba de Sprint 1
  */
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ActiveProfiles("test")
@@ -51,6 +34,14 @@ abstract class AbstractCasoPruebaIT {
 
     static {
         POSTGRES.start();
+        // Se configura una sola vez para todo el run (ver Javadoc de la clase: este
+        // bloque estático corre una única vez, sin importar cuántas subclases lo
+        // disparen). replaceFiltersWith (no filters(), que ACUMULA) imprime a
+        // System.out la petición y la respuesta completas de cada llamada HTTP —
+        // es justo el detalle que el reporte HTML final necesita mostrar por caso.
+        RestAssured.replaceFiltersWith(java.util.List.of(
+                new RequestLoggingFilter(LogDetail.ALL),
+                new ResponseLoggingFilter(LogDetail.ALL)));
     }
 
     @DynamicPropertySource
@@ -68,6 +59,27 @@ abstract class AbstractCasoPruebaIT {
         RestAssured.port = puerto;
         RestAssured.baseURI = "http://localhost";
         RestAssured.basePath = "/api/v1";
+    }
+
+    /**
+     * Delimita, dentro del log de la clase (capturado por Failsafe en
+     * {@code <system-out>}), en qué punto empieza y termina cada caso — el
+     * generador de reporte ({@code tools/qa/generar_reporte_casos_prueba.py})
+     * usa estos marcadores para mostrar, al hacer clic en un caso, exactamente
+     * las peticiones/respuestas HTTP que ese caso disparó.
+     */
+    @BeforeEach
+    void marcarInicioDeCaso(TestInfo info) {
+        System.out.println("###CASO-INICIO### " + nombreDelMetodo(info));
+    }
+
+    @AfterEach
+    void marcarFinDeCaso(TestInfo info) {
+        System.out.println("###CASO-FIN### " + nombreDelMetodo(info));
+    }
+
+    private static String nombreDelMetodo(TestInfo info) {
+        return info.getTestMethod().map(java.lang.reflect.Method::getName).orElse("desconocido");
     }
 
     /** Genera un valor legible pero único, para no chocar con datos creados por otras clases de este paquete. */
