@@ -7,10 +7,7 @@ import org.junit.jupiter.api.Test;
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.equalTo;
 
-/**
- * HU-14 — Eliminar Centro de Distribución. Casos CP-HU14-001 a CP-HU14-003.
- */
-class Hu14EliminarCentroDistribucionIT extends AbstractCasoPruebaIT {
+class EliminarCentroDistribucionIT extends AbstractCasoPruebaIT {
 
     @Test
     @DisplayName("CP-HU14-001 — Eliminar Centro de Distribución existente")
@@ -29,7 +26,6 @@ class Hu14EliminarCentroDistribucionIT extends AbstractCasoPruebaIT {
                 .when().delete("/centros-distribucion/" + cdId)
                 .then().statusCode(204);
 
-        // AC-4: un CD eliminado no debe estar disponible para nuevas operaciones.
         given().header("Authorization", "Bearer " + tokenAdmin)
                 .when().get("/centros-distribucion/" + cdId)
                 .then().statusCode(404);
@@ -45,7 +41,6 @@ class Hu14EliminarCentroDistribucionIT extends AbstractCasoPruebaIT {
             + "todavía.")
     @DisplayName("CP-HU14-002 — Bloquear eliminación de CD con operaciones/dependencias asociadas")
     void cpHu14002_bloquearEliminacionConDependenciasAsociadas() {
-        // Intencionalmente vacío: ver motivo en @Disabled.
     }
 
     @Test
@@ -65,10 +60,6 @@ class Hu14EliminarCentroDistribucionIT extends AbstractCasoPruebaIT {
                 .when().delete("/centros-distribucion/" + cdId)
                 .then().statusCode(204);
 
-        // AC-5: la información histórica que deba conservarse debe permanecer
-        // disponible. Hoy el borrado es físico (misma naturaleza que el defecto D-03
-        // en Bodega_Tienda): la consulta devuelve 404 de inmediato. Este assert
-        // documenta el defecto D-04 (severidad Media).
         given().header("Authorization", "Bearer " + tokenAdmin)
                 .when().get("/centros-distribucion/" + cdId)
                 .then().statusCode(200)

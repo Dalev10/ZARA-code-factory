@@ -7,10 +7,7 @@ import java.util.UUID;
 
 import static io.restassured.RestAssured.given;
 
-/**
- * HU-07 — Registrar Bodega_Tienda. Casos CP-HU07-001 a CP-HU07-003.
- */
-class Hu07RegistrarBodegaTiendaIT extends AbstractCasoPruebaIT {
+class RegistrarBodegaTiendaIT extends AbstractCasoPruebaIT {
 
     @Test
     @DisplayName("CP-HU07-001 — Registrar Bodega_Tienda con la información requerida")

@@ -4,14 +4,8 @@ import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-/**
- * HU-18 — Eliminar Producto. Casos CP-HU18-001 a CP-HU18-003.
- *
- * <p>Ver Javadoc de {@link Hu15RegistrarProductoIT}: la entidad Producto no
- * existe en el backend.
- */
-@Disabled("No ejecutable: el backend no implementa la entidad Producto (ver Hu15RegistrarProductoIT).")
-class Hu18EliminarProductoIT extends AbstractCasoPruebaIT {
+@Disabled("No ejecutable: el backend no implementa la entidad Producto (ver RegistrarProductoIT).")
+class EliminarProductoIT extends AbstractCasoPruebaIT {
 
     @Test
     @DisplayName("CP-HU18-001 — Eliminar Producto sin dependencias bloqueantes")

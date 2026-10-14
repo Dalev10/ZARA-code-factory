@@ -7,10 +7,7 @@ import org.junit.jupiter.api.Test;
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.equalTo;
 
-/**
- * HU-12 — Consultar Centro de Distribución. Casos CP-HU12-001 y CP-HU12-002.
- */
-class Hu12ConsultarCentroDistribucionIT extends AbstractCasoPruebaIT {
+class ConsultarCentroDistribucionIT extends AbstractCasoPruebaIT {
 
     @Test
     @DisplayName("CP-HU12-001 — Consultar Centro de Distribución existente")
@@ -39,6 +36,5 @@ class Hu12ConsultarCentroDistribucionIT extends AbstractCasoPruebaIT {
             + "y no existe un endpoint de inventario de CD en Sprint 1.")
     @DisplayName("CP-HU12-002 — Consultar la información de inventario asociada al CD")
     void cpHu12002_consultarInventarioAsociado() {
-        // Intencionalmente vacío: ver motivo en @Disabled.
     }
 }

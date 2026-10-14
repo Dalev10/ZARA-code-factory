@@ -6,10 +6,7 @@ import org.junit.jupiter.api.Test;
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.equalTo;
 
-/**
- * HU-13 — Modificar Centro de Distribución. Casos CP-HU13-001 y CP-HU13-002.
- */
-class Hu13ModificarCentroDistribucionIT extends AbstractCasoPruebaIT {
+class ModificarCentroDistribucionIT extends AbstractCasoPruebaIT {
 
     private static String cdId;
 

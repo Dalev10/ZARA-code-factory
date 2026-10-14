@@ -7,10 +7,7 @@ import org.junit.jupiter.api.Test;
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.equalTo;
 
-/**
- * HU-10 — Eliminar Bodega_Tienda. Casos CP-HU10-001 a CP-HU10-003.
- */
-class Hu10EliminarBodegaTiendaIT extends AbstractCasoPruebaIT {
+class EliminarBodegaTiendaIT extends AbstractCasoPruebaIT {
 
     @Test
     @DisplayName("CP-HU10-001 — Eliminar Bodega_Tienda sin inventario asociado")
@@ -37,9 +34,6 @@ class Hu10EliminarBodegaTiendaIT extends AbstractCasoPruebaIT {
                 .when().delete("/bodegas-tienda/" + bodegaId)
                 .then().statusCode(204);
 
-        // AC-4: una Bodega_Tienda eliminada no debe estar disponible para nuevas
-        // asignaciones — pero SÍ debe permitir registrar una nueva bodega para la
-        // misma Tienda, ya que la anterior ya no existe.
         given().header("Authorization", "Bearer " + tokenAdmin)
                 .contentType("application/json")
                 .body("""
@@ -56,7 +50,6 @@ class Hu10EliminarBodegaTiendaIT extends AbstractCasoPruebaIT {
             + "pero no se puede activar todavía vía API.")
     @DisplayName("CP-HU10-002 — Bloquear eliminación de Bodega_Tienda con inventario asociado")
     void cpHu10002_bloquearEliminacionConInventarioAsociado() {
-        // Intencionalmente vacío: ver motivo en @Disabled.
     }
 
     @Test
@@ -84,9 +77,6 @@ class Hu10EliminarBodegaTiendaIT extends AbstractCasoPruebaIT {
                 .when().delete("/bodegas-tienda/" + bodegaId)
                 .then().statusCode(204);
 
-        // AC-5: la información histórica que deba conservarse no debe verse afectada.
-        // Hoy el borrado es físico: la consulta devuelve 404 de inmediato, sin ningún
-        // rastro histórico. Este assert documenta el defecto D-03 (severidad Media).
         given().header("Authorization", "Bearer " + tokenAdmin)
                 .when().get("/bodegas-tienda/" + bodegaId)
                 .then().statusCode(200)

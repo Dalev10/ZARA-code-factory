@@ -6,10 +6,7 @@ import org.junit.jupiter.api.Test;
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.equalTo;
 
-/**
- * HU-03 — Registrar Tienda/Almacén. Casos CP-HU03-001 a CP-HU03-003.
- */
-class Hu03RegistrarTiendaIT extends AbstractCasoPruebaIT {
+class RegistrarTiendaIT extends AbstractCasoPruebaIT {
 
     @Test
     @DisplayName("CP-HU03-001 — Registrar Tienda con información válida y ubicación")

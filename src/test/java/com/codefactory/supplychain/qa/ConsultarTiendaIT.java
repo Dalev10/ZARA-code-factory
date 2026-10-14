@@ -7,13 +7,7 @@ import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.equalTo;
 
-/**
- * HU-04 — Consultar Tienda/Almacén. Casos CP-HU04-001 a CP-HU04-003.
- *
- * <p>Fixture propia: una Tienda con su Bodega_Tienda asociada, creada una
- * sola vez de forma perezosa y reutilizada por los 3 casos.
- */
-class Hu04ConsultarTiendaIT extends AbstractCasoPruebaIT {
+class ConsultarTiendaIT extends AbstractCasoPruebaIT {
 
     private static String tiendaId;
     private static String bodegaId;
@@ -73,10 +67,6 @@ class Hu04ConsultarTiendaIT extends AbstractCasoPruebaIT {
         String tokenAdmin = iniciarSesionComoAdmin();
         asegurarFixture(tokenAdmin);
 
-        // El inventario de la Tienda solo es consultable de forma indirecta, vía su
-        // Bodega_Tienda asociada. Aparece siempre vacío porque el módulo de
-        // inventario/movimientos es alcance de Sprint 2 (Plan de Calidad, Incremento 2):
-        // esto es una limitación de alcance documentada, no un defecto.
         given().header("Authorization", "Bearer " + tokenAdmin)
                 .when().get("/bodegas-tienda/" + bodegaId)
                 .then().statusCode(200)

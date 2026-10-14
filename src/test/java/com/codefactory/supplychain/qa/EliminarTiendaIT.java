@@ -6,18 +6,7 @@ import org.junit.jupiter.api.Test;
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.equalTo;
 
-/**
- * HU-06 — Eliminar Tienda/Almacén. Casos CP-HU06-001 a CP-HU06-004.
- *
- * <p>CP-HU06-002 y CP-HU06-003 documentan el defecto D-01 (severidad Alta):
- * {@code TiendaService.desactivar()} no valida si la Tienda tiene una
- * Bodega_Tienda asociada antes de desactivarla. Estas dos pruebas afirman
- * el criterio de aceptación DOCUMENTADO (AC-2/AC-3/AC-4: la eliminación no
- * debe ejecutarse), así que quedarán en rojo hasta que ese defecto se
- * corrija — es la señal correcta y esperada de un defecto real, no un
- * error de la prueba.
- */
-class Hu06EliminarTiendaIT extends AbstractCasoPruebaIT {
+class EliminarTiendaIT extends AbstractCasoPruebaIT {
 
     @Test
     @DisplayName("CP-HU06-001 — Eliminar (desactivar) Tienda sin dependencias")
@@ -41,7 +30,6 @@ class Hu06EliminarTiendaIT extends AbstractCasoPruebaIT {
                 .then().statusCode(200)
                 .body("estado", equalTo("INACTIVA"));
 
-        // AC-5: una Tienda eliminada no debe quedar disponible para nuevas operaciones.
         given().header("Authorization", "Bearer " + tokenAdmin)
                 .contentType("application/json")
                 .body("""
@@ -74,9 +62,6 @@ class Hu06EliminarTiendaIT extends AbstractCasoPruebaIT {
         given().header("Authorization", "Bearer " + tokenAdmin)
                 .when().delete("/tiendas/" + tiendaId);
 
-        // AC-2 / AC-4: al tener una Bodega_Tienda asociada, la eliminación NO debía
-        // ejecutarse y la Tienda debía seguir ACTIVA. Hoy el sistema la desactiva
-        // igual (204) — este assert documenta el defecto D-01.
         given().header("Authorization", "Bearer " + tokenAdmin)
                 .when().get("/tiendas/" + tiendaId)
                 .then().statusCode(200)
@@ -107,7 +92,6 @@ class Hu06EliminarTiendaIT extends AbstractCasoPruebaIT {
         given().header("Authorization", "Bearer " + tokenAdmin)
                 .when().delete("/tiendas/" + tiendaId);
 
-        // AC-3: la relación válida con su Bodega_Tienda debe permanecer intacta.
         given().header("Authorization", "Bearer " + tokenAdmin)
                 .when().get("/bodegas-tienda/" + bodegaId)
                 .then().statusCode(200)
@@ -136,7 +120,6 @@ class Hu06EliminarTiendaIT extends AbstractCasoPruebaIT {
                 .when().delete("/tiendas/" + tiendaId)
                 .then().statusCode(204);
 
-        // Al ser una baja lógica (desactivación), el registro sigue disponible.
         given().header("Authorization", "Bearer " + tokenAdmin)
                 .when().get("/tiendas/" + tiendaId)
                 .then().statusCode(200)

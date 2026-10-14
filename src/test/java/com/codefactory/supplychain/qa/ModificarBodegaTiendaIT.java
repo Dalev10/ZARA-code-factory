@@ -8,10 +8,7 @@ import java.util.UUID;
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.equalTo;
 
-/**
- * HU-09 — Modificar Bodega_Tienda. Casos CP-HU09-001 a CP-HU09-003.
- */
-class Hu09ModificarBodegaTiendaIT extends AbstractCasoPruebaIT {
+class ModificarBodegaTiendaIT extends AbstractCasoPruebaIT {
 
     private static String bodegaId;
     private static String tiendaDestinoId;

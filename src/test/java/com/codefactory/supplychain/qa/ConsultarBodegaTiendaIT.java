@@ -7,10 +7,7 @@ import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.equalTo;
 
-/**
- * HU-08 — Consultar Bodega_Tienda. Casos CP-HU08-001 y CP-HU08-002.
- */
-class Hu08ConsultarBodegaTiendaIT extends AbstractCasoPruebaIT {
+class ConsultarBodegaTiendaIT extends AbstractCasoPruebaIT {
 
     private static String tiendaId;
     private static String bodegaId;
@@ -57,8 +54,6 @@ class Hu08ConsultarBodegaTiendaIT extends AbstractCasoPruebaIT {
         String tokenAdmin = iniciarSesionComoAdmin();
         asegurarFixture(tokenAdmin);
 
-        // Igual que en CP-HU04-003: el campo "inventario" existe y es consultable,
-        // pero está siempre vacío porque el módulo de inventario es Sprint 2.
         given().header("Authorization", "Bearer " + tokenAdmin)
                 .when().get("/bodegas-tienda/" + bodegaId)
                 .then().statusCode(200)

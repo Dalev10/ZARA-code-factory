@@ -5,18 +5,7 @@ import org.junit.jupiter.api.Test;
 
 import static io.restassured.RestAssured.given;
 
-/**
- * HU-02 — Iniciar Sesión. Casos CP-HU02-001 a CP-HU02-004.
- *
- * <p>Fixture compartida: un usuario cuyo único rol tiene el scope
- * "cd:administrar" (y ningún otro) — sirve tanto para el caso positivo
- * (AC-4: accede a una función permitida) como para el negativo (AC-4:
- * no accede a una función NO permitida, CP-HU02-004). Se crea de forma
- * perezosa en el primer test que la necesita (no se puede usar
- * {@code @BeforeAll} porque los helpers de fixtures son de instancia y
- * dependen de RestAssured ya configurado por {@code @BeforeEach}).
- */
-class Hu02IniciarSesionIT extends AbstractCasoPruebaIT {
+class IniciarSesionIT extends AbstractCasoPruebaIT {
 
     private static String email;
     private static final String PASSWORD = "ClaveSegura2026!";
@@ -73,8 +62,6 @@ class Hu02IniciarSesionIT extends AbstractCasoPruebaIT {
         asegurarFixture(tokenAdmin);
         String token = iniciarSesion(email, PASSWORD);
 
-        // El rol de este usuario solo tiene "cd:administrar"; "tiendas:administrar" le
-        // debe quedar prohibido.
         given().header("Authorization", "Bearer " + token)
                 .contentType("application/json")
                 .body("""

@@ -26,30 +26,16 @@
 
     <dependencies>
 
-        <!-- ============================================================
-             Web / API REST
-             Nota: en Spring Boot 4.x el starter "web" fue renombrado a
-             "webmvc" como parte de la modularizacion del framework.
-             ============================================================ -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-webmvc</artifactId>
         </dependency>
 
-        <!-- ============================================================
-             Actuator — expone /actuator/health, que los proveedores de
-             hosting (Render, etc.) usan como health check para saber si el
-             contenedor está listo para recibir tráfico. Público a propósito
-             (ver SecurityConfig); no se exponen otros endpoints de Actuator.
-             ============================================================ -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-actuator</artifactId>
         </dependency>
 
-        <!-- ============================================================
-             Persistencia — PostgreSQL vía Spring Data JPA
-             ============================================================ -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-data-jpa</artifactId>
@@ -60,13 +46,6 @@
             <scope>runtime</scope>
         </dependency>
 
-        <!-- ============================================================
-             Migraciones de esquema versionadas (reemplaza ddl-auto=update)
-             En Spring Boot 4.x, Flyway requiere el starter dedicado MÁS
-             el módulo específico del motor de base de datos por separado
-             (desde Flyway 9.x, el soporte por motor se movió fuera de
-             flyway-core).
-             ============================================================ -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-flyway</artifactId>
@@ -76,40 +55,22 @@
             <artifactId>flyway-database-postgresql</artifactId>
         </dependency>
 
-        <!-- ============================================================
-             Validación de entrada en los adaptadores REST
-             ============================================================ -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-validation</artifactId>
         </dependency>
 
-        <!-- ============================================================
-             Seguridad — usada solo como infraestructura (SecurityFilterChain,
-             PasswordEncoder). La lógica de negocio de autenticación/MFA/tokens
-             vive en identity/application/service, no acoplada a este framework.
-             ============================================================ -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-security</artifactId>
         </dependency>
 
-        <!-- ============================================================
-             Documentación interactiva de la API (Swagger UI) para probar
-             los endpoints manualmente en localhost durante el desarrollo.
-             ============================================================ -->
         <dependency>
             <groupId>org.springdoc</groupId>
             <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
             <version>3.0.3</version>
         </dependency>
 
-        <!-- ============================================================
-             JWT — access tokens firmados (HS256). jjwt-jackson usa su propio
-             ObjectMapper interno de Jackson 2.x clásico (com.fasterxml), no
-             el JsonMapper de Jackson 3.x que Boot 4.1.1 registra por defecto,
-             así que no hay conflicto entre ambos.
-             ============================================================ -->
         <dependency>
             <groupId>io.jsonwebtoken</groupId>
             <artifactId>jjwt-api</artifactId>
@@ -128,30 +89,18 @@
             <scope>runtime</scope>
         </dependency>
 
-        <!-- ============================================================
-             MFA TOTP (RFC 6238) — genera/verifica códigos de 6 dígitos
-             compatibles con Google Authenticator/Authy, y renderiza el QR
-             (usa ZXing internamente) para escanear el secreto.
-             ============================================================ -->
         <dependency>
             <groupId>dev.samstevens.totp</groupId>
             <artifactId>totp</artifactId>
             <version>1.7.1</version>
         </dependency>
 
-        <!-- ============================================================
-             Utilidades de desarrollo (reduce boilerplate en entidades/DTOs)
-             ============================================================ -->
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
             <optional>true</optional>
         </dependency>
 
-        <!-- ============================================================
-             Pruebas — cada starter principal trae su companion "-test"
-             en Spring Boot 4.x
-             ============================================================ -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-webmvc-test</artifactId>
@@ -163,12 +112,6 @@
             <scope>test</scope>
         </dependency>
 
-        <!-- ============================================================
-             Testcontainers — levanta un Postgres real (efímero, vía Docker)
-             para los tests de repositorio, en vez de un H2 embebido que no
-             refleja fielmente las migraciones de Flyway (gen_random_uuid(),
-             triggers, CHECK constraints, etc.)
-             ============================================================ -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-testcontainers</artifactId>
@@ -185,10 +128,6 @@
             <scope>test</scope>
         </dependency>
 
-        <!-- ============================================================
-             Pruebas QA: REST Assured — cliente HTTP para las pruebas funcionales/API
-             de aceptación de Sprint 1 
-             ============================================================ -->
         <dependency>
             <groupId>io.rest-assured</groupId>
             <artifactId>rest-assured</artifactId>
@@ -196,16 +135,6 @@
             <scope>test</scope>
         </dependency>
 
-        <!-- ============================================================
-             Pruebas QA: REST Assured 5.5.1 fue construido contra Groovy 4.0.22 (usa su
-             motor HTTPBuilder internamente vía Groovy dinámico). El BOM de
-             spring-boot-dependencies:4.1.1 importa groovy-bom en la versión
-             5.0.8 y esa versión GANA por dependencyManagement sobre lo que
-             rest-assured pide transitivamente — mezclar Groovy 5.x con el
-             engine de rest-assured revienta con NullPointerException dentro
-             de ClosureMetaClass en cualquier request HTTP. Se fija acá la
-             versión que rest-assured realmente espera, solo para test.
-             ============================================================ -->
         <dependency>
             <groupId>org.apache.groovy</groupId>
             <artifactId>groovy</artifactId>
@@ -242,15 +171,6 @@
                 </configuration>
             </plugin>
 
-            <!-- ============================================================
-                 HU-27: cobertura de tests (JaCoCo). Genera el reporte HTML en
-                 target/site/jacoco/index.html en cada "mvn verify", y falla
-                 el build si la cobertura de línea del proyecto cae por debajo
-                 del piso configurado. El umbral (85%) se calibró contra la
-                 cobertura real medida al agregar este gate (~92.7%), dejando
-                 margen para trabajo futuro sin ser un piso trivial de cumplir.
-                 No cubre clase por clase todavía, solo el total del proyecto.
-                 ============================================================ -->
             <plugin>
                 <groupId>org.jacoco</groupId>
                 <artifactId>jacoco-maven-plugin</artifactId>
@@ -293,14 +213,28 @@
                 </executions>
             </plugin>
 
-            <!-- ============================================================
-                 HU-27: linter estático (Checkstyle). Corre en "mvn verify" y
-                 publica el reporte en target/checkstyle-result.xml, pero
-                 todavía NO rompe el build (failOnViolation=false): esta base
-                 de código nunca pasó por un linter, así que primero hay que
-                 medir el volumen real de violaciones antes de decidir qué
-                 reglas conviene exigir de forma obligatoria.
-                 ============================================================ -->
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <version>3.5.0</version>
+                <executions>
+                    <execution>
+                        <id>resumen-pruebas-unitarias</id>
+                        <phase>test</phase>
+                        <goals>
+                            <goal>exec</goal>
+                        </goals>
+                        <configuration>
+                            <executable>python3</executable>
+                            <arguments>
+                                <argument>${project.basedir}/tools/resumen_pruebas_unitarias.py</argument>
+                                <argument>${project.build.directory}/surefire-reports</argument>
+                            </arguments>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-checkstyle-plugin</artifactId>
@@ -324,10 +258,6 @@
         </plugins>
     </build>
 
-    <!-- ================================================================
-         Profile dedicado a los 56 casos de prueba del documento
-         Reporte legible al final en: target/reports/casos-prueba-sprint1.html
-         ================================================================ -->
     <profiles>
         <profile>
             <id>casos-qa-sprint1</id>
@@ -354,13 +284,6 @@
                             </execution>
                         </executions>
                     </plugin>
-                    <!-- ============================================================
-                         Reporte propio (no el genérico de maven-surefire-report-plugin):
-                         lee target/failsafe-reports/*.xml + tools/qa/casos_metadata.json
-                         y genera un único HTML con resumen, sección de bugs y detalle
-                         por caso (petición/respuesta) al hacer clic. Requiere python3
-                         (sin dependencias extra, solo librería estándar).
-                         ============================================================ -->
                     <plugin>
                         <groupId>org.codehaus.mojo</groupId>
                         <artifactId>exec-maven-plugin</artifactId>

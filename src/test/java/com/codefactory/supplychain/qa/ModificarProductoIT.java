@@ -4,14 +4,8 @@ import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-/**
- * HU-17 — Modificar Producto. Casos CP-HU17-001 a CP-HU17-003.
- *
- * <p>Ver Javadoc de {@link Hu15RegistrarProductoIT}: la entidad Producto no
- * existe en el backend.
- */
-@Disabled("No ejecutable: el backend no implementa la entidad Producto (ver Hu15RegistrarProductoIT).")
-class Hu17ModificarProductoIT extends AbstractCasoPruebaIT {
+@Disabled("No ejecutable: el backend no implementa la entidad Producto (ver RegistrarProductoIT).")
+class ModificarProductoIT extends AbstractCasoPruebaIT {
 
     @Test
     @DisplayName("CP-HU17-001 — Modificar campos permitidos de un Producto")

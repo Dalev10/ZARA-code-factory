@@ -7,11 +7,7 @@ import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasItem;
 
-/**
- * HU-01 — Registrar Usuario. Casos CP-HU01-001 a CP-HU01-004 del documento
- * «Casos_de_Prueba_-_Sprint__1_EAP01FE.docx».
- */
-class Hu01RegistrarUsuarioIT extends AbstractCasoPruebaIT {
+class RegistrarUsuarioIT extends AbstractCasoPruebaIT {
 
     @Test
     @DisplayName("CP-HU01-001 — Registrar usuario con información válida, habilitado y con su rol")
@@ -19,11 +15,8 @@ class Hu01RegistrarUsuarioIT extends AbstractCasoPruebaIT {
         String tokenAdmin = iniciarSesionComoAdmin();
         String email = unico("hu01-001") + "@supplychain-test.local";
 
-        // AC-1 / AC-4: se registra y queda habilitado (estado ACTIVO) para iniciar sesión.
         String usuarioId = registrarUsuario(tokenAdmin, email, "QA Usuario HU01-001", "ClaveSegura2026!");
 
-        // El registro por sí solo NO asocia rol (RegistrarUsuarioRequest no tiene ese campo);
-        // AC-5 se cumple con una llamada adicional a POST /usuarios/{id}/roles.
         String rolId = crearRol(tokenAdmin, unico("hu01-001-rol"));
         given().header("Authorization", "Bearer " + tokenAdmin)
                 .contentType("application/json")

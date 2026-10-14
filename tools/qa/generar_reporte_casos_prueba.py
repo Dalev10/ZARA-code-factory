@@ -1,23 +1,4 @@
 #!/usr/bin/env python3
-"""
-Genera un reporte HTML único, legible y navegable de los 56 casos de prueba
-de Sprint 1 (Casos_de_Prueba_-_Sprint__1_EAP01FE.docx), a partir de:
-
-  - tools/qa/casos_metadata.json   -> datos estáticos de cada caso (nombre,
-    tipo, criterios de aceptación/rechazo, prerrequisitos, pasos, resultado
-    esperado), extraídos una sola vez del documento original.
-  - target/failsafe-reports/TEST-*.xml -> resultado real de la última
-    ejecución de src/test/java/.../qa/*IT.java (JUnit 5 + REST Assured),
-    generado por maven-failsafe-plugin.
-
-No depende de librerías externas (solo la librería estándar de Python), para
-no agregar otra herramienta más al proyecto. Se invoca automáticamente al
-final de:
-
-    ./mvnw verify -q -Pcasos-qa-sprint1
-
-Uso manual: python3 tools/qa/generar_reporte_casos_prueba.py <target-dir>
-"""
 import html
 import json
 import re
@@ -31,6 +12,13 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 METADATA_PATH = Path(__file__).resolve().parent / "casos_metadata.json"
 
 CP_ID_RE = re.compile(r"cpHu(\d{2})(\d{3})")
+
+VERDE = "\033[92m"
+ROJO = "\033[91m"
+AMARILLO = "\033[93m"
+NEGRITA = "\033[1m"
+GRIS = "\033[90m"
+FIN = "\033[0m"
 
 DEFECTOS = [
     {
@@ -79,22 +67,47 @@ DEFECTOS = [
 ]
 DEFECTO_POR_CASO = {cp: d for d in DEFECTOS for cp in d["casos"]}
 
+def imprimir_resumen_consola(total, aprobados, fallidos, omitidos, resultados, out_file):
+    ancho = 58
+    linea = "=" * ancho
+    print()
+    print(f"{NEGRITA}{linea}{FIN}")
+    print(f"{NEGRITA}  RESUMEN — 56 Casos de Prueba (Sprint 1, QA){FIN}")
+    print(linea)
+    print(f"  Total de casos    : {total}")
+    print(f"  {VERDE}Aprobados         : {aprobados}{FIN}")
+    color_f = ROJO if fallidos > 0 else GRIS
+    print(f"  {color_f}Fallidos          : {fallidos}{FIN}")
+    color_s = AMARILLO if omitidos > 0 else GRIS
+    print(f"  {color_s}Omitidos (skip)   : {omitidos}{FIN}")
+    print(linea)
+
+    if fallidos > 0:
+        print(f"  {ROJO}{NEGRITA}Casos fallidos (defectos):{FIN}")
+        for r in resultados:
+            if r["estado"] == "FALLIDO":
+                defecto = DEFECTO_POR_CASO.get(r["cpId"])
+                etiqueta = f" [{defecto['id']} · {defecto['severidad']}]" if defecto else ""
+                print(f"  {ROJO}  - {r['cpId']}{etiqueta}{FIN}")
+        print(linea)
+
+    resultado = f"{ROJO}HAY FALLAS{FIN}" if fallidos > 0 else f"{VERDE}TODO OK{FIN}"
+    print(f"  Resultado: {resultado}")
+    print(f"  Reporte HTML: {out_file}")
+    print(f"{linea}\n")
 
 def cargar_metadata():
     datos = json.loads(METADATA_PATH.read_text(encoding="utf-8"))
     return {c["id"]: c for c in datos}
 
-
 def limpiar_log(texto):
     if not texto:
         return None
     lineas = [l for l in texto.split("\n") if not l.startswith("###CASO-")]
-    # Recorta el ruido de arranque de Spring (solo aparece en el primer caso de
-    # cada clase, no aporta nada al detalle de ESE caso puntual).
+
     lineas = [l for l in lineas if not re.match(r"^\d{4}-\d{2}-\d{2}T.*(INFO|WARN)\s", l)]
     texto_limpio = "\n".join(lineas).strip("\n")
     return texto_limpio or None
-
 
 def parsear_resultados(target_dir: Path):
     reportes_dir = target_dir / "failsafe-reports"
@@ -135,24 +148,20 @@ def parsear_resultados(target_dir: Path):
             })
     return casos
 
-
 def hu_de(cp_id):
     m = re.match(r"CP-HU(\d{2})-", cp_id)
     return m.group(1) if m else "00"
-
 
 def render_lista(items):
     if not items:
         return ""
     return "<ul>" + "".join(f"<li>{html.escape(i)}</li>" for i in items) + "</ul>"
 
-
 ESTADO_INFO = {
     "APROBADO": {"clase": "ok", "icono": "&#10003;"},
     "FALLIDO": {"clase": "fail", "icono": "&#10007;"},
     "OMITIDO": {"clase": "skip", "icono": "&#9888;"},
 }
-
 
 def render_caso(resultado, meta):
     cp_id = resultado["cpId"]
@@ -214,7 +223,6 @@ def render_caso(resultado, meta):
     </details>
     """
 
-
 def render_bug(defecto):
     casos_html = ", ".join(defecto["casos"])
     nota_html = f'<p class="bug-nota">{html.escape(defecto["nota"])}</p>' if defecto["nota"] else ""
@@ -231,7 +239,6 @@ def render_bug(defecto):
       <p class="bug-casos"><strong>Casos:</strong> {html.escape(casos_html)}</p>
     </div>
     """
-
 
 HU_TITULOS = {
     "01": "HU-01 · Registrar Usuario", "02": "HU-02 · Iniciar Sesión",
@@ -341,7 +348,6 @@ pre.http-log {
 footer { text-align: center; color: var(--muted); font-size: 12px; padding: 20px; }
 """
 
-
 def main():
     target_dir = Path(sys.argv[1]) if len(sys.argv) > 1 else REPO_ROOT / "target"
     metadata = cargar_metadata()
@@ -422,9 +428,7 @@ def main():
     out_dir.mkdir(parents=True, exist_ok=True)
     out_file = out_dir / "casos-prueba-sprint1.html"
     out_file.write_text(pagina, encoding="utf-8")
-    print(f"[reporte-qa] Reporte escrito en {out_file} "
-          f"({total} casos: {aprobados} aprobados, {fallidos} fallidos, {omitidos} omitidos)")
-
+    imprimir_resumen_consola(total, aprobados, fallidos, omitidos, resultados, out_file)
 
 if __name__ == "__main__":
     main()

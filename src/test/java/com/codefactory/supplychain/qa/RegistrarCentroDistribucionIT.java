@@ -6,10 +6,7 @@ import org.junit.jupiter.api.Test;
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.equalTo;
 
-/**
- * HU-11 — Registrar Centro de Distribución. Casos CP-HU11-001 a CP-HU11-003.
- */
-class Hu11RegistrarCentroDistribucionIT extends AbstractCasoPruebaIT {
+class RegistrarCentroDistribucionIT extends AbstractCasoPruebaIT {
 
     @Test
     @DisplayName("CP-HU11-001 — Registrar Centro de Distribución con la información requerida")

@@ -6,10 +6,7 @@ import org.junit.jupiter.api.Test;
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.equalTo;
 
-/**
- * HU-05 — Modificar Tienda/Almacén. Casos CP-HU05-001 a CP-HU05-003.
- */
-class Hu05ModificarTiendaIT extends AbstractCasoPruebaIT {
+class ModificarTiendaIT extends AbstractCasoPruebaIT {
 
     private static String tiendaId;
     private static String bodegaId;
@@ -83,8 +80,6 @@ class Hu05ModificarTiendaIT extends AbstractCasoPruebaIT {
                 .when().put("/tiendas/" + tiendaId)
                 .then().statusCode(200);
 
-        // La Bodega_Tienda asociada, creada antes de la modificación, debe seguir
-        // consultable y seguir apuntando a la misma Tienda.
         given().header("Authorization", "Bearer " + tokenAdmin)
                 .when().get("/bodegas-tienda/" + bodegaId)
                 .then().statusCode(200)
