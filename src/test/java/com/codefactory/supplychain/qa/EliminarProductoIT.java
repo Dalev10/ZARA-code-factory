@@ -8,17 +8,17 @@ import org.junit.jupiter.api.Test;
 class EliminarProductoIT extends AbstractCasoPruebaIT {
 
     @Test
-    @DisplayName("CP-HU18-001 — Eliminar Producto sin dependencias bloqueantes")
+    @DisplayName("CP-001 — Eliminar Producto sin dependencias bloqueantes")
     void cpHu18001_eliminarProductoSinDependencias() {
     }
 
     @Test
-    @DisplayName("CP-HU18-002 — Bloquear eliminación de Producto con inventario u operaciones asociadas")
+    @DisplayName("CP-002 — Bloquear eliminación de Producto con inventario u operaciones asociadas")
     void cpHu18002_bloquearEliminacionConDependencias() {
     }
 
     @Test
-    @DisplayName("CP-HU18-003 — Conservar información histórica después de eliminar un Producto")
+    @DisplayName("CP-003 — Conservar información histórica después de eliminar un Producto")
     void cpHu18003_conservarInformacionHistorica() {
     }
 }

@@ -10,7 +10,7 @@ import static org.hamcrest.Matchers.hasItem;
 class RegistrarUsuarioIT extends AbstractCasoPruebaIT {
 
     @Test
-    @DisplayName("CP-HU01-001 — Registrar usuario con información válida, habilitado y con su rol")
+    @DisplayName("CP-001 — Registrar usuario con información válida, habilitado y con su rol")
     void cpHu01001_registrarUsuarioValidoHabilitadoConRol() {
         String tokenAdmin = iniciarSesionComoAdmin();
         String email = unico("hu01-001") + "@supplychain-test.local";
@@ -39,7 +39,7 @@ class RegistrarUsuarioIT extends AbstractCasoPruebaIT {
     }
 
     @Test
-    @DisplayName("CP-HU01-002 — Rechazar registro de usuario con información obligatoria incompleta")
+    @DisplayName("CP-002 — Rechazar registro de usuario con información obligatoria incompleta")
     void cpHu01002_rechazarRegistroInformacionIncompleta() {
         String tokenAdmin = iniciarSesionComoAdmin();
 
@@ -53,7 +53,7 @@ class RegistrarUsuarioIT extends AbstractCasoPruebaIT {
     }
 
     @Test
-    @DisplayName("CP-HU01-003 — Rechazar registro de usuario duplicado")
+    @DisplayName("CP-003 — Rechazar registro de usuario duplicado")
     void cpHu01003_rechazarRegistroDuplicado() {
         String tokenAdmin = iniciarSesionComoAdmin();
         String email = unico("hu01-003") + "@supplychain-test.local";
@@ -69,7 +69,7 @@ class RegistrarUsuarioIT extends AbstractCasoPruebaIT {
     }
 
     @Test
-    @DisplayName("CP-HU01-004 — Rechazar registro de usuario con información inválida")
+    @DisplayName("CP-004 — Rechazar registro de usuario con información inválida")
     void cpHu01004_rechazarRegistroInformacionInvalida() {
         String tokenAdmin = iniciarSesionComoAdmin();
 

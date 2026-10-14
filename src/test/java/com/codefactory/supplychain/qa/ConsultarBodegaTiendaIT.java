@@ -36,7 +36,7 @@ class ConsultarBodegaTiendaIT extends AbstractCasoPruebaIT {
     }
 
     @Test
-    @DisplayName("CP-HU08-001 — Consultar Bodega_Tienda existente (muestra la Tienda a la que pertenece)")
+    @DisplayName("CP-001 — Consultar Bodega_Tienda existente (muestra la Tienda a la que pertenece)")
     void cpHu08001_consultarBodegaTiendaExistente() {
         String tokenAdmin = iniciarSesionComoAdmin();
         asegurarFixture(tokenAdmin);
@@ -49,7 +49,7 @@ class ConsultarBodegaTiendaIT extends AbstractCasoPruebaIT {
     }
 
     @Test
-    @DisplayName("CP-HU08-002 — Identificar el inventario asociado a la Bodega_Tienda")
+    @DisplayName("CP-002 — Identificar el inventario asociado a la Bodega_Tienda")
     void cpHu08002_identificarInventarioAsociado() {
         String tokenAdmin = iniciarSesionComoAdmin();
         asegurarFixture(tokenAdmin);

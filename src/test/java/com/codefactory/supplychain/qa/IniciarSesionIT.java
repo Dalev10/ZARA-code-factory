@@ -18,7 +18,7 @@ class IniciarSesionIT extends AbstractCasoPruebaIT {
     }
 
     @Test
-    @DisplayName("CP-HU02-001 — Iniciar sesión con credenciales válidas y acceder a funciones permitidas")
+    @DisplayName("CP-001 — Iniciar sesión con credenciales válidas y acceder a funciones permitidas")
     void cpHu02001_iniciarSesionValidaYAccederFuncionPermitida() {
         String tokenAdmin = iniciarSesionComoAdmin();
         asegurarFixture(tokenAdmin);
@@ -31,7 +31,7 @@ class IniciarSesionIT extends AbstractCasoPruebaIT {
     }
 
     @Test
-    @DisplayName("CP-HU02-002 — Rechazar inicio de sesión con contraseña incorrecta")
+    @DisplayName("CP-002 — Rechazar inicio de sesión con contraseña incorrecta")
     void cpHu02002_rechazarPasswordIncorrecta() {
         String tokenAdmin = iniciarSesionComoAdmin();
         asegurarFixture(tokenAdmin);
@@ -45,7 +45,7 @@ class IniciarSesionIT extends AbstractCasoPruebaIT {
     }
 
     @Test
-    @DisplayName("CP-HU02-003 — Rechazar inicio de sesión de un usuario no registrado")
+    @DisplayName("CP-003 — Rechazar inicio de sesión de un usuario no registrado")
     void cpHu02003_rechazarUsuarioNoRegistrado() {
         given().contentType("application/json")
                 .body("""
@@ -56,7 +56,7 @@ class IniciarSesionIT extends AbstractCasoPruebaIT {
     }
 
     @Test
-    @DisplayName("CP-HU02-004 — Impedir el acceso a una función no permitida para el rol del usuario")
+    @DisplayName("CP-004 — Impedir el acceso a una función no permitida para el rol del usuario")
     void cpHu02004_impedirAccesoFuncionNoPermitida() {
         String tokenAdmin = iniciarSesionComoAdmin();
         asegurarFixture(tokenAdmin);

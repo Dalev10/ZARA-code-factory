@@ -8,22 +8,22 @@ import org.junit.jupiter.api.Test;
 class RegistrarProductoIT extends AbstractCasoPruebaIT {
 
     @Test
-    @DisplayName("CP-HU15-001 — Registrar Producto con información válida y situación definida")
+    @DisplayName("CP-001 — Registrar Producto con información válida y situación definida")
     void cpHu15001_registrarProductoValido() {
     }
 
     @Test
-    @DisplayName("CP-HU15-002 — Rechazar registro de Producto con información obligatoria incompleta")
+    @DisplayName("CP-002 — Rechazar registro de Producto con información obligatoria incompleta")
     void cpHu15002_rechazarInformacionIncompleta() {
     }
 
     @Test
-    @DisplayName("CP-HU15-003 — Rechazar registro de Producto duplicado")
+    @DisplayName("CP-003 — Rechazar registro de Producto duplicado")
     void cpHu15003_rechazarProductoDuplicado() {
     }
 
     @Test
-    @DisplayName("CP-HU15-004 — Relacionar un Producto con las ubicaciones donde se gestiona")
+    @DisplayName("CP-004 — Relacionar un Producto con las ubicaciones donde se gestiona")
     void cpHu15004_relacionarProductoConUbicaciones() {
     }
 }

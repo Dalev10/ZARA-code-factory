@@ -34,7 +34,7 @@ class ModificarTiendaIT extends AbstractCasoPruebaIT {
     }
 
     @Test
-    @DisplayName("CP-HU05-001 — Modificar Tienda con datos válidos")
+    @DisplayName("CP-001 — Modificar Tienda con datos válidos")
     void cpHu05001_modificarTiendaConDatosValidos() {
         String tokenAdmin = iniciarSesionComoAdmin();
         asegurarFixture(tokenAdmin);
@@ -52,7 +52,7 @@ class ModificarTiendaIT extends AbstractCasoPruebaIT {
     }
 
     @Test
-    @DisplayName("CP-HU05-002 — Rechazar modificación de Tienda con información inválida")
+    @DisplayName("CP-002 — Rechazar modificación de Tienda con información inválida")
     void cpHu05002_rechazarModificacionInvalida() {
         String tokenAdmin = iniciarSesionComoAdmin();
         asegurarFixture(tokenAdmin);
@@ -67,7 +67,7 @@ class ModificarTiendaIT extends AbstractCasoPruebaIT {
     }
 
     @Test
-    @DisplayName("CP-HU05-003 — La modificación de la Tienda no debe eliminar la información histórica relacionada")
+    @DisplayName("CP-003 — La modificación de la Tienda no debe eliminar la información histórica relacionada")
     void cpHu05003_noEliminarInformacionHistoricaRelacionada() {
         String tokenAdmin = iniciarSesionComoAdmin();
         asegurarFixture(tokenAdmin);

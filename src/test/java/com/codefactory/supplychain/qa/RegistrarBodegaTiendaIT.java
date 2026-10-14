@@ -10,7 +10,7 @@ import static io.restassured.RestAssured.given;
 class RegistrarBodegaTiendaIT extends AbstractCasoPruebaIT {
 
     @Test
-    @DisplayName("CP-HU07-001 — Registrar Bodega_Tienda con la información requerida")
+    @DisplayName("CP-001 — Registrar Bodega_Tienda con la información requerida")
     void cpHu07001_registrarBodegaTiendaValida() {
         String tokenAdmin = iniciarSesionComoAdmin();
         String tiendaId = given().header("Authorization", "Bearer " + tokenAdmin)
@@ -33,7 +33,7 @@ class RegistrarBodegaTiendaIT extends AbstractCasoPruebaIT {
     }
 
     @Test
-    @DisplayName("CP-HU07-002 — Rechazar registro de Bodega_Tienda sin una Tienda asociada válida")
+    @DisplayName("CP-002 — Rechazar registro de Bodega_Tienda sin una Tienda asociada válida")
     void cpHu07002_rechazarSinTiendaValida() {
         String tokenAdmin = iniciarSesionComoAdmin();
 
@@ -47,7 +47,7 @@ class RegistrarBodegaTiendaIT extends AbstractCasoPruebaIT {
     }
 
     @Test
-    @DisplayName("CP-HU07-003 — Rechazar registro de Bodega_Tienda duplicada")
+    @DisplayName("CP-003 — Rechazar registro de Bodega_Tienda duplicada")
     void cpHu07003_rechazarBodegaTiendaDuplicada() {
         String tokenAdmin = iniciarSesionComoAdmin();
         String tiendaId = given().header("Authorization", "Bearer " + tokenAdmin)

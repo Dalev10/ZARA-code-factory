@@ -43,7 +43,7 @@ class ModificarBodegaTiendaIT extends AbstractCasoPruebaIT {
     }
 
     @Test
-    @DisplayName("CP-HU09-001 — Modificar Bodega_Tienda reasignándola a otra Tienda existente")
+    @DisplayName("CP-001 — Modificar Bodega_Tienda reasignándola a otra Tienda existente")
     void cpHu09001_modificarBodegaReasignandoATiendaExistente() {
         String tokenAdmin = iniciarSesionComoAdmin();
         asegurarFixture(tokenAdmin);
@@ -59,7 +59,7 @@ class ModificarBodegaTiendaIT extends AbstractCasoPruebaIT {
     }
 
     @Test
-    @DisplayName("CP-HU09-002 — Rechazar modificación de Bodega_Tienda a una Tienda inexistente")
+    @DisplayName("CP-002 — Rechazar modificación de Bodega_Tienda a una Tienda inexistente")
     void cpHu09002_rechazarModificacionATiendaInexistente() {
         String tokenAdmin = iniciarSesionComoAdmin();
         asegurarFixture(tokenAdmin);
@@ -74,7 +74,7 @@ class ModificarBodegaTiendaIT extends AbstractCasoPruebaIT {
     }
 
     @Test
-    @DisplayName("CP-HU09-003 — Rechazar modificación de Bodega_Tienda con información inválida")
+    @DisplayName("CP-003 — Rechazar modificación de Bodega_Tienda con información inválida")
     void cpHu09003_rechazarModificacionInvalida() {
         String tokenAdmin = iniciarSesionComoAdmin();
         asegurarFixture(tokenAdmin);

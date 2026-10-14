@@ -24,7 +24,7 @@ class ModificarCentroDistribucionIT extends AbstractCasoPruebaIT {
     }
 
     @Test
-    @DisplayName("CP-HU13-001 — Modificar Centro de Distribución con datos válidos")
+    @DisplayName("CP-001 — Modificar Centro de Distribución con datos válidos")
     void cpHu13001_modificarCentroDistribucionConDatosValidos() {
         String tokenAdmin = iniciarSesionComoAdmin();
         asegurarFixture(tokenAdmin);
@@ -42,7 +42,7 @@ class ModificarCentroDistribucionIT extends AbstractCasoPruebaIT {
     }
 
     @Test
-    @DisplayName("CP-HU13-002 — Rechazar modificación de CD con información inválida")
+    @DisplayName("CP-002 — Rechazar modificación de CD con información inválida")
     void cpHu13002_rechazarModificacionInvalida() {
         String tokenAdmin = iniciarSesionComoAdmin();
         asegurarFixture(tokenAdmin);

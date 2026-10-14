@@ -10,7 +10,7 @@ import static org.hamcrest.Matchers.equalTo;
 class ConsultarCentroDistribucionIT extends AbstractCasoPruebaIT {
 
     @Test
-    @DisplayName("CP-HU12-001 — Consultar Centro de Distribución existente")
+    @DisplayName("CP-001 — Consultar Centro de Distribución existente")
     void cpHu12001_consultarCentroDistribucionExistente() {
         String tokenAdmin = iniciarSesionComoAdmin();
         String nombre = unico("CD HU12-001");
@@ -34,7 +34,7 @@ class ConsultarCentroDistribucionIT extends AbstractCasoPruebaIT {
     @Disabled("No ejecutable: la respuesta de consulta de un Centro de Distribución "
             + "(CentroDistribucionConNodoResponse) no expone ningún campo de inventario, "
             + "y no existe un endpoint de inventario de CD en Sprint 1.")
-    @DisplayName("CP-HU12-002 — Consultar la información de inventario asociada al CD")
+    @DisplayName("CP-002 — Consultar la información de inventario asociada al CD")
     void cpHu12002_consultarInventarioAsociado() {
     }
 }

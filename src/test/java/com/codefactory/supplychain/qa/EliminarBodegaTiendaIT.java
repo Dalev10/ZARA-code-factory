@@ -10,7 +10,7 @@ import static org.hamcrest.Matchers.equalTo;
 class EliminarBodegaTiendaIT extends AbstractCasoPruebaIT {
 
     @Test
-    @DisplayName("CP-HU10-001 — Eliminar Bodega_Tienda sin inventario asociado")
+    @DisplayName("CP-001 — Eliminar Bodega_Tienda sin inventario asociado")
     void cpHu10001_eliminarBodegaSinInventarioAsociado() {
         String tokenAdmin = iniciarSesionComoAdmin();
         String tiendaId = given().header("Authorization", "Bearer " + tokenAdmin)
@@ -48,12 +48,12 @@ class EliminarBodegaTiendaIT extends AbstractCasoPruebaIT {
             + "precondición 'Bodega_Tienda con inventario asociado'. El guard de código "
             + "(BodegaTiendaConInventarioAsociadoException en BodegaTiendaService.eliminar) existe, "
             + "pero no se puede activar todavía vía API.")
-    @DisplayName("CP-HU10-002 — Bloquear eliminación de Bodega_Tienda con inventario asociado")
+    @DisplayName("CP-002 — Bloquear eliminación de Bodega_Tienda con inventario asociado")
     void cpHu10002_bloquearEliminacionConInventarioAsociado() {
     }
 
     @Test
-    @DisplayName("CP-HU10-003 — Conservar información histórica tras eliminar una Bodega_Tienda [defecto D-03]")
+    @DisplayName("CP-003 — Conservar información histórica tras eliminar una Bodega_Tienda [defecto D-03]")
     void cpHu10003_conservarInformacionHistorica() {
         String tokenAdmin = iniciarSesionComoAdmin();
         String tiendaId = given().header("Authorization", "Bearer " + tokenAdmin)

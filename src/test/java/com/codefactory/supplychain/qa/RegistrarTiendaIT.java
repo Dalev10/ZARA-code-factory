@@ -9,7 +9,7 @@ import static org.hamcrest.Matchers.equalTo;
 class RegistrarTiendaIT extends AbstractCasoPruebaIT {
 
     @Test
-    @DisplayName("CP-HU03-001 — Registrar Tienda con información válida y ubicación")
+    @DisplayName("CP-001 — Registrar Tienda con información válida y ubicación")
     void cpHu03001_registrarTiendaValidaConUbicacion() {
         String tokenAdmin = iniciarSesionComoAdmin();
         String nombre = unico("Tienda HU03-001");
@@ -27,7 +27,7 @@ class RegistrarTiendaIT extends AbstractCasoPruebaIT {
     }
 
     @Test
-    @DisplayName("CP-HU03-002 — Rechazar registro de Tienda con información obligatoria incompleta")
+    @DisplayName("CP-002 — Rechazar registro de Tienda con información obligatoria incompleta")
     void cpHu03002_rechazarInformacionIncompleta() {
         String tokenAdmin = iniciarSesionComoAdmin();
 
@@ -41,7 +41,7 @@ class RegistrarTiendaIT extends AbstractCasoPruebaIT {
     }
 
     @Test
-    @DisplayName("CP-HU03-003 — Rechazar registro de Tienda duplicada")
+    @DisplayName("CP-003 — Rechazar registro de Tienda duplicada")
     void cpHu03003_rechazarTiendaDuplicada() {
         String tokenAdmin = iniciarSesionComoAdmin();
         String nombre = unico("Tienda HU03-003");

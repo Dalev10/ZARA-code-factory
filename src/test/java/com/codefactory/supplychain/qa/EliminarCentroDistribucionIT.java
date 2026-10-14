@@ -10,7 +10,7 @@ import static org.hamcrest.Matchers.equalTo;
 class EliminarCentroDistribucionIT extends AbstractCasoPruebaIT {
 
     @Test
-    @DisplayName("CP-HU14-001 — Eliminar Centro de Distribución existente")
+    @DisplayName("CP-001 — Eliminar Centro de Distribución existente")
     void cpHu14001_eliminarCentroDistribucionExistente() {
         String tokenAdmin = iniciarSesionComoAdmin();
         String cdId = given().header("Authorization", "Bearer " + tokenAdmin)
@@ -39,12 +39,12 @@ class EliminarCentroDistribucionIT extends AbstractCasoPruebaIT {
             + "guard de dependencias (ver defecto D-02 en el informe de ejecución) — pero "
             + "eso es un hallazgo de revisión de código, no algo reproducible en runtime "
             + "todavía.")
-    @DisplayName("CP-HU14-002 — Bloquear eliminación de CD con operaciones/dependencias asociadas")
+    @DisplayName("CP-002 — Bloquear eliminación de CD con operaciones/dependencias asociadas")
     void cpHu14002_bloquearEliminacionConDependenciasAsociadas() {
     }
 
     @Test
-    @DisplayName("CP-HU14-003 — Conservar información histórica tras eliminar un CD [defecto D-04]")
+    @DisplayName("CP-003 — Conservar información histórica tras eliminar un CD [defecto D-04]")
     void cpHu14003_conservarInformacionHistorica() {
         String tokenAdmin = iniciarSesionComoAdmin();
         String cdId = given().header("Authorization", "Bearer " + tokenAdmin)

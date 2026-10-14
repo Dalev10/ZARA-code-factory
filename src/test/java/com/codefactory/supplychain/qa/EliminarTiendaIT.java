@@ -9,7 +9,7 @@ import static org.hamcrest.Matchers.equalTo;
 class EliminarTiendaIT extends AbstractCasoPruebaIT {
 
     @Test
-    @DisplayName("CP-HU06-001 — Eliminar (desactivar) Tienda sin dependencias")
+    @DisplayName("CP-001 — Eliminar (desactivar) Tienda sin dependencias")
     void cpHu06001_eliminarTiendaSinDependencias() {
         String tokenAdmin = iniciarSesionComoAdmin();
         String tiendaId = given().header("Authorization", "Bearer " + tokenAdmin)
@@ -40,7 +40,7 @@ class EliminarTiendaIT extends AbstractCasoPruebaIT {
     }
 
     @Test
-    @DisplayName("CP-HU06-002 — Bloquear eliminación de Tienda con Bodega_Tienda asociada [defecto D-01]")
+    @DisplayName("CP-002 — Bloquear eliminación de Tienda con Bodega_Tienda asociada [defecto D-01]")
     void cpHu06002_bloquearEliminacionConBodegaAsociada() {
         String tokenAdmin = iniciarSesionComoAdmin();
         String tiendaId = given().header("Authorization", "Bearer " + tokenAdmin)
@@ -69,7 +69,7 @@ class EliminarTiendaIT extends AbstractCasoPruebaIT {
     }
 
     @Test
-    @DisplayName("CP-HU06-003 — Validar que existen operaciones/información asociada antes de eliminar [defecto D-01]")
+    @DisplayName("CP-003 — Validar que existen operaciones/información asociada antes de eliminar [defecto D-01]")
     void cpHu06003_validarInformacionAsociadaAntesDeEliminar() {
         String tokenAdmin = iniciarSesionComoAdmin();
         String tiendaId = given().header("Authorization", "Bearer " + tokenAdmin)
@@ -103,7 +103,7 @@ class EliminarTiendaIT extends AbstractCasoPruebaIT {
     }
 
     @Test
-    @DisplayName("CP-HU06-004 — Conservar información histórica tras eliminar una Tienda")
+    @DisplayName("CP-004 — Conservar información histórica tras eliminar una Tienda")
     void cpHu06004_conservarInformacionHistorica() {
         String tokenAdmin = iniciarSesionComoAdmin();
         String nombre = unico("Tienda HU06-004");
