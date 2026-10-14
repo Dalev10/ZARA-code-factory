@@ -192,6 +192,8 @@
             <scope>test</scope>
         </dependency>
 
+        <!-- Fijado a propósito: Spring Boot gestiona Groovy 5.x, pero rest-assured 5.5.1
+             está compilado contra Groovy 4.0.22 (no actualizar sin actualizar rest-assured). -->
         <dependency>
             <groupId>org.apache.groovy</groupId>
             <artifactId>groovy</artifactId>
@@ -279,28 +281,6 @@
                 </executions>
             </plugin>
 
-            <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>exec-maven-plugin</artifactId>
-                <version>3.5.0</version>
-                <executions>
-                    <execution>
-                        <id>resumen-pruebas-unitarias</id>
-                        <phase>test</phase>
-                        <goals>
-                            <goal>exec</goal>
-                        </goals>
-                        <configuration>
-                            <executable>python3</executable>
-                            <arguments>
-                                <argument>${project.basedir}/tools/resumen_pruebas_unitarias.py</argument>
-                                <argument>${project.build.directory}/surefire-reports</argument>
-                            </arguments>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-
             <!-- ============================================================
                  HU-27: linter estático (Checkstyle). Corre en "mvn verify" y
                  publica el reporte en target/checkstyle-result.xml, pero
@@ -333,15 +313,58 @@
     </build>
 
     <profiles>
+        <!-- Se activa solo si existe python3: así "mvn test" no falla en máquinas sin
+             ese ejecutable (p. ej. Windows), y en Linux/macOS/CI el resumen sigue apareciendo. -->
+        <profile>
+            <id>resumen-pruebas-unitarias</id>
+            <activation>
+                <file>
+                    <exists>/usr/bin/python3</exists>
+                </file>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.codehaus.mojo</groupId>
+                        <artifactId>exec-maven-plugin</artifactId>
+                        <version>3.5.0</version>
+                        <executions>
+                            <execution>
+                                <id>resumen-pruebas-unitarias</id>
+                                <phase>test</phase>
+                                <goals>
+                                    <goal>exec</goal>
+                                </goals>
+                                <configuration>
+                                    <executable>python3</executable>
+                                    <arguments>
+                                        <argument>${project.basedir}/tools/resumen_pruebas_unitarias.py</argument>
+                                        <argument>${project.build.directory}/surefire-reports</argument>
+                                    </arguments>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
         <profile>
             <id>casos-qa-sprint1</id>
             <properties>
-                <surefire.skip>true</surefire.skip>
                 <jacoco.skip>true</jacoco.skip>
                 <checkstyle.skip>true</checkstyle.skip>
             </properties>
             <build>
                 <plugins>
+                    <!-- skipTests va en la configuración de Surefire y no como propiedad:
+                         la propiedad global también apagaría los *IT de Failsafe. -->
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-surefire-plugin</artifactId>
+                        <configuration>
+                            <skipTests>true</skipTests>
+                        </configuration>
+                    </plugin>
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-failsafe-plugin</artifactId>
