@@ -43,6 +43,10 @@ spring:
     properties:
       hibernate:
         format_sql: true
+        # HU-29: las fechas viajan a la base siempre en UTC, sin depender de la zona
+        # horaria de la JVM (Render corre en UTC; las máquinas locales, en UTC-5).
+        jdbc:
+          time_zone: UTC
 
   flyway:
     enabled: true

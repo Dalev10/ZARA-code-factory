@@ -43,6 +43,21 @@ tipo interno de otro, o aparece un ciclo entre módulos, `./mvnw verify` falla.
 Lo que un módulo expone a los demás se declara con `@NamedInterface`; `shared` es
 un módulo abierto.
 
+**Eventos entre módulos.** Si un módulo necesita una respuesta de otro, usa un
+puerto síncrono; si solo informa un hecho, publica un evento. Todo listener que
+reacciona a un hecho de otro módulo sigue esta forma:
+
+```java
+@TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+@Transactional(propagation = Propagation.REQUIRES_NEW)
+public void alOcurrirAlgo(AlgoOcurrio evento) { ... }
+```
+
+Corre en el mismo hilo, después del commit y antes de responder al cliente; si
+falla, Spring lo registra en el log y la operación de origen queda confirmada.
+Spring no arranca si el listener declara `@Transactional` sin `REQUIRES_NEW`.
+Comportamiento fijado en `EventosReintentosZonaHorariaTest`.
+
 ## Primeros pasos
 
 1. Generar el Maven Wrapper (requiere Maven instalado localmente una única vez):
