@@ -38,6 +38,10 @@ excepciones globales, DTOs comunes) viven en `shared/`.
 **Regla no negociable:** ningún módulo accede directamente a las tablas o
 entidades JPA de otro módulo. La comunicación entre módulos ocurre siempre a
 través de los puertos de aplicación (`application/port/*`).
+Spring Modulith la verifica en cada build (`ModularidadTest`): si un módulo usa un
+tipo interno de otro, o aparece un ciclo entre módulos, `./mvnw verify` falla.
+Lo que un módulo expone a los demás se declara con `@NamedInterface`; `shared` es
+un módulo abierto.
 
 ## Primeros pasos
 
