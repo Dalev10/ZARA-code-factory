@@ -80,7 +80,7 @@ class MfaControllerTest {
     @Test
     void activarSinAutenticacionSeRechaza() throws Exception {
         mockMvc.perform(post("/api/v1/mfa/activar"))
-                .andExpect(status().is4xxClientError());
+                .andExpect(status().isUnauthorized());
     }
 
     @Test
