@@ -19,16 +19,17 @@ public interface UsuarioJpaRepository extends JpaRepository<UsuarioEntity, UUID>
     boolean existsByEmail(String email);
 
     /**
-     * Estado y scopes del usuario en una sola consulta (se ejecuta en cada request). Una
-     * fila por scope; si el usuario no tiene roles ni scopes, una sola fila con codigo NULL;
-     * si no existe, ninguna fila.
+     * Estado, scopes y tiendas asignadas del usuario en una sola consulta (se ejecuta en cada
+     * request). Una fila por combinación scope x tienda (columnas NULL si no tiene); si el
+     * usuario no existe, ninguna fila. Con los volúmenes de un usuario, el producto es chico.
      */
     @Query(value = """
-            SELECT u.estado AS estado, s.codigo AS codigo
+            SELECT u.estado AS estado, s.codigo AS codigo, ut.tienda_id AS tienda
             FROM usuario u
             LEFT JOIN usuario_rol ur ON ur.usuario_id = u.id
             LEFT JOIN rol_scope rs ON rs.rol_id = ur.rol_id
             LEFT JOIN scope s ON s.id = rs.scope_id
+            LEFT JOIN usuario_tienda ut ON ut.usuario_id = u.id
             WHERE u.id = :usuarioId
             """, nativeQuery = true)
     List<FilaContextoAutorizacion> buscarContextoAutorizacion(@Param("usuarioId") UUID usuarioId);
@@ -37,5 +38,7 @@ public interface UsuarioJpaRepository extends JpaRepository<UsuarioEntity, UUID>
         String getEstado();
 
         String getCodigo();
+
+        UUID getTienda();
     }
 }

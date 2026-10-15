@@ -3,18 +3,24 @@ package com.codefactory.supplychain.identity.infrastructure.adapter.in.web;
 import com.codefactory.supplychain.identity.application.port.in.ActivarUsuarioUseCase;
 import com.codefactory.supplychain.identity.application.port.in.AsignarRolAUsuarioUseCase;
 import com.codefactory.supplychain.identity.application.port.in.AsignarRolComando;
+import com.codefactory.supplychain.identity.application.port.in.AsignarTiendaAUsuarioUseCase;
+import com.codefactory.supplychain.identity.application.port.in.AsignarTiendaComando;
 import com.codefactory.supplychain.identity.application.port.in.DesactivarUsuarioComando;
 import com.codefactory.supplychain.identity.application.port.in.DesactivarUsuarioUseCase;
 import com.codefactory.supplychain.identity.application.port.in.ListarRolesDeUsuarioUseCase;
+import com.codefactory.supplychain.identity.application.port.in.ListarTiendasDeUsuarioUseCase;
 import com.codefactory.supplychain.identity.application.port.in.ListarUsuariosUseCase;
 import com.codefactory.supplychain.identity.application.port.in.ObtenerUsuarioUseCase;
 import com.codefactory.supplychain.identity.application.port.in.QuitarRolDeUsuarioUseCase;
+import com.codefactory.supplychain.identity.application.port.in.QuitarTiendaDeUsuarioUseCase;
 import com.codefactory.supplychain.identity.application.port.in.RegistrarUsuarioComando;
 import com.codefactory.supplychain.identity.application.port.in.RegistrarUsuarioUseCase;
 import com.codefactory.supplychain.identity.domain.model.Usuario;
 import com.codefactory.supplychain.identity.infrastructure.adapter.in.web.dto.AsignarRolRequest;
+import com.codefactory.supplychain.identity.infrastructure.adapter.in.web.dto.AsignarTiendaRequest;
 import com.codefactory.supplychain.identity.infrastructure.adapter.in.web.dto.RegistrarUsuarioRequest;
 import com.codefactory.supplychain.identity.infrastructure.adapter.in.web.dto.RolResponse;
+import com.codefactory.supplychain.identity.infrastructure.adapter.in.web.dto.TiendaAsignadaResponse;
 import com.codefactory.supplychain.identity.infrastructure.adapter.in.web.dto.UsuarioResponse;
 import com.codefactory.supplychain.shared.security.UsuarioActual;
 import jakarta.validation.Valid;
@@ -58,6 +64,9 @@ public class UsuarioController {
     private final ListarRolesDeUsuarioUseCase listarRolesDeUsuarioUseCase;
     private final DesactivarUsuarioUseCase desactivarUsuarioUseCase;
     private final ActivarUsuarioUseCase activarUsuarioUseCase;
+    private final AsignarTiendaAUsuarioUseCase asignarTiendaAUsuarioUseCase;
+    private final QuitarTiendaDeUsuarioUseCase quitarTiendaDeUsuarioUseCase;
+    private final ListarTiendasDeUsuarioUseCase listarTiendasDeUsuarioUseCase;
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
@@ -103,5 +112,22 @@ public class UsuarioController {
     @PutMapping("/{id}/activar")
     public UsuarioResponse activar(@PathVariable UUID id) {
         return UsuarioResponse.desde(activarUsuarioUseCase.activar(id));
+    }
+
+    @GetMapping("/{id}/tiendas")
+    public List<TiendaAsignadaResponse> listarTiendas(@PathVariable UUID id) {
+        return listarTiendasDeUsuarioUseCase.listarTiendas(id).stream().map(TiendaAsignadaResponse::desde).toList();
+    }
+
+    @PostMapping("/{id}/tiendas")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void asignarTienda(@PathVariable UUID id, @Valid @RequestBody AsignarTiendaRequest request) {
+        asignarTiendaAUsuarioUseCase.asignar(new AsignarTiendaComando(id, request.tiendaId()));
+    }
+
+    @DeleteMapping("/{id}/tiendas/{tiendaId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void quitarTienda(@PathVariable UUID id, @PathVariable UUID tiendaId) {
+        quitarTiendaDeUsuarioUseCase.quitar(new AsignarTiendaComando(id, tiendaId));
     }
 }

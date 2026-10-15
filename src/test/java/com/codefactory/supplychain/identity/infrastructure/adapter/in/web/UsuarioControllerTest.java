@@ -373,6 +373,65 @@ class UsuarioControllerTest {
                 .andExpect(jsonPath("$.mensaje").value("La operación dejaría al sistema sin ningún usuario ADMIN activo"));
     }
 
+    @Test
+    void asignaListaYQuitaTiendasDeUnUsuarioConDatosQueProveeInventario() throws Exception {
+        String tokenAdmin = loguearComoAdmin("admin-tiendas@ejemplo.com");
+        Usuario vendedor = crearUsuario("vendedor-tiendas@ejemplo.com");
+        String tiendaActiva = crearTienda(tokenAdmin, "Tienda Norte HU32");
+        String tiendaInactiva = crearTienda(tokenAdmin, "Tienda Cerrada HU32");
+        mockMvc.perform(delete("/api/v1/tiendas/" + tiendaInactiva)
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + tokenAdmin))
+                .andExpect(status().isNoContent());
+        String rutaTiendas = "/api/v1/usuarios/" + vendedor.getId() + "/tiendas";
+
+        for (String tienda : List.of(tiendaActiva, tiendaInactiva, tiendaActiva)) {
+            mockMvc.perform(post(rutaTiendas)
+                            .header(HttpHeaders.AUTHORIZATION, "Bearer " + tokenAdmin)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content("{\"tiendaId\": \"" + tienda + "\"}"))
+                    .andExpect(status().isNoContent());
+        }
+
+        // La segunda asignación de la misma tienda no la duplica; la inactiva se puede asignar (D-70).
+        mockMvc.perform(get(rutaTiendas).header(HttpHeaders.AUTHORIZATION, "Bearer " + tokenAdmin))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(2))
+                .andExpect(jsonPath("$[?(@.id == '" + tiendaActiva + "')].nombre").value("Tienda Norte HU32"))
+                .andExpect(jsonPath("$[?(@.id == '" + tiendaActiva + "')].activa").value(true))
+                .andExpect(jsonPath("$[?(@.id == '" + tiendaInactiva + "')].activa").value(false));
+
+        mockMvc.perform(delete(rutaTiendas + "/" + tiendaActiva)
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + tokenAdmin))
+                .andExpect(status().isNoContent());
+
+        mockMvc.perform(get(rutaTiendas).header(HttpHeaders.AUTHORIZATION, "Bearer " + tokenAdmin))
+                .andExpect(jsonPath("$.length()").value(1))
+                .andExpect(jsonPath("$[0].id").value(tiendaInactiva));
+    }
+
+    @Test
+    void asignarUnaTiendaQueNoExisteSeRechazaCon404() throws Exception {
+        String tokenAdmin = loguearComoAdmin("admin-tienda-inexistente@ejemplo.com");
+        Usuario vendedor = crearUsuario("vendedor-sin-tienda@ejemplo.com");
+
+        mockMvc.perform(post("/api/v1/usuarios/" + vendedor.getId() + "/tiendas")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + tokenAdmin)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"tiendaId\": \"" + UUID.randomUUID() + "\"}"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.mensaje").value("La tienda solicitada no existe"));
+    }
+
+    private String crearTienda(String tokenAdmin, String nombre) throws Exception {
+        MvcResult creada = mockMvc.perform(post("/api/v1/tiendas")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + tokenAdmin)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"nombre\": \"" + nombre + "\", \"ubicacion\": \"Medellín\"}"))
+                .andExpect(status().isCreated())
+                .andReturn();
+        return new ObjectMapper().readTree(creada.getResponse().getContentAsString()).get("id").asText();
+    }
+
     private static String registrarUsuarioJson(String email, String nombreCompleto, String password) {
         return """
                 {
