@@ -9,15 +9,14 @@ import com.codefactory.supplychain.identity.application.port.in.ConfirmarMfaUseC
 import com.codefactory.supplychain.identity.infrastructure.adapter.in.web.dto.ActivarMfaResponse;
 import com.codefactory.supplychain.identity.infrastructure.adapter.in.web.dto.ConfirmarMfaRequest;
 import com.codefactory.supplychain.identity.infrastructure.adapter.in.web.dto.ConfirmarMfaResponse;
+import com.codefactory.supplychain.shared.security.UsuarioActual;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.core.Authentication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-
-import java.util.UUID;
 
 /**
  * Requiere un JWT válido (ver SecurityConfig / JwtAuthenticationFilter): activar MFA
@@ -35,21 +34,16 @@ public class MfaController {
     private final ConfirmarMfaUseCase confirmarMfaUseCase;
 
     @PostMapping("/activar")
-    public ActivarMfaResponse activar(Authentication authentication) {
-        ActivarMfaResultado resultado = activarMfaUseCase.activar(
-                new ActivarMfaComando(usuarioIdDe(authentication)));
+    public ActivarMfaResponse activar(@AuthenticationPrincipal UsuarioActual actor) {
+        ActivarMfaResultado resultado = activarMfaUseCase.activar(new ActivarMfaComando(actor.id()));
         return new ActivarMfaResponse(resultado.secretoBase32(), resultado.qrCodeDataUri());
     }
 
     @PostMapping("/confirmar")
-    public ConfirmarMfaResponse confirmar(Authentication authentication,
+    public ConfirmarMfaResponse confirmar(@AuthenticationPrincipal UsuarioActual actor,
                                            @Valid @RequestBody ConfirmarMfaRequest request) {
         ConfirmarMfaResultado resultado = confirmarMfaUseCase.confirmar(
-                new ConfirmarMfaComando(usuarioIdDe(authentication), request.codigo()));
+                new ConfirmarMfaComando(actor.id(), request.codigo()));
         return new ConfirmarMfaResponse(resultado.codigosRespaldo());
-    }
-
-    private static UUID usuarioIdDe(Authentication authentication) {
-        return (UUID) authentication.getPrincipal();
     }
 }

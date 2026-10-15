@@ -133,7 +133,7 @@ class RolControllerTest {
                         .content("""
                                 {"nombre": "ROL_SIN_AUTH", "descripcion": "desc"}
                                 """))
-                .andExpect(status().is4xxClientError());
+                .andExpect(status().isUnauthorized());
     }
 
     @Test

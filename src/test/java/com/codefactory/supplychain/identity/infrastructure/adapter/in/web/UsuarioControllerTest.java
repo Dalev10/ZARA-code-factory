@@ -126,7 +126,7 @@ class UsuarioControllerTest {
         mockMvc.perform(post("/api/v1/usuarios")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(registrarUsuarioJson("sin-auth@ejemplo.com", "Sin Auth", "contraseñaSegura123")))
-                .andExpect(status().is4xxClientError());
+                .andExpect(status().isUnauthorized());
     }
 
     @Test

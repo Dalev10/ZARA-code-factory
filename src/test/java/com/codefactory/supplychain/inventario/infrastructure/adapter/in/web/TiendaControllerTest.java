@@ -159,7 +159,7 @@ class TiendaControllerTest {
                         .content("""
                                 {"nombre": "Tienda Sin Auth", "ubicacion": "Test"}
                                 """))
-                .andExpect(status().is4xxClientError());
+                .andExpect(status().isUnauthorized());
     }
 
     @Test

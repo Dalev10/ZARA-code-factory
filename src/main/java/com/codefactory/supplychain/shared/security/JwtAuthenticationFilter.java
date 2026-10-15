@@ -25,15 +25,15 @@ import java.util.UUID;
 
 /**
  * Resuelve el usuario autenticado a partir del JWT del header "Authorization: Bearer",
- * y sus autoridades (los scopes que le otorgan sus roles, ver ScopesUsuarioPort) para
+ * y sus autoridades (los scopes que le otorgan sus roles, ver ContextoAutorizacionPort) para
  * que el guard genérico de HU-11 (@PreAuthorize("hasAuthority('...')")) funcione en
  * cualquier endpoint. Los scopes se resuelven contra la base en cada request — nunca
  * se cachean en el JWT — para que quitarle un scope a un rol aplique de inmediato, sin
  * esperar a que expire el access token.
  *
- * El principal que queda en el SecurityContext es el UUID del usuario (el "sub" del
- * JWT), no un objeto de dominio completo — evita que este filtro transversal dependa
- * del módulo identity para resolver un Usuario.
+ * El principal que queda en el SecurityContext es un UsuarioActual (id + scopes), no un
+ * objeto de dominio del módulo identity. Si el usuario no existe o no está ACTIVO, el
+ * request sigue sin autenticar y SecurityConfig responde 401.
  *
  * Componentes transversales de tipo 'security', compartidos por todos los módulos.
  */
@@ -41,12 +41,12 @@ import java.util.UUID;
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final SecretKey clave;
-    private final ScopesUsuarioPort scopesUsuarioPort;
+    private final ContextoAutorizacionPort contextoAutorizacionPort;
 
     public JwtAuthenticationFilter(@Value("${app.security.jwt.secret}") String secreto,
-                                    ScopesUsuarioPort scopesUsuarioPort) {
+                                    ContextoAutorizacionPort contextoAutorizacionPort) {
         this.clave = Keys.hmacShaKeyFor(secreto.getBytes(StandardCharsets.UTF_8));
-        this.scopesUsuarioPort = scopesUsuarioPort;
+        this.contextoAutorizacionPort = contextoAutorizacionPort;
     }
 
     @Override
@@ -64,12 +64,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     SecurityContextHolder.clearContext();
                 } else {
                     UUID usuarioId = UUID.fromString(claims.getSubject());
-                    List<GrantedAuthority> autoridades = scopesUsuarioPort.obtenerScopes(usuarioId).stream()
-                            .map(SimpleGrantedAuthority::new)
-                            .map(GrantedAuthority.class::cast)
-                            .toList();
-                    var authentication = new UsernamePasswordAuthenticationToken(usuarioId, null, autoridades);
-                    SecurityContextHolder.getContext().setAuthentication(authentication);
+                    contextoAutorizacionPort.resolver(usuarioId).ifPresentOrElse(
+                            this::autenticar, SecurityContextHolder::clearContext);
                 }
             } catch (JwtException | IllegalArgumentException excepcionTokenInvalido) {
                 SecurityContextHolder.clearContext();
@@ -77,5 +73,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
 
         chain.doFilter(request, response);
+    }
+
+    private void autenticar(UsuarioActual usuario) {
+        List<GrantedAuthority> autoridades = usuario.scopes().stream()
+                .map(SimpleGrantedAuthority::new)
+                .map(GrantedAuthority.class::cast)
+                .toList();
+        SecurityContextHolder.getContext().setAuthentication(
+                new UsernamePasswordAuthenticationToken(usuario, null, autoridades));
     }
 }
