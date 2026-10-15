@@ -24,5 +24,9 @@ public interface UsuarioRolRepositoryPort {
 
     List<Rol> listarRolesDeUsuario(UUID usuarioId);
 
-    long contarUsuariosConRol(UUID rolId);
+    /**
+     * Solo cuenta usuarios ACTIVO: un ADMIN desactivado no puede administrar, así que no
+     * cuenta para la regla de "nunca dejar al sistema sin ADMIN".
+     */
+    long contarUsuariosActivosConRol(UUID rolId);
 }

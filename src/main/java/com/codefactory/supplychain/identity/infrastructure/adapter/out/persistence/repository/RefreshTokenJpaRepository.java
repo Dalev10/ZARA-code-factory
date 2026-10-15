@@ -17,8 +17,15 @@ public interface RefreshTokenJpaRepository extends JpaRepository<RefreshTokenEnt
 
     Optional<RefreshTokenEntity> findByTokenHash(String tokenHash);
 
-    @Modifying(clearAutomatically = true)
+    // flushAutomatically: sin él, clearAutomatically descartaría los cambios pendientes de la
+    // misma transacción (p. ej. el estado del usuario al desactivarlo, HU-31) antes de enviarlos.
+    @Modifying(flushAutomatically = true, clearAutomatically = true)
     @Query("update RefreshTokenEntity r set r.revocadoEn = :ahora "
             + "where r.familiaId = :familiaId and r.revocadoEn is null")
     int revocarFamilia(@Param("familiaId") UUID familiaId, @Param("ahora") Instant ahora);
+
+    @Modifying(flushAutomatically = true, clearAutomatically = true)
+    @Query("update RefreshTokenEntity r set r.revocadoEn = :ahora "
+            + "where r.usuarioId = :usuarioId and r.revocadoEn is null")
+    int revocarTodosDeUsuario(@Param("usuarioId") UUID usuarioId, @Param("ahora") Instant ahora);
 }

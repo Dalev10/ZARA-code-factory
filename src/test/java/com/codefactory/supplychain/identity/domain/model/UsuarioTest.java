@@ -196,4 +196,25 @@ class UsuarioTest {
         assertThatThrownBy(() -> usuario.confirmarActivacionMfa(Instant.now()))
                 .isInstanceOf(MfaNoConfiguradoException.class);
     }
+
+    @Test
+    void desactivarPasaAInactivoConservandoElRestoDeLosDatos() {
+        Usuario usuario = Usuario.crear(EMAIL, "Ana Pérez", HASH).registrarIntentoFallido(Instant.now());
+        Instant ahora = Instant.now();
+
+        Usuario desactivado = usuario.desactivar(ahora);
+
+        assertThat(desactivado.getEstado()).isEqualTo(EstadoUsuario.INACTIVO);
+        assertThat(desactivado.getId()).isEqualTo(usuario.getId());
+        assertThat(desactivado.getIntentosFallidos()).isEqualTo(usuario.getIntentosFallidos());
+        assertThat(desactivado.getActualizadoEn()).isEqualTo(ahora);
+    }
+
+    @Test
+    void activarDevuelveAlUsuarioAlEstadoActivoYPedirElEstadoQueYaTieneNoEsError() {
+        Usuario inactivo = Usuario.crear(EMAIL, "Ana Pérez", HASH).desactivar(Instant.now());
+
+        assertThat(inactivo.activar(Instant.now()).getEstado()).isEqualTo(EstadoUsuario.ACTIVO);
+        assertThat(inactivo.desactivar(Instant.now()).getEstado()).isEqualTo(EstadoUsuario.INACTIVO);
+    }
 }

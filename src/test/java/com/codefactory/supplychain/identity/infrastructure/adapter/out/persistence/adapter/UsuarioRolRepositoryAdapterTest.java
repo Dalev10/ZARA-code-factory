@@ -19,6 +19,7 @@ import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
+import java.time.Instant;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -124,7 +125,7 @@ class UsuarioRolRepositoryAdapterTest {
     }
 
     @Test
-    void contarUsuariosConRolCuentaSoloLasAsignacionesDeEseRol() {
+    void contarUsuariosActivosConRolCuentaSoloAsignacionesDeEseRolConUsuarioActivo() {
         Usuario usuarioUno = usuarioRepository.guardar(Usuario.crear(Email.de("contar-uno@ejemplo.com"),
                 "Contar Uno", PasswordHash.de("$2a$10$abcdefghijklmnopqrstuv")));
         Usuario usuarioDos = usuarioRepository.guardar(Usuario.crear(Email.de("contar-dos@ejemplo.com"),
@@ -132,16 +133,18 @@ class UsuarioRolRepositoryAdapterTest {
         Rol rol = rolRepository.guardar(Rol.crear("ROL_PARA_CONTAR", null));
         entityManager.flush();
 
-        assertThat(usuarioRolRepository.contarUsuariosConRol(rol.getId())).isZero();
+        assertThat(usuarioRolRepository.contarUsuariosActivosConRol(rol.getId())).isZero();
 
         usuarioRolRepository.asignar(usuarioUno.getId(), rol.getId());
-        entityManager.flush();
-        entityManager.clear();
-        assertThat(usuarioRolRepository.contarUsuariosConRol(rol.getId())).isEqualTo(1);
-
         usuarioRolRepository.asignar(usuarioDos.getId(), rol.getId());
         entityManager.flush();
         entityManager.clear();
-        assertThat(usuarioRolRepository.contarUsuariosConRol(rol.getId())).isEqualTo(2);
+        assertThat(usuarioRolRepository.contarUsuariosActivosConRol(rol.getId())).isEqualTo(2);
+
+        // HU-31: un usuario desactivado conserva el rol pero deja de contar.
+        usuarioRepository.guardar(usuarioDos.desactivar(Instant.now()));
+        entityManager.flush();
+        entityManager.clear();
+        assertThat(usuarioRolRepository.contarUsuariosActivosConRol(rol.getId())).isEqualTo(1);
     }
 }
