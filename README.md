@@ -92,3 +92,18 @@ entidades del ERD de negocio, con UUID como identificador en todo el
 dominio de negocio. El esquema del módulo `identity` (usuarios/autenticación)
 se agrega en `V2` a `V8`; las migraciones posteriores (`V9` en adelante)
 extienden el esquema de negocio a medida que se desarrollan las features.
+
+## Pruebas
+
+- `./mvnw verify` corre todas las pruebas del equipo de desarrollo (sufijo `Test`),
+  con Postgres real vía Testcontainers, la verificación de módulos y el umbral de
+  cobertura de JaCoCo (85 %). Es lo mismo que corre la CI.
+- `./mvnw -P casos-qa-sprint1 verify` corre las pruebas funcionales de QA
+  (sufijo `IT`, en `src/test/.../qa/`) y genera su reporte.
+- Para probar autorización con usuarios reales, usar `soporte/UsuariosDePrueba`
+  (`@Import(UsuariosDePrueba.class)`): `usuarios.conRol("VENDEDOR", tiendaId)` o
+  `usuarios.conScopes(Set.of("ventas:anular"))` devuelven el usuario y su token
+  (`bearer()`), sin copiar en cada test el armado de usuario, rol y login.
+- Los roles y scopes sembrados por las migraciones (`ADMIN`, `VENDEDOR`,
+  `SUPERVISOR_TIENDA`, `OPERADOR_CD` y sus scopes) son nombres reservados: no
+  usarlos como datos de prueba nuevos.
