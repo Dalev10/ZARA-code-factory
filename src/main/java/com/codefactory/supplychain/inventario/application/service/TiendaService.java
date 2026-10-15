@@ -1,5 +1,7 @@
 package com.codefactory.supplychain.inventario.application.service;
 
+import com.codefactory.supplychain.inventario.api.ConsultaTiendas;
+import com.codefactory.supplychain.inventario.api.TiendaResumen;
 import com.codefactory.supplychain.inventario.application.port.in.TiendaUseCase;
 import com.codefactory.supplychain.inventario.application.port.out.NodoRepositoryPort;
 import com.codefactory.supplychain.inventario.application.port.out.TiendaRepositoryPort;
@@ -14,6 +16,9 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Collection;
+import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 /**
@@ -22,11 +27,14 @@ import java.util.UUID;
  * aprovisiona por separado (ver BodegaTiendaService, FEAT-03) sobre una
  * Tienda ya existente.
  *
+ * También implementa ConsultaTiendas, la consulta de solo lectura que inventario publica
+ * para otros módulos en su paquete api (ver ARQUITECTURA.md).
+ *
  * Módulo: inventario — Red de nodos (CD, Tienda/Almacén, Bodega_Tienda) e inventario polimórfico sobre ellos.
  */
 @Service
 @RequiredArgsConstructor
-public class TiendaService implements TiendaUseCase {
+public class TiendaService implements TiendaUseCase, ConsultaTiendas {
 
     private final TiendaRepositoryPort tiendaRepositoryPort;
     private final NodoRepositoryPort nodoRepositoryPort;
@@ -71,5 +79,19 @@ public class TiendaService implements TiendaUseCase {
     public Tienda activar(UUID id) {
         Tienda tienda = obtenerPorId(id);
         return tiendaRepositoryPort.guardar(tienda.activar());
+    }
+
+    @Override
+    public Optional<TiendaResumen> buscar(UUID tiendaId) {
+        return tiendaRepositoryPort.buscarPorId(tiendaId).map(TiendaService::resumir);
+    }
+
+    @Override
+    public List<TiendaResumen> buscarTodas(Collection<UUID> tiendaIds) {
+        return tiendaRepositoryPort.buscarPorIds(tiendaIds).stream().map(TiendaService::resumir).toList();
+    }
+
+    private static TiendaResumen resumir(Tienda tienda) {
+        return new TiendaResumen(tienda.getId(), tienda.getNombre(), tienda.estaActiva());
     }
 }

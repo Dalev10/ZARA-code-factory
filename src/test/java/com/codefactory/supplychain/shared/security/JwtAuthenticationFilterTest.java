@@ -41,7 +41,7 @@ class JwtAuthenticationFilterTest {
         UUID usuarioId = UUID.randomUUID();
         String token = generarToken(usuarioId, Duration.ofMinutes(15));
         when(contextoAutorizacionPort.resolver(usuarioId))
-                .thenReturn(Optional.of(new UsuarioActual(usuarioId, Set.of())));
+                .thenReturn(Optional.of(new UsuarioActual(usuarioId, Set.of(), Set.of())));
 
         HttpServletRequest request = mock(HttpServletRequest.class);
         HttpServletResponse response = mock(HttpServletResponse.class);
@@ -52,7 +52,7 @@ class JwtAuthenticationFilterTest {
 
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         assertThat(authentication).isNotNull();
-        assertThat(authentication.getPrincipal()).isEqualTo(new UsuarioActual(usuarioId, Set.of()));
+        assertThat(authentication.getPrincipal()).isEqualTo(new UsuarioActual(usuarioId, Set.of(), Set.of()));
         verify(chain).doFilter(request, response);
     }
 
@@ -61,7 +61,7 @@ class JwtAuthenticationFilterTest {
         UUID usuarioId = UUID.randomUUID();
         String token = generarToken(usuarioId, Duration.ofMinutes(15));
         when(contextoAutorizacionPort.resolver(usuarioId)).thenReturn(Optional.of(
-                new UsuarioActual(usuarioId, Set.of("usuarios:administrar", "roles:administrar"))));
+                new UsuarioActual(usuarioId, Set.of("usuarios:administrar", "roles:administrar"), Set.of())));
 
         HttpServletRequest request = mock(HttpServletRequest.class);
         HttpServletResponse response = mock(HttpServletResponse.class);

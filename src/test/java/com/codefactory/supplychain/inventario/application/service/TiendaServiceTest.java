@@ -1,5 +1,6 @@
 package com.codefactory.supplychain.inventario.application.service;
 
+import com.codefactory.supplychain.inventario.api.TiendaResumen;
 import com.codefactory.supplychain.inventario.application.port.out.NodoRepositoryPort;
 import com.codefactory.supplychain.inventario.application.port.out.TiendaRepositoryPort;
 import com.codefactory.supplychain.inventario.domain.exception.TiendaNoEncontradaException;
@@ -127,5 +128,31 @@ class TiendaServiceTest {
         Tienda activada = servicio.activar(tienda.getId());
 
         assertThat(activada.estaActiva()).isTrue();
+    }
+
+    @Test
+    void laConsultaPublicaResumeLaTiendaSinExponerElDominio() {
+        UUID id = UUID.randomUUID();
+        Tienda inactiva = Tienda.reconstruir(id, "Centro", "Medellín", EstadoTienda.INACTIVA, Instant.now(), Instant.now());
+        when(tiendaRepositoryPort.buscarPorId(id)).thenReturn(Optional.of(inactiva));
+
+        assertThat(servicio.buscar(id)).contains(new TiendaResumen(id, "Centro", false));
+    }
+
+    @Test
+    void laConsultaPublicaDevuelveVacioSiLaTiendaNoExiste() {
+        UUID id = UUID.randomUUID();
+        when(tiendaRepositoryPort.buscarPorId(id)).thenReturn(Optional.empty());
+
+        assertThat(servicio.buscar(id)).isEmpty();
+    }
+
+    @Test
+    void laConsultaPublicaResumeVariasTiendasEnUnaSolaBusqueda() {
+        UUID id = UUID.randomUUID();
+        Tienda activa = Tienda.reconstruir(id, "Norte", null, EstadoTienda.ACTIVA, Instant.now(), Instant.now());
+        when(tiendaRepositoryPort.buscarPorIds(List.of(id))).thenReturn(List.of(activa));
+
+        assertThat(servicio.buscarTodas(List.of(id))).containsExactly(new TiendaResumen(id, "Norte", true));
     }
 }

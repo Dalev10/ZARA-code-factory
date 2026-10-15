@@ -90,6 +90,29 @@ class ContextoAutorizacionAdapterTest {
     }
 
     @Test
+    void resuelveLasTiendasAsignadasSinDuplicarScopesNiTiendas() {
+        UUID usuarioId = crearUsuario("ACTIVO", "NULL");
+        asignarRol(usuarioId, crearRolConScopes("uno", "dos"));
+        UUID tiendaA = crearTienda();
+        UUID tiendaB = crearTienda();
+        asignarTienda(usuarioId, tiendaA);
+        asignarTienda(usuarioId, tiendaB);
+
+        UsuarioActual usuario = adapter.resolver(usuarioId).orElseThrow();
+
+        assertThat(usuario.scopes()).containsExactlyInAnyOrder(sufijo("uno"), sufijo("dos"));
+        assertThat(usuario.tiendasPermitidas()).containsExactlyInAnyOrder(tiendaA, tiendaB);
+    }
+
+    @Test
+    void usuarioSinTiendasAsignadasSeResuelveSinTiendas() {
+        UUID usuarioId = crearUsuario("ACTIVO", "NULL");
+        asignarRol(usuarioId, crearRolConScopes("solo-scope"));
+
+        assertThat(adapter.resolver(usuarioId)).hasValueSatisfying(u -> assertThat(u.tiendasPermitidas()).isEmpty());
+    }
+
+    @Test
     void usuarioInexistenteNoSeResuelve() {
         assertThat(adapter.resolver(UUID.randomUUID())).isEmpty();
     }
@@ -119,6 +142,16 @@ class ContextoAutorizacionAdapterTest {
 
     private void asignarRol(UUID usuarioId, UUID rolId) {
         ejecutar("INSERT INTO usuario_rol (usuario_id, rol_id) VALUES (?1, ?2)", usuarioId, rolId);
+    }
+
+    private UUID crearTienda() {
+        UUID tiendaId = UUID.randomUUID();
+        ejecutar("INSERT INTO tienda (id, nombre) VALUES (?1, ?2)", tiendaId, "tienda-" + tiendaId);
+        return tiendaId;
+    }
+
+    private void asignarTienda(UUID usuarioId, UUID tiendaId) {
+        ejecutar("INSERT INTO usuario_tienda (usuario_id, tienda_id) VALUES (?1, ?2)", usuarioId, tiendaId);
     }
 
     private void ejecutar(String sql, Object... parametros) {

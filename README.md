@@ -18,6 +18,7 @@ de Puertos y Adaptadores (arquitectura hexagonal):
 
 ```
 <modulo>/
+├── api/               # Lo único que otros módulos pueden usar (solo si tiene consumidores)
 ├── domain/            # Reglas de negocio puras, sin dependencias de framework
 │   ├── model/
 │   └── exception/
@@ -36,12 +37,13 @@ Módulos actuales: `identity`, `catalogo`, `inventario`, `ventas`,
 excepciones globales, DTOs comunes) viven en `shared/`.
 
 **Regla no negociable:** ningún módulo accede directamente a las tablas o
-entidades JPA de otro módulo. La comunicación entre módulos ocurre siempre a
-través de los puertos de aplicación (`application/port/*`).
+entidades JPA de otro módulo. Un módulo solo puede usar de otro lo que este
+publica en su paquete `api/` (marcado con `@NamedInterface("api")`), y lo hace a
+través de un puerto propio y un adaptador. La guía completa, con ejemplos y el
+checklist para cada HU, está en [ARQUITECTURA.md](ARQUITECTURA.md).
 Spring Modulith la verifica en cada build (`ModularidadTest`): si un módulo usa un
 tipo interno de otro, o aparece un ciclo entre módulos, `./mvnw verify` falla.
-Lo que un módulo expone a los demás se declara con `@NamedInterface`; `shared` es
-un módulo abierto.
+`shared` es un módulo abierto.
 
 **Eventos entre módulos.** Si un módulo necesita una respuesta de otro, usa un
 puerto síncrono; si solo informa un hecho, publica un evento. Todo listener que
