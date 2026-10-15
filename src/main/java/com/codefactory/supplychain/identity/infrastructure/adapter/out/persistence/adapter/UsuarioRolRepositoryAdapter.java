@@ -53,7 +53,7 @@ public class UsuarioRolRepositoryAdapter implements UsuarioRolRepositoryPort {
     }
 
     @Override
-    public long contarUsuariosConRol(UUID rolId) {
-        return usuarioRolJpaRepository.countByIdRolId(rolId);
+    public long contarUsuariosActivosConRol(UUID rolId) {
+        return usuarioRolJpaRepository.contarUsuariosActivosConRol(rolId);
     }
 }

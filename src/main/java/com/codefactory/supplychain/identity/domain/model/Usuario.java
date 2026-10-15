@@ -151,6 +151,24 @@ public final class Usuario {
                 true, mfaSecretEncrypted, proveedorExterno, creadoEn, ahora);
     }
 
+    /**
+     * HU-31: deja de poder operar. Su access token vigente lo corta el filtro JWT (HU-30)
+     * y sus refresh tokens los revoca el caso de uso; aquí solo cambia el estado. Pedir el
+     * estado que ya tiene no es un error.
+     */
+    public Usuario desactivar(Instant ahora) {
+        return conEstado(EstadoUsuario.INACTIVO, ahora);
+    }
+
+    public Usuario activar(Instant ahora) {
+        return conEstado(EstadoUsuario.ACTIVO, ahora);
+    }
+
+    private Usuario conEstado(EstadoUsuario nuevoEstado, Instant ahora) {
+        return new Usuario(id, email, nombreCompleto, passwordHash, nuevoEstado, intentosFallidos, bloqueadoHasta,
+                mfaHabilitado, mfaSecretEncrypted, proveedorExterno, creadoEn, ahora);
+    }
+
     private static Instant calcularBloqueoHasta(int intentosFallidosConsecutivos, Instant ahora) {
         if (intentosFallidosConsecutivos >= UMBRAL_NIVEL_4) {
             return ahora.plus(BLOQUEO_NIVEL_4);

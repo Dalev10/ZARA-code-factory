@@ -1,7 +1,10 @@
 package com.codefactory.supplychain.identity.infrastructure.adapter.in.web;
 
+import com.codefactory.supplychain.identity.application.port.in.ActivarUsuarioUseCase;
 import com.codefactory.supplychain.identity.application.port.in.AsignarRolAUsuarioUseCase;
 import com.codefactory.supplychain.identity.application.port.in.AsignarRolComando;
+import com.codefactory.supplychain.identity.application.port.in.DesactivarUsuarioComando;
+import com.codefactory.supplychain.identity.application.port.in.DesactivarUsuarioUseCase;
 import com.codefactory.supplychain.identity.application.port.in.ListarRolesDeUsuarioUseCase;
 import com.codefactory.supplychain.identity.application.port.in.ListarUsuariosUseCase;
 import com.codefactory.supplychain.identity.application.port.in.ObtenerUsuarioUseCase;
@@ -13,14 +16,17 @@ import com.codefactory.supplychain.identity.infrastructure.adapter.in.web.dto.As
 import com.codefactory.supplychain.identity.infrastructure.adapter.in.web.dto.RegistrarUsuarioRequest;
 import com.codefactory.supplychain.identity.infrastructure.adapter.in.web.dto.RolResponse;
 import com.codefactory.supplychain.identity.infrastructure.adapter.in.web.dto.UsuarioResponse;
+import com.codefactory.supplychain.shared.security.UsuarioActual;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
@@ -50,6 +56,8 @@ public class UsuarioController {
     private final AsignarRolAUsuarioUseCase asignarRolAUsuarioUseCase;
     private final QuitarRolDeUsuarioUseCase quitarRolDeUsuarioUseCase;
     private final ListarRolesDeUsuarioUseCase listarRolesDeUsuarioUseCase;
+    private final DesactivarUsuarioUseCase desactivarUsuarioUseCase;
+    private final ActivarUsuarioUseCase activarUsuarioUseCase;
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
@@ -84,5 +92,16 @@ public class UsuarioController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void quitarRol(@PathVariable UUID id, @PathVariable UUID rolId) {
         quitarRolDeUsuarioUseCase.quitar(new AsignarRolComando(id, rolId));
+    }
+
+    // PUT y no DELETE: un usuario nunca se borra; solo deja de poder operar.
+    @PutMapping("/{id}/desactivar")
+    public UsuarioResponse desactivar(@PathVariable UUID id, @AuthenticationPrincipal UsuarioActual actor) {
+        return UsuarioResponse.desde(desactivarUsuarioUseCase.desactivar(new DesactivarUsuarioComando(id, actor.id())));
+    }
+
+    @PutMapping("/{id}/activar")
+    public UsuarioResponse activar(@PathVariable UUID id) {
+        return UsuarioResponse.desde(activarUsuarioUseCase.activar(id));
     }
 }

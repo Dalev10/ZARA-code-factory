@@ -21,4 +21,10 @@ public interface RefreshTokenRepositoryPort {
      * y se invalida toda la cadena, forzando un nuevo login.
      */
     void revocarFamilia(UUID familiaId, Instant ahora);
+
+    /**
+     * HU-31: revoca todos los tokens activos del usuario al desactivarlo. Sin esto, al
+     * reactivarlo, sus refresh tokens no vencidos resucitarían sesiones anteriores.
+     */
+    void revocarTodosDeUsuario(UUID usuarioId, Instant ahora);
 }
