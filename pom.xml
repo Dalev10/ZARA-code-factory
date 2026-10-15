@@ -24,6 +24,20 @@
         <java.version>21</java.version>
     </properties>
 
+    <!-- Spring Boot no gestiona la versión de Spring Modulith: el BOM la fija
+         para todos sus artefactos (2.1.x es la línea compilada contra Boot 4.1). -->
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.springframework.modulith</groupId>
+                <artifactId>spring-modulith-bom</artifactId>
+                <version>2.1.1</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
     <dependencies>
 
         <!-- ============================================================
@@ -146,6 +160,22 @@
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
             <optional>true</optional>
+        </dependency>
+
+        <!-- ============================================================
+             HU-28: Spring Modulith verifica en el build la regla del README
+             (ningún módulo usa tipos internos de otro). "api" trae solo las
+             anotaciones (@ApplicationModule, @NamedInterface); "core" hace la
+             verificación y solo se necesita en los tests.
+             ============================================================ -->
+        <dependency>
+            <groupId>org.springframework.modulith</groupId>
+            <artifactId>spring-modulith-api</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.modulith</groupId>
+            <artifactId>spring-modulith-core</artifactId>
+            <scope>test</scope>
         </dependency>
 
         <!-- ============================================================
