@@ -42,7 +42,7 @@ class TiendaServiceTest {
     }
 
     @Test
-    void crearGuardaLaTiendaYAprovisionaSuNodoAlmacen() {
+    void crearGuardaLaTiendaYAprovisionaSusNodosAlmacenYBodega() {
         when(tiendaRepositoryPort.existePorNombre("Tienda Centro")).thenReturn(false);
         when(tiendaRepositoryPort.guardar(any())).thenAnswer(inv -> inv.getArgument(0));
 
@@ -51,9 +51,13 @@ class TiendaServiceTest {
         assertThat(tienda.getNombre()).isEqualTo("Tienda Centro");
 
         ArgumentCaptor<Nodo> captor = ArgumentCaptor.forClass(Nodo.class);
-        verify(nodoRepositoryPort).guardar(captor.capture());
-        assertThat(captor.getValue().getTipo()).isEqualTo(TipoNodo.ALMACEN);
-        assertThat(captor.getValue().getTiendaId()).isEqualTo(tienda.getId());
+        verify(nodoRepositoryPort, org.mockito.Mockito.times(2)).guardar(captor.capture());
+        assertThat(captor.getAllValues())
+                .extracting(Nodo::getTipo)
+                .containsExactlyInAnyOrder(TipoNodo.ALMACEN, TipoNodo.BODEGA_TIENDA);
+        assertThat(captor.getAllValues())
+                .extracting(Nodo::getTiendaId)
+                .containsOnly(tienda.getId());
     }
 
     @Test

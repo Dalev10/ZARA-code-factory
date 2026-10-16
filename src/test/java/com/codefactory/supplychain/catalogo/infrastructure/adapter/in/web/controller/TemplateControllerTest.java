@@ -152,6 +152,19 @@ class TemplateControllerTest {
     }
 
     @Test
+    void crearSinCategoriaDevuelve400() throws Exception {
+        String token = loguearComoAdmin("usuario-template-sin-categoria@ejemplo.com");
+
+        mockMvc.perform(post("/api/v1/templates")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"nombre": "Template Sin Categoria"}
+                                """))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
     void crearConPrecioNegativoDevuelve400() throws Exception {
         String token = loguearComoAdmin("usuario-template-precio-negativo@ejemplo.com");
         String categoriaId = crearCategoria(token, "Categoria Precio Negativo");

@@ -100,17 +100,13 @@ class BodegaTiendaControllerTest {
     }
 
     @Test
-    void registrarUnaBodegaParaUnaTiendaActivaDevuelve201() throws Exception {
-        String token = loguearComoAdmin("admin-registra-bodega@ejemplo.com");
+    void crearUnaTiendaCreaSuBodegaAutomaticamente() throws Exception {
+        String token = loguearComoAdmin("admin-crea-bodega-automatica@ejemplo.com");
         String tiendaId = crearTienda(token, "Tienda Con Bodega");
 
-        mockMvc.perform(post("/api/v1/bodegas-tienda")
-                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("""
-                                {"tiendaId": "%s"}
-                                """.formatted(tiendaId)))
-                .andExpect(status().isCreated())
+        mockMvc.perform(get("/api/v1/bodegas-tienda/tienda/" + tiendaId)
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + token))
+                .andExpect(status().isOk())
                 .andExpect(jsonPath("$.tiendaId").value(tiendaId));
     }
 
@@ -175,14 +171,6 @@ class BodegaTiendaControllerTest {
                         .content("""
                                 {"tiendaId": "%s"}
                                 """.formatted(tiendaId)))
-                .andExpect(status().isCreated());
-
-        mockMvc.perform(post("/api/v1/bodegas-tienda")
-                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("""
-                                {"tiendaId": "%s"}
-                                """.formatted(tiendaId)))
                 .andExpect(status().isConflict());
     }
 
@@ -190,13 +178,6 @@ class BodegaTiendaControllerTest {
     void consultarPorTiendaIdDevuelveLaBodegaEnriquecidaConDatosDeTienda() throws Exception {
         String token = loguearComoAdmin("admin-consulta-bodega@ejemplo.com");
         String tiendaId = crearTienda(token, "Tienda Consultada");
-        mockMvc.perform(post("/api/v1/bodegas-tienda")
-                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("""
-                                {"tiendaId": "%s"}
-                                """.formatted(tiendaId)))
-                .andExpect(status().isCreated());
 
         mockMvc.perform(get("/api/v1/bodegas-tienda/tienda/" + tiendaId)
                         .header(HttpHeaders.AUTHORIZATION, "Bearer " + token))
@@ -209,13 +190,9 @@ class BodegaTiendaControllerTest {
     void eliminarUnaBodegaSinInventarioDevuelve204() throws Exception {
         String token = loguearComoAdmin("admin-elimina-bodega@ejemplo.com");
         String tiendaId = crearTienda(token, "Tienda Bodega A Eliminar");
-        MvcResult registrada = mockMvc.perform(post("/api/v1/bodegas-tienda")
-                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("""
-                                {"tiendaId": "%s"}
-                                """.formatted(tiendaId)))
-                .andExpect(status().isCreated())
+        MvcResult registrada = mockMvc.perform(get("/api/v1/bodegas-tienda/tienda/" + tiendaId)
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + token))
+                .andExpect(status().isOk())
                 .andReturn();
         String bodegaId = new ObjectMapper().readTree(registrada.getResponse().getContentAsString())
                 .get("id").asText();

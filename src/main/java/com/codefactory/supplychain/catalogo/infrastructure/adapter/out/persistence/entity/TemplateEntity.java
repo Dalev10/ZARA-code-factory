@@ -42,10 +42,8 @@ public class TemplateEntity {
     @EqualsAndHashCode.Include
     private UUID id;
 
-    // categoria_id es nullable en el esquema existente (no tiene NOT NULL),
-    // por lo que la relación se mapea como opcional.
-    @ManyToOne(fetch = FetchType.LAZY, optional = true)
-    @JoinColumn(name = "categoria_id")
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "categoria_id", nullable = false)
     private CategoriaEntity categoria;
 
     @Column(name = "nombre", nullable = false, length = 200)
