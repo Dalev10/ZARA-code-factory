@@ -22,10 +22,8 @@ import java.util.Optional;
 import java.util.UUID;
 
 /**
- * Crea una Tienda y su Nodo Almacén satélite en la misma operación — toda
- * Tienda tiene su Almacén desde que existe. El Nodo Bodega_Tienda se
- * aprovisiona por separado (ver BodegaTiendaService, FEAT-03) sobre una
- * Tienda ya existente.
+ * Crea una Tienda y sus nodos satélite {@code ALMACEN} y
+ * {@code BODEGA_TIENDA} en la misma transacción.
  *
  * También implementa ConsultaTiendas, la consulta de solo lectura que inventario publica
  * para otros módulos en su paquete api (ver ARQUITECTURA.md).
@@ -47,6 +45,7 @@ public class TiendaService implements TiendaUseCase, ConsultaTiendas {
         }
         Tienda creada = tiendaRepositoryPort.guardar(Tienda.crear(nombre, ubicacion));
         nodoRepositoryPort.guardar(Nodo.crearParaTienda(creada.getId(), TipoNodo.ALMACEN));
+        nodoRepositoryPort.guardar(Nodo.crearParaTienda(creada.getId(), TipoNodo.BODEGA_TIENDA));
         return creada;
     }
 
