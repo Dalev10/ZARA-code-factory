@@ -1,13 +1,18 @@
 package com.codefactory.supplychain.inventario.application.service;
 
+import com.codefactory.supplychain.inventario.api.ExistenciasActualizadas;
+import com.codefactory.supplychain.inventario.api.TipoMovimientoKardex;
 import com.codefactory.supplychain.inventario.application.port.in.InventarioUseCase;
 import com.codefactory.supplychain.inventario.application.port.out.InventarioRepositoryPort;
+import com.codefactory.supplychain.inventario.application.port.out.MovimientoInventarioRepositoryPort;
 import com.codefactory.supplychain.inventario.domain.exception.InventarioYaCargadoException;
 import com.codefactory.supplychain.inventario.domain.exception.VarianteNoCargadaException;
 import com.codefactory.supplychain.inventario.domain.model.Inventario;
 import com.codefactory.supplychain.inventario.domain.model.MovimientoInventario;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
 import java.util.function.Function;
@@ -24,8 +29,11 @@ import java.util.function.Function;
 public class InventarioService implements InventarioUseCase {
 
     private final InventarioRepositoryPort inventarioRepositoryPort;
+    private final MovimientoInventarioRepositoryPort movimientoInventarioRepositoryPort;
+    private final ApplicationEventPublisher eventos;
 
     @Override
+    @Transactional
     public MovimientoInventario cargar(UUID nodoId, UUID varianteId, int cantidad) {
         if (inventarioRepositoryPort.buscarPorNodoYVariante(nodoId, varianteId).isPresent()) {
             throw new InventarioYaCargadoException(nodoId, varianteId);
@@ -33,15 +41,18 @@ public class InventarioService implements InventarioUseCase {
         Inventario inventario = Inventario.crear(nodoId, varianteId);
         MovimientoInventario movimiento = inventario.cargar(cantidad);
         inventarioRepositoryPort.guardar(inventario);
+        registrarMovimiento(inventario, movimiento);
         return movimiento;
     }
 
     @Override
+    @Transactional
     public MovimientoInventario reponer(UUID nodoId, UUID varianteId, int cantidad) {
         return ejecutar(nodoId, varianteId, inventario -> inventario.reponer(cantidad));
     }
 
     @Override
+    @Transactional
     public MovimientoInventario aplicarVenta(
             UUID nodoId,
             UUID varianteId,
@@ -51,6 +62,7 @@ public class InventarioService implements InventarioUseCase {
     }
 
     @Override
+    @Transactional
     public MovimientoInventario aplicarAjuste(
             UUID nodoId,
             UUID varianteId,
@@ -60,6 +72,7 @@ public class InventarioService implements InventarioUseCase {
     }
 
     @Override
+    @Transactional
     public MovimientoInventario revertir(
             UUID nodoId,
             UUID varianteId,
@@ -76,6 +89,42 @@ public class InventarioService implements InventarioUseCase {
                 .orElseThrow(() -> new VarianteNoCargadaException(nodoId, varianteId));
         MovimientoInventario movimiento = operacion.apply(inventario);
         inventarioRepositoryPort.guardar(inventario);
+        registrarMovimiento(inventario, movimiento);
         return movimiento;
+    }
+
+    private void registrarMovimiento(
+            Inventario inventario,
+            MovimientoInventario movimiento) {
+
+        movimientoInventarioRepositoryPort.guardar(
+                inventario.getNodoId(),
+                inventario.getVarianteId(),
+                movimiento);
+        publicarExistenciasActualizadas(inventario, movimiento);
+    }
+    
+    /**
+     * Utiliza el ApplicationEventPublisher de Spring para publicar un evento de existencias actualizadas 
+     * después de registrar un movimiento de inventario.
+     * 
+     * Debe ser escuchado con @TransactionalEventListener para garantizar que el evento se publique 
+     * solo después de que la transacción se haya completado con éxito.
+     */
+    private void publicarExistenciasActualizadas(
+            Inventario inventario,
+            MovimientoInventario movimiento) {
+        eventos.publishEvent(new ExistenciasActualizadas(
+                inventario.getNodoId(),
+                inventario.getVarianteId(),
+                movimiento.id(),
+                TipoMovimientoKardex.valueOf(movimiento.tipo().name()),
+                null,
+                inventario.getALaMano(),
+                inventario.getDisponible(),
+                inventario.getEntrante(),
+                inventario.getSaliente(),
+                inventario.getPronosticado(),
+                movimiento.ocurridoEn()));
     }
 }
