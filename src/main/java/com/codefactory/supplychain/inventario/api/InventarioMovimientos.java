@@ -13,10 +13,15 @@ public interface InventarioMovimientos {
     /**
      * Descuenta existencias por una venta confirmada.
      *
-     * TODO: confirmar con Altamiranda los identificadores,
-     * cantidad y semántica de idempotencia.
+     * TODO: confirmar con Altamiranda los identificadores, cantidad,
+     * semántica de idempotencia y quién puede solicitar una venta forzada.
      */
-    void descontarPorVenta(UUID nodoId, UUID varianteId, int cantidad, UUID ventaId);
+    void descontarPorVenta(
+            UUID nodoId,
+            UUID varianteId,
+            int cantidad,
+            UUID ventaId,
+            boolean forzado);
 
     /**
      * Revierte el descuento producido por una venta anulada.
