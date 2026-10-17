@@ -2,6 +2,7 @@ package com.codefactory.supplychain.inventario.application.service;
 
 import com.codefactory.supplychain.inventario.application.port.out.InventarioRepositoryPort;
 import com.codefactory.supplychain.inventario.domain.exception.VarianteNoCargadaException;
+import com.codefactory.supplychain.inventario.domain.exception.InventarioYaCargadoException;
 import com.codefactory.supplychain.inventario.domain.model.Inventario;
 import com.codefactory.supplychain.inventario.domain.model.MovimientoInventario;
 import com.codefactory.supplychain.inventario.domain.model.TipoMovimientoInventario;
@@ -65,5 +66,31 @@ class InventarioServiceTest {
 
         assertThat(movimiento.tipo()).isEqualTo(TipoMovimientoInventario.REPOSICION);
         verify(repository).guardar(same(inventario));
+    }
+
+    @Test
+    void cargarCreaLaFilaParaLaCargaInicial() {
+        UUID nodoId = UUID.randomUUID();
+        UUID varianteId = UUID.randomUUID();
+        when(repository.buscarPorNodoYVariante(nodoId, varianteId)).thenReturn(Optional.empty());
+
+        MovimientoInventario movimiento = servicio.cargar(nodoId, varianteId, 8);
+
+        assertThat(movimiento.tipo()).isEqualTo(TipoMovimientoInventario.CARGA_INICIAL);
+        verify(repository).guardar(org.mockito.ArgumentMatchers.argThat(inventario ->
+                inventario.getNodoId().equals(nodoId)
+                        && inventario.getVarianteId().equals(varianteId)
+                        && inventario.getALaMano() == 8));
+    }
+
+    @Test
+    void rechazaUnaSegundaCargaInicial() {
+        UUID nodoId = UUID.randomUUID();
+        UUID varianteId = UUID.randomUUID();
+        Inventario inventario = Inventario.crear(nodoId, varianteId);
+        when(repository.buscarPorNodoYVariante(nodoId, varianteId)).thenReturn(Optional.of(inventario));
+
+        assertThatThrownBy(() -> servicio.cargar(nodoId, varianteId, 8))
+                .isInstanceOf(InventarioYaCargadoException.class);
     }
 }

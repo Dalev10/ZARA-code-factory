@@ -2,6 +2,7 @@ package com.codefactory.supplychain.inventario.application.service;
 
 import com.codefactory.supplychain.inventario.application.port.in.InventarioUseCase;
 import com.codefactory.supplychain.inventario.application.port.out.InventarioRepositoryPort;
+import com.codefactory.supplychain.inventario.domain.exception.InventarioYaCargadoException;
 import com.codefactory.supplychain.inventario.domain.exception.VarianteNoCargadaException;
 import com.codefactory.supplychain.inventario.domain.model.Inventario;
 import com.codefactory.supplychain.inventario.domain.model.MovimientoInventario;
@@ -26,7 +27,13 @@ public class InventarioService implements InventarioUseCase {
 
     @Override
     public MovimientoInventario cargar(UUID nodoId, UUID varianteId, int cantidad) {
-        return ejecutar(nodoId, varianteId, inventario -> inventario.cargar(cantidad));
+        if (inventarioRepositoryPort.buscarPorNodoYVariante(nodoId, varianteId).isPresent()) {
+            throw new InventarioYaCargadoException(nodoId, varianteId);
+        }
+        Inventario inventario = Inventario.crear(nodoId, varianteId);
+        MovimientoInventario movimiento = inventario.cargar(cantidad);
+        inventarioRepositoryPort.guardar(inventario);
+        return movimiento;
     }
 
     @Override
