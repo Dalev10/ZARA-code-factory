@@ -26,13 +26,12 @@ import java.util.function.Function;
  */
 @Service
 @RequiredArgsConstructor
-public class InventarioService implements InventarioUseCase {
+public class InventarioService {
 
     private final InventarioRepositoryPort inventarioRepositoryPort;
     private final MovimientoInventarioRepositoryPort movimientoInventarioRepositoryPort;
     private final ApplicationEventPublisher eventos;
 
-    @Override
     @Transactional
     public MovimientoInventario cargar(UUID nodoId, UUID varianteId, int cantidad) {
         if (inventarioRepositoryPort.buscarPorNodoYVariante(nodoId, varianteId).isPresent()) {
@@ -45,13 +44,11 @@ public class InventarioService implements InventarioUseCase {
         return movimiento;
     }
 
-    @Override
     @Transactional
     public MovimientoInventario reponer(UUID nodoId, UUID varianteId, int cantidad) {
         return ejecutar(nodoId, varianteId, inventario -> inventario.reponer(cantidad));
     }
 
-    @Override
     @Transactional
     public MovimientoInventario aplicarVenta(
             UUID nodoId,
@@ -61,7 +58,6 @@ public class InventarioService implements InventarioUseCase {
         return ejecutar(nodoId, varianteId, inventario -> inventario.aplicarVenta(cantidad, forzado));
     }
 
-    @Override
     @Transactional
     public MovimientoInventario aplicarAjuste(
             UUID nodoId,
@@ -71,7 +67,6 @@ public class InventarioService implements InventarioUseCase {
         return ejecutar(nodoId, varianteId, inventario -> inventario.aplicarAjuste(delta, motivo));
     }
 
-    @Override
     @Transactional
     public MovimientoInventario revertir(
             UUID nodoId,
