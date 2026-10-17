@@ -15,4 +15,6 @@ import java.util.UUID;
 public interface InventarioJpaRepository extends JpaRepository<InventarioJpaEntity, UUID> {
 
     List<InventarioJpaEntity> findByNodoId(UUID nodoId);
+
+    java.util.Optional<InventarioJpaEntity> findByNodoIdAndVarianteId(UUID nodoId, UUID varianteId);
 }

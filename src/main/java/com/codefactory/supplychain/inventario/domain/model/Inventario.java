@@ -17,6 +17,7 @@ public final class Inventario {
     private final UUID id;
     private final UUID nodoId;
     private final UUID varianteId;
+    private final int version;
     private int aLaMano;
     private int entrante;
     private int saliente;
@@ -29,7 +30,8 @@ public final class Inventario {
             UUID varianteId,
             int aLaMano,
             int entrante,
-            int saliente) {
+            int saliente,
+            int version) {
         if (id == null || nodoId == null || varianteId == null) {
             throw new InventarioInvalidoException("El inventario debe tener id, nodo y variante");
         }
@@ -39,6 +41,7 @@ public final class Inventario {
         this.id = id;
         this.nodoId = nodoId;
         this.varianteId = varianteId;
+        this.version = version;
         this.aLaMano = aLaMano;
         this.entrante = entrante;
         this.saliente = saliente;
@@ -46,7 +49,7 @@ public final class Inventario {
     }
 
     public static Inventario crear(UUID nodoId, UUID varianteId) {
-        return new Inventario(UUID.randomUUID(), nodoId, varianteId, 0, 0, 0);
+        return new Inventario(UUID.randomUUID(), nodoId, varianteId, 0, 0, 0, 0);
     }
 
     public static Inventario reconstruir(
@@ -56,7 +59,18 @@ public final class Inventario {
             int aLaMano,
             int entrante,
             int saliente) {
-        return new Inventario(id, nodoId, varianteId, aLaMano, entrante, saliente);
+        return new Inventario(id, nodoId, varianteId, aLaMano, entrante, saliente, 0);
+    }
+
+    public static Inventario reconstruir(
+            UUID id,
+            UUID nodoId,
+            UUID varianteId,
+            int aLaMano,
+            int entrante,
+            int saliente,
+            int version) {
+        return new Inventario(id, nodoId, varianteId, aLaMano, entrante, saliente, version);
     }
 
     public MovimientoInventario cargar(int cantidad) {
@@ -133,6 +147,10 @@ public final class Inventario {
 
     public UUID getVarianteId() {
         return varianteId;
+    }
+
+    public int getVersion() {
+        return version;
     }
 
     public int getALaMano() {

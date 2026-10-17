@@ -1,7 +1,7 @@
 package com.codefactory.supplychain.inventario.infrastructure.adapter.out.persistence.adapter;
 
 import com.codefactory.supplychain.inventario.application.port.out.InventarioPorNodoPort;
-import com.codefactory.supplychain.inventario.infrastructure.adapter.out.persistence.entity.InventarioJpaEntity;
+import com.codefactory.supplychain.inventario.infrastructure.adapter.out.persistence.mapper.InventarioMapper;
 import com.codefactory.supplychain.inventario.infrastructure.adapter.out.persistence.repository.InventarioJpaRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
@@ -21,14 +21,16 @@ import java.util.UUID;
 public class InventarioPorNodoPersistenceAdapter implements InventarioPorNodoPort {
 
     private final InventarioJpaRepository repository;
+    private final InventarioMapper mapper;
 
     @Override
     public List<InventarioResumen> consultarPorNodo(UUID nodoId) {
-        return repository.findByNodoId(nodoId).stream().map(this::toResumen).toList();
-    }
-
-    private InventarioResumen toResumen(InventarioJpaEntity inventario) {
-        return new InventarioResumen(
-                inventario.getVarianteId(), inventario.getALaMano(), inventario.getDisponibleParaUso());
+        return repository.findByNodoId(nodoId).stream()
+                .map(mapper::toDomain)
+                .map(inventario -> new InventarioResumen(
+                        inventario.getVarianteId(),
+                        inventario.getALaMano(),
+                        inventario.getDisponible()))
+                .toList();
     }
 }
