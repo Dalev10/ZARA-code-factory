@@ -6,6 +6,7 @@ import org.springframework.resilience.annotation.Retryable;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.util.Arrays;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -35,10 +36,6 @@ class InventarioRetryableServiceTest {
     }
 
     private boolean esOperacionDeInventario(Method metodo) {
-        return !metodo.getName().equals("main")
-                && !metodo.isSynthetic()
-                && !metodo.getName().equals("ejecutar")
-                && !metodo.getName().equals("registrarMovimiento")
-                && !metodo.getName().equals("publicarExistenciasActualizadas");
+        return Modifier.isPublic(metodo.getModifiers()) && !metodo.isSynthetic();
     }
 }
