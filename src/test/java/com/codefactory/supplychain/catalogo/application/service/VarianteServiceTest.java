@@ -1,5 +1,6 @@
 package com.codefactory.supplychain.catalogo.application.service;
 
+import com.codefactory.supplychain.catalogo.api.VarianteResumen;
 import com.codefactory.supplychain.catalogo.application.exception.CatalogoRecursoNoEncontradoException;
 import com.codefactory.supplychain.catalogo.application.exception.SkuDuplicadoException;
 import com.codefactory.supplychain.catalogo.application.port.out.TemplateRepository;
@@ -15,6 +16,7 @@ import org.springframework.data.domain.Pageable;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -137,5 +139,21 @@ class VarianteServiceTest {
 
         assertThatThrownBy(() -> servicio.eliminar(id)).isInstanceOf(CatalogoRecursoNoEncontradoException.class);
         verify(varianteRepository, never()).deleteById(any());
+    }
+
+    @Test
+    void buscarPorSkusDevuelveSoloLasVariantesExistentes() {
+        Variante variante = new Variante("SKU-001", template(), null, null);
+        when(varianteRepository.findBySkuIn(Set.of("SKU-001", "SKU-FALTA"))).thenReturn(List.of(variante));
+
+        List<VarianteResumen> resultado = servicio.buscarPorSkus(Set.of("SKU-001", "SKU-FALTA"));
+
+        assertThat(resultado).containsExactly(new VarianteResumen(variante.getId(), "SKU-001"));
+    }
+
+    @Test
+    void buscarPorSkusSinSkusNoConsultaElRepositorio() {
+        assertThat(servicio.buscarPorSkus(Set.of())).isEmpty();
+        verify(varianteRepository, never()).findBySkuIn(any());
     }
 }

@@ -5,6 +5,8 @@ import com.codefactory.supplychain.catalogo.domain.model.Variante;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
+import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -36,6 +38,11 @@ public interface VarianteRepository {
      * Busca una Variante por su SKU.
      */
     Optional<Variante> findBySku(String sku);
+
+    /**
+     * Busca las Variantes cuyos SKU estén en la colección dada.
+     */
+    List<Variante> findBySkuIn(Collection<String> skus);
 
     /**
      * Obtiene las Variantes existentes, paginadas.

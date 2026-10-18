@@ -3,6 +3,7 @@ package com.codefactory.supplychain.inventario.infrastructure.adapter.out.persis
 import com.codefactory.supplychain.inventario.infrastructure.adapter.out.persistence.entity.InventarioJpaEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
 
@@ -15,4 +16,8 @@ import java.util.UUID;
 public interface InventarioJpaRepository extends JpaRepository<InventarioJpaEntity, UUID> {
 
     List<InventarioJpaEntity> findByNodoId(UUID nodoId);
+
+    java.util.Optional<InventarioJpaEntity> findByNodoIdAndVarianteId(UUID nodoId, UUID varianteId);
+
+    List<InventarioJpaEntity> findByNodoIdAndVarianteIdIn(UUID nodoId, Collection<UUID> varianteIds);
 }
