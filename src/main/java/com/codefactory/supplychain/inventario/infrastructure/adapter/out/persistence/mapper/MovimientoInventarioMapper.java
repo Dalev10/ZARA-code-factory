@@ -1,5 +1,6 @@
 package com.codefactory.supplychain.inventario.infrastructure.adapter.out.persistence.mapper;
 
+import com.codefactory.supplychain.inventario.application.dto.MovimientoKardexConsulta;
 import com.codefactory.supplychain.inventario.domain.model.MovimientoInventario;
 import com.codefactory.supplychain.inventario.infrastructure.adapter.out.persistence.entity.MovimientoInventarioEntity;
 import org.springframework.stereotype.Component;
@@ -28,5 +29,18 @@ public class MovimientoInventarioMapper {
                 .usuarioId(movimiento.usuarioId())
                 .ocurridoEn(movimiento.ocurridoEn())
                 .build();
+    }
+
+    public MovimientoKardexConsulta toConsulta(MovimientoInventarioEntity entity) {
+        return new MovimientoKardexConsulta(
+                entity.getId(),
+                entity.getVarianteId(),
+                entity.getTipo(),
+                entity.getCantidad(),
+                entity.getMotivo(),
+                entity.getComentario(),
+                entity.isForzado(),
+                entity.getUsuarioId(),
+                entity.getOcurridoEn());
     }
 }

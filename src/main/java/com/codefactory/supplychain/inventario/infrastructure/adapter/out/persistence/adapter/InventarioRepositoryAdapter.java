@@ -6,8 +6,11 @@ import com.codefactory.supplychain.inventario.infrastructure.adapter.out.persist
 import com.codefactory.supplychain.inventario.infrastructure.adapter.out.persistence.mapper.InventarioMapper;
 import com.codefactory.supplychain.inventario.infrastructure.adapter.out.persistence.repository.InventarioJpaRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -41,5 +44,24 @@ public class InventarioRepositoryAdapter implements InventarioRepositoryPort {
         return repository.findByNodoIdAndVarianteIdIn(nodoId, varianteIds).stream()
                 .map(InventarioJpaEntity::getVarianteId)
                 .collect(Collectors.toSet());
+    }
+
+    @Override
+    public Page<Inventario> buscarPorNodo(UUID nodoId, Pageable pageable) {
+        return repository.findByNodoIdOrderByVarianteIdAsc(nodoId, pageable).map(mapper::toDomain);
+    }
+
+    @Override
+    public List<Inventario> buscarPorVariante(UUID varianteId) {
+        return repository.findByVarianteIdOrderByNodoIdAsc(varianteId).stream()
+                .map(mapper::toDomain)
+                .toList();
+    }
+
+    @Override
+    public List<Inventario> buscarPorVarianteEnTiendas(UUID varianteId, Set<UUID> tiendaIds) {
+        return repository.buscarPorVarianteEnTiendas(varianteId, tiendaIds).stream()
+                .map(mapper::toDomain)
+                .toList();
     }
 }
