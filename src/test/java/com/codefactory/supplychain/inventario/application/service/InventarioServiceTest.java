@@ -19,7 +19,9 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentCaptor.forClass;
 import static org.mockito.ArgumentMatchers.same;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -47,6 +49,25 @@ class InventarioServiceTest {
 
         assertThatThrownBy(() -> servicio.aplicarVenta(nodoId, varianteId, 1, false))
                 .isInstanceOf(VarianteNoCargadaException.class);
+    }
+
+    /**
+     * Escenario: variante sin carga no se puede vender ni forzando
+     *   Dado un nodo sin fila para la variante X
+     *   Cuando se intenta descontar X con forzado = true
+     *   Entonces se rechaza con error de carga requerida
+     *   Y no se crea ninguna fila
+     */
+    @Test
+    void rechazaVentaForzadaDeUnaVarianteNoCargadaSinCrearFila() {
+        UUID nodoId = UUID.randomUUID();
+        UUID varianteId = UUID.randomUUID();
+        when(repository.buscarPorNodoYVariante(nodoId, varianteId)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> servicio.aplicarVenta(nodoId, varianteId, 1, true))
+                .isInstanceOf(VarianteNoCargadaException.class);
+        verify(repository, never()).guardar(any());
+        verifyNoInteractions(movimientoRepository, eventos);
     }
 
     @Test

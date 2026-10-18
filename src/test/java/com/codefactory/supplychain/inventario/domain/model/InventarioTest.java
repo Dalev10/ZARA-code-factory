@@ -121,6 +121,78 @@ class InventarioTest {
     }
 
     @Test
+    void ajustePositivoAumentaStockYRegistraMotivo() {
+        Inventario inventario = Inventario.crear(nodoId, varianteId);
+        inventario.cargar(2);
+
+        MovimientoInventario movimiento = inventario.aplicarAjuste(3, "INGRESO_MANUAL");
+
+        assertThat(movimiento.tipo()).isEqualTo(TipoMovimientoInventario.AJUSTE);
+        assertThat(movimiento.cantidad()).isEqualTo(3);
+        assertThat(movimiento.motivo()).isEqualTo("INGRESO_MANUAL");
+        assertThat(movimiento.forzado()).isFalse();
+        assertThat(inventario.getALaMano()).isEqualTo(5);
+    }
+
+    @Test
+    void ajusteEnCeroEsRechazado() {
+        Inventario inventario = Inventario.crear(nodoId, varianteId);
+        inventario.cargar(2);
+
+        assertThatThrownBy(() -> inventario.aplicarAjuste(0, "CORRECCION"))
+                .isInstanceOf(InventarioInvalidoException.class);
+        assertThat(inventario.getALaMano()).isEqualTo(2);
+    }
+
+    @Test
+    void ventaNormalPuedeDejarElStockExactamenteEnCero() {
+        Inventario inventario = Inventario.crear(nodoId, varianteId);
+        inventario.cargar(3);
+
+        MovimientoInventario movimiento = inventario.aplicarVenta(3, false);
+
+        assertThat(movimiento.saldoResultante()).isZero();
+        assertThat(inventario.getALaMano()).isZero();
+    }
+
+    @Test
+    void cadaTransicionMantieneLasInvariantesYElSaldoDelMovimiento() {
+        Inventario inventario = Inventario.crear(nodoId, varianteId);
+
+        verificarInvariantes(inventario, inventario.cargar(10));
+        verificarInvariantes(inventario, inventario.reponer(2));
+        verificarInvariantes(inventario, inventario.aplicarVenta(4, false));
+        verificarInvariantes(inventario, inventario.aplicarAjuste(3, "INGRESO_MANUAL"));
+        verificarInvariantes(inventario, inventario.aplicarAjuste(-1, "MERMA"));
+        verificarInvariantes(inventario, inventario.revertir(4, "Venta anulada"));
+        verificarInvariantes(inventario, inventario.aplicarVenta(20, true));
+
+        assertThat(inventario.getALaMano()).isEqualTo(-6);
+    }
+
+    @Test
+    void reconstruirRecalculaDerivadasYConservaLaVersion() {
+        UUID id = UUID.randomUUID();
+
+        Inventario inventario = Inventario.reconstruir(id, nodoId, varianteId, 7, 0, 0, 3);
+
+        assertThat(inventario.getId()).isEqualTo(id);
+        assertThat(inventario.getVersion()).isEqualTo(3);
+        assertThat(inventario.getDisponible()).isEqualTo(7);
+        assertThat(inventario.getPronosticado()).isEqualTo(7);
+    }
+
+    @Test
+    void reconstruirRechazaDatosIncompletosOMagnitudesNegativas() {
+        assertThatThrownBy(() -> Inventario.reconstruir(null, nodoId, varianteId, 0, 0, 0))
+                .isInstanceOf(InventarioInvalidoException.class);
+        assertThatThrownBy(() -> Inventario.reconstruir(UUID.randomUUID(), nodoId, varianteId, 0, -1, 0))
+                .isInstanceOf(InventarioInvalidoException.class);
+        assertThatThrownBy(() -> Inventario.reconstruir(UUID.randomUUID(), nodoId, varianteId, 0, 0, -1))
+                .isInstanceOf(InventarioInvalidoException.class);
+    }
+
+    @Test
     void soloUnaVentaPuedeRegistrarseComoForzada() {
         assertThatThrownBy(() -> new MovimientoInventario(
                 UUID.randomUUID(),
@@ -143,5 +215,16 @@ class InventarioTest {
                 .isInstanceOf(InventarioInvalidoException.class);
         assertThatThrownBy(() -> inventario.revertir(0, "Anulación"))
                 .isInstanceOf(InventarioInvalidoException.class);
+        assertThatThrownBy(() -> inventario.reponer(0))
+                .isInstanceOf(InventarioInvalidoException.class);
+    }
+
+    private static void verificarInvariantes(Inventario inventario, MovimientoInventario movimiento) {
+        assertThat(inventario.getDisponible()).isEqualTo(inventario.getALaMano());
+        assertThat(inventario.getPronosticado()).isEqualTo(
+                inventario.getALaMano() + inventario.getEntrante() - inventario.getSaliente());
+        assertThat(inventario.getEntrante()).isZero();
+        assertThat(inventario.getSaliente()).isZero();
+        assertThat(movimiento.saldoResultante()).isEqualTo(inventario.getALaMano());
     }
 }
