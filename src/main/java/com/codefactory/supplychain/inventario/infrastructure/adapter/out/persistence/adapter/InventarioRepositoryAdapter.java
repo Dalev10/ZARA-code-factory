@@ -2,12 +2,15 @@ package com.codefactory.supplychain.inventario.infrastructure.adapter.out.persis
 
 import com.codefactory.supplychain.inventario.application.port.out.InventarioRepositoryPort;
 import com.codefactory.supplychain.inventario.domain.model.Inventario;
+import com.codefactory.supplychain.inventario.infrastructure.adapter.out.persistence.entity.InventarioJpaEntity;
 import com.codefactory.supplychain.inventario.infrastructure.adapter.out.persistence.mapper.InventarioMapper;
 import com.codefactory.supplychain.inventario.infrastructure.adapter.out.persistence.repository.InventarioJpaRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.UUID;
 
 /**
@@ -28,5 +31,15 @@ public class InventarioRepositoryAdapter implements InventarioRepositoryPort {
     @Override
     public Inventario guardar(Inventario inventario) {
         return mapper.toDomain(repository.save(mapper.toEntity(inventario)));
+    }
+
+    @Override
+    public Set<UUID> buscarVariantesCargadas(UUID nodoId, Set<UUID> varianteIds) {
+        if (varianteIds.isEmpty()) {
+            return Set.of();
+        }
+        return repository.findByNodoIdAndVarianteIdIn(nodoId, varianteIds).stream()
+                .map(InventarioJpaEntity::getVarianteId)
+                .collect(Collectors.toSet());
     }
 }
