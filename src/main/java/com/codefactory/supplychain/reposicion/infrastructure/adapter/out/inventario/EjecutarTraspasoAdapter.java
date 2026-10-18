@@ -1,36 +1,38 @@
 package com.codefactory.supplychain.reposicion.infrastructure.adapter.out.inventario;
 
+import com.codefactory.supplychain.inventario.api.InventarioMovimientos;
+import com.codefactory.supplychain.reposicion.application.port.out.ConsultarNodosPort;
 import com.codefactory.supplychain.reposicion.application.port.out.EjecutarTraspasoPort;
 import org.springframework.stereotype.Component;
 
 import java.util.UUID;
 
-import com.codefactory.supplychain.inventario.api.InventarioMovimientos;
-import com.codefactory.supplychain.inventario.api.ConsultaNodos;
-
 /**
- * Adaptador que aplica el movimiento contable del traspaso en el módulo inventario.
+ * ACL hacia inventario.api: ejecuta el traspaso Bodega → Almacén registrando el
+ * movimiento en el kardex de inventario.
  *
- * Módulo: reposicion — Reposición interna.
+ * Módulo: reposicion.
  */
 @Component
 public class EjecutarTraspasoAdapter implements EjecutarTraspasoPort {
 
     private final InventarioMovimientos inventarioMovimientos;
-    private final ConsultaNodos consultaNodos;
+    private final ConsultarNodosPort consultarNodos;
 
     public EjecutarTraspasoAdapter(InventarioMovimientos inventarioMovimientos,
-                                    ConsultaNodos consultaNodos) {
+                                   ConsultarNodosPort consultarNodos) {
         this.inventarioMovimientos = inventarioMovimientos;
-        this.consultaNodos = consultaNodos;
+        this.consultarNodos = consultarNodos;
     }
 
     @Override
     public void traspasar(UUID tiendaId, UUID varianteId, int cantidad, UUID traspasoId) {
-        UUID nodoOrigen = consultaNodos.buscarNodoBodega(tiendaId)
-                .orElseThrow(() -> new IllegalStateException("Bodega no encontrada para tienda " + tiendaId));
-        UUID nodoDestino = consultaNodos.buscarNodoAlmacen(tiendaId)
-                .orElseThrow(() -> new IllegalStateException("Almacén no encontrado para tienda " + tiendaId));
+        UUID nodoOrigen = consultarNodos.buscarNodoBodega(tiendaId)
+                .orElseThrow(() -> new IllegalStateException(
+                        "Bodega no encontrada para tienda " + tiendaId));
+        UUID nodoDestino = consultarNodos.buscarNodoAlmacen(tiendaId)
+                .orElseThrow(() -> new IllegalStateException(
+                        "Almacén no encontrado para tienda " + tiendaId));
         inventarioMovimientos.trasladar(nodoOrigen, nodoDestino, varianteId, cantidad, traspasoId);
     }
 }
