@@ -1,5 +1,6 @@
 package com.codefactory.supplychain.inventario.application.port.in;
 
+import com.codefactory.supplychain.inventario.domain.model.MotivoAjuste;
 import com.codefactory.supplychain.inventario.domain.model.MovimientoInventario;
 
 import java.util.UUID;
@@ -23,7 +24,9 @@ public interface InventarioUseCase {
             UUID nodoId,
             UUID varianteId,
             int delta,
-            String motivo);
+            MotivoAjuste motivo,
+            String comentario,
+            UUID usuarioId);
 
     MovimientoInventario revertir(
             UUID nodoId,

@@ -1,6 +1,7 @@
 package com.codefactory.supplychain.inventario.infrastructure.adapter.out.persistence.mapper;
 
 import com.codefactory.supplychain.inventario.domain.model.Inventario;
+import com.codefactory.supplychain.inventario.domain.model.MotivoAjuste;
 import com.codefactory.supplychain.inventario.domain.model.MovimientoInventario;
 import com.codefactory.supplychain.inventario.domain.model.TipoMovimientoInventario;
 import com.codefactory.supplychain.inventario.infrastructure.adapter.out.persistence.entity.MovimientoInventarioEntity;
@@ -31,6 +32,22 @@ class MovimientoInventarioMapperTest {
         assertThat(entity.getOcurridoEn()).isEqualTo(movimiento.ocurridoEn());
         assertThat(entity.isForzado()).isFalse();
         assertThat(entity.getUsuarioId()).isEqualTo(usuarioId);
+    }
+
+    @Test
+    void mapeaMotivoYComentarioDeUnAjuste() {
+        UUID nodoId = UUID.randomUUID();
+        UUID varianteId = UUID.randomUUID();
+        Inventario inventario = Inventario.crear(nodoId, varianteId);
+        inventario.cargar(3, null);
+        MovimientoInventario movimiento = inventario.aplicarAjuste(
+                -1, MotivoAjuste.CORRECCION, "Conteo mal digitado", null);
+
+        MovimientoInventarioEntity entity = new MovimientoInventarioMapper()
+                .toEntity(nodoId, varianteId, movimiento);
+
+        assertThat(entity.getMotivo()).isEqualTo("CORRECCION");
+        assertThat(entity.getComentario()).isEqualTo("Conteo mal digitado");
     }
 
     @Test

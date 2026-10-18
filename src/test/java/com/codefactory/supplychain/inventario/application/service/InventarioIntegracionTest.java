@@ -318,6 +318,26 @@ class InventarioIntegracionTest {
                 .isInstanceOf(DataIntegrityViolationException.class);
     }
 
+    @Test
+    @DisplayName("""
+            Escenario: la base solo acepta ajustes con motivo cerrado
+              Cuando se intenta guardar un AJUSTE con un motivo fuera de la lista
+              O una CORRECCION sin comentario
+              Entonces la base rechaza la operación
+              Y acepta una CORRECCION con comentario""")
+    void laBaseSoloAceptaAjustesConMotivoCerrado() {
+        String insertar = """
+                INSERT INTO movimiento_inventario (nodo_id, variante_id, tipo, cantidad, motivo, comentario)
+                VALUES (?, ?, 'AJUSTE', 1, ?, ?)""";
+
+        assertThatThrownBy(() -> jdbc.update(insertar, nodoId, varianteId, "conteo", null))
+                .isInstanceOf(DataIntegrityViolationException.class);
+        assertThatThrownBy(() -> jdbc.update(insertar, nodoId, varianteId, "CORRECCION", " "))
+                .isInstanceOf(DataIntegrityViolationException.class);
+        assertThat(jdbc.update(insertar, nodoId, varianteId, "CORRECCION", "Conteo mal digitado"))
+                .isEqualTo(1);
+    }
+
     private int aLaMano() {
         return jdbc.queryForObject(
                 "SELECT a_la_mano FROM inventario WHERE nodo_id = ? AND variante_id = ?",

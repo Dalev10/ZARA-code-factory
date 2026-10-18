@@ -1,6 +1,7 @@
 package com.codefactory.supplychain.inventario.application.service;
 
 import com.codefactory.supplychain.inventario.application.port.in.InventarioUseCase;
+import com.codefactory.supplychain.inventario.domain.model.MotivoAjuste;
 import com.codefactory.supplychain.inventario.domain.model.MovimientoInventario;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.OptimisticLockingFailureException;
@@ -49,8 +50,10 @@ public class InventarioRetryableService implements InventarioUseCase {
             UUID nodoId,
             UUID varianteId,
             int delta,
-            String motivo) {
-        return inventarioService.aplicarAjuste(nodoId, varianteId, delta, motivo);
+            MotivoAjuste motivo,
+            String comentario,
+            UUID usuarioId) {
+        return inventarioService.aplicarAjuste(nodoId, varianteId, delta, motivo, comentario, usuarioId);
     }
 
     @Override

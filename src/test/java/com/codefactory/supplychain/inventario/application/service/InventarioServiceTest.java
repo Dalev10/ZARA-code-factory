@@ -9,6 +9,7 @@ import com.codefactory.supplychain.inventario.domain.exception.NodoNoEncontradoE
 import com.codefactory.supplychain.inventario.domain.exception.VarianteNoCargadaException;
 import com.codefactory.supplychain.inventario.domain.exception.InventarioYaCargadoException;
 import com.codefactory.supplychain.inventario.domain.model.Inventario;
+import com.codefactory.supplychain.inventario.domain.model.MotivoAjuste;
 import com.codefactory.supplychain.inventario.domain.model.MovimientoInventario;
 import com.codefactory.supplychain.inventario.domain.model.Nodo;
 import com.codefactory.supplychain.inventario.domain.model.TipoNodo;
@@ -197,7 +198,8 @@ class InventarioServiceTest {
         Inventario inventario = Inventario.crear(nodoId, varianteId);
         when(repository.buscarPorNodoYVariante(nodoId, varianteId)).thenReturn(Optional.of(inventario));
 
-        MovimientoInventario movimiento = servicio.aplicarAjuste(nodoId, varianteId, 3, "conteo");
+        MovimientoInventario movimiento = servicio.aplicarAjuste(
+                nodoId, varianteId, 3, MotivoAjuste.CONTEO_FISICO, null, null);
 
         assertThat(movimiento.tipo()).isEqualTo(TipoMovimientoInventario.AJUSTE);
         verify(movimientoRepository).guardar(eq(nodoId), eq(varianteId), same(movimiento));
