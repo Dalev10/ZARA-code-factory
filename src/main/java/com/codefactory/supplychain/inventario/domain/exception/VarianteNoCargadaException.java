@@ -6,6 +6,11 @@ import java.util.UUID;
 
 /**
  * Indica que todavía no existe una fila de Inventario para el nodo y variante.
+ *
+ * TODO: debe responder 409 (compuerta de carga, plan HU-27), incluso en venta
+ * forzada. Hoy GlobalExceptionHandler de shared/ traduce toda
+ * ReglaDeNegocioException a 400. Separar conflictos de validaciones en shared/
+ * y ajustar las pruebas afectadas.
  */
 public class VarianteNoCargadaException extends ReglaDeNegocioException {
 
