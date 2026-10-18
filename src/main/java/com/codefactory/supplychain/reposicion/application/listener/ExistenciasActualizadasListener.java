@@ -2,8 +2,8 @@ package com.codefactory.supplychain.reposicion.application.listener;
 
 import com.codefactory.supplychain.inventario.api.ExistenciasActualizadas;
 import com.codefactory.supplychain.inventario.api.TipoMovimientoKardex;
+import com.codefactory.supplychain.inventario.api.TipoNodoInventario;
 import com.codefactory.supplychain.reposicion.application.port.in.TraspasoAutomaticoUseCase;
-import com.codefactory.supplychain.reposicion.application.port.out.ConsultarNodosPort;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -12,7 +12,10 @@ import org.springframework.transaction.event.TransactionalEventListener;
 
 /**
  * Reacciona a cambios de stock y dispara el traspaso automático si el nodo es un
- * Almacén y el stock cayó bajo el umbral.
+ * Almacén de una tienda y el stock cayó bajo el umbral.
+ * <p>
+ * El evento ya trae {@code tipoNodo} y {@code tiendaId}, así que no hace falta
+ * consultar los nodos.
  * <p>
  * Ignora movimientos de traspaso para evitar bucle: un traspaso genera
  * TRASPASO_SALIDA y TRASPASO_ENTRADA, que volverían a activar este listener.
@@ -25,12 +28,9 @@ import org.springframework.transaction.event.TransactionalEventListener;
 @Component
 public class ExistenciasActualizadasListener {
 
-    private final ConsultarNodosPort consultarNodos;
     private final TraspasoAutomaticoUseCase traspasoAutomatico;
 
-    public ExistenciasActualizadasListener(ConsultarNodosPort consultarNodos,
-                                           TraspasoAutomaticoUseCase traspasoAutomatico) {
-        this.consultarNodos = consultarNodos;
+    public ExistenciasActualizadasListener(TraspasoAutomaticoUseCase traspasoAutomatico) {
         this.traspasoAutomatico = traspasoAutomatico;
     }
 
@@ -41,7 +41,9 @@ public class ExistenciasActualizadasListener {
                 || evento.tipoMovimiento() == TipoMovimientoKardex.TRASPASO_ENTRADA) {
             return;
         }
-        consultarNodos.buscarTiendaPorNodoAlmacen(evento.nodoId())
-                .ifPresent(tiendaId -> traspasoAutomatico.evaluar(tiendaId, evento.varianteId()));
+        if (evento.tipoNodo() != TipoNodoInventario.ALMACEN || evento.tiendaId() == null) {
+            return;
+        }
+        traspasoAutomatico.evaluar(evento.tiendaId(), evento.varianteId());
     }
 }
