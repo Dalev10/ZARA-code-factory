@@ -26,7 +26,7 @@ class InventarioMovimientosAdapter implements InventarioMovimientos {
     @Override
     public void descontarPorVenta(UUID nodoId, UUID varianteId, int cantidad, UUID ventaId, boolean forzado) {
         try {
-            inventarioUseCase.aplicarVentaReferenciada(nodoId, varianteId, cantidad, forzado, ventaId);
+            inventarioUseCase.aplicarVenta(nodoId, varianteId, cantidad, forzado);
         } catch (com.codefactory.supplychain.inventario.domain.exception.StockInsuficienteException e) {
             throw new StockInsuficienteException();
         }
@@ -34,7 +34,7 @@ class InventarioMovimientosAdapter implements InventarioMovimientos {
 
     @Override
     public void revertirPorAnulacion(UUID nodoId, UUID varianteId, int cantidad, UUID ventaId) {
-        inventarioUseCase.revertirVenta(nodoId, varianteId, cantidad, MOTIVO_ANULACION, ventaId);
+        inventarioUseCase.revertir(nodoId, varianteId, cantidad, MOTIVO_ANULACION);
     }
 
     @Override
