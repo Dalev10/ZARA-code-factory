@@ -23,8 +23,8 @@ public class InventarioRetryableService implements InventarioUseCase {
 
     @Override
     @Retryable(includes = OptimisticLockingFailureException.class, maxRetries = 3, delay = 10)
-    public MovimientoInventario cargar(UUID nodoId, UUID varianteId, int cantidad) {
-        return inventarioService.cargar(nodoId, varianteId, cantidad);
+    public MovimientoInventario cargar(UUID nodoId, UUID varianteId, int cantidad, UUID usuarioId) {
+        return inventarioService.cargar(nodoId, varianteId, cantidad, usuarioId);
     }
 
     @Override

@@ -29,7 +29,7 @@ class InventarioTest {
     void cargarAumentaALaManoYRecalculaDerivadas() {
         Inventario inventario = Inventario.crear(nodoId, varianteId);
 
-        MovimientoInventario movimiento = inventario.cargar(10);
+        MovimientoInventario movimiento = inventario.cargar(10, null);
 
         assertThat(movimiento.tipo()).isEqualTo(TipoMovimientoInventario.CARGA_INICIAL);
         assertThat(movimiento.cantidad()).isEqualTo(10);
@@ -39,10 +39,19 @@ class InventarioTest {
     }
 
     @Test
+    void cargarRegistraAlAutorEnElMovimiento() {
+        UUID usuarioId = UUID.randomUUID();
+
+        MovimientoInventario movimiento = Inventario.crear(nodoId, varianteId).cargar(5, usuarioId);
+
+        assertThat(movimiento.usuarioId()).isEqualTo(usuarioId);
+    }
+
+    @Test
     void cargarEnCeroEsValidaYDejaLaVarianteCargada() {
         Inventario inventario = Inventario.crear(nodoId, varianteId);
 
-        MovimientoInventario movimiento = inventario.cargar(0);
+        MovimientoInventario movimiento = inventario.cargar(0, null);
 
         assertThat(movimiento.tipo()).isEqualTo(TipoMovimientoInventario.CARGA_INICIAL);
         assertThat(movimiento.cantidad()).isZero();
@@ -52,7 +61,7 @@ class InventarioTest {
     @Test
     void ventaNormalDescuentaStock() {
         Inventario inventario = Inventario.crear(nodoId, varianteId);
-        inventario.cargar(10);
+        inventario.cargar(10, null);
 
         MovimientoInventario movimiento = inventario.aplicarVenta(4, false);
 
@@ -67,7 +76,7 @@ class InventarioTest {
     @Test
     void ventaNormalConStockInsuficienteEsRechazadaSinMutarEstado() {
         Inventario inventario = Inventario.crear(nodoId, varianteId);
-        inventario.cargar(3);
+        inventario.cargar(3, null);
 
         assertThatThrownBy(() -> inventario.aplicarVenta(4, false))
                 .isInstanceOf(StockInsuficienteException.class);
@@ -91,7 +100,7 @@ class InventarioTest {
     @Test
     void ajustePositivoYNegativoMantieneDerivadasCoherentes() {
         Inventario inventario = Inventario.crear(nodoId, varianteId);
-        inventario.cargar(10);
+        inventario.cargar(10, null);
 
         inventario.aplicarAjuste(-3, "Conteo físico");
 
@@ -111,7 +120,7 @@ class InventarioTest {
     @Test
     void revertirRegistraAnulacionYReponeStock() {
         Inventario inventario = Inventario.crear(nodoId, varianteId);
-        inventario.cargar(2);
+        inventario.cargar(2, null);
         inventario.aplicarVenta(2, false);
 
         MovimientoInventario movimiento = inventario.revertir(2, "Venta anulada");
@@ -134,7 +143,7 @@ class InventarioTest {
     @Test
     void ajustePositivoAumentaStockYRegistraMotivo() {
         Inventario inventario = Inventario.crear(nodoId, varianteId);
-        inventario.cargar(2);
+        inventario.cargar(2, null);
 
         MovimientoInventario movimiento = inventario.aplicarAjuste(3, "INGRESO_MANUAL");
 
@@ -148,7 +157,7 @@ class InventarioTest {
     @Test
     void ajusteEnCeroEsRechazado() {
         Inventario inventario = Inventario.crear(nodoId, varianteId);
-        inventario.cargar(2);
+        inventario.cargar(2, null);
 
         assertThatThrownBy(() -> inventario.aplicarAjuste(0, "CORRECCION"))
                 .isInstanceOf(InventarioInvalidoException.class);
@@ -158,7 +167,7 @@ class InventarioTest {
     @Test
     void ventaNormalPuedeDejarElStockExactamenteEnCero() {
         Inventario inventario = Inventario.crear(nodoId, varianteId);
-        inventario.cargar(3);
+        inventario.cargar(3, null);
 
         MovimientoInventario movimiento = inventario.aplicarVenta(3, false);
 
@@ -170,7 +179,7 @@ class InventarioTest {
     void cadaTransicionMantieneLasInvariantesYElSaldoDelMovimiento() {
         Inventario inventario = Inventario.crear(nodoId, varianteId);
 
-        verificarInvariantes(inventario, inventario.cargar(10));
+        verificarInvariantes(inventario, inventario.cargar(10, null));
         verificarInvariantes(inventario, inventario.reponer(2));
         verificarInvariantes(inventario, inventario.aplicarVenta(4, false));
         verificarInvariantes(inventario, inventario.aplicarAjuste(3, "INGRESO_MANUAL"));
@@ -211,6 +220,7 @@ class InventarioTest {
                 1,
                 "Conteo físico",
                 true,
+                null,
                 1,
                 java.time.Instant.now()))
                 .isInstanceOf(IllegalArgumentException.class);
@@ -220,7 +230,7 @@ class InventarioTest {
     void rechazaCantidadesNoPositivas() {
         Inventario inventario = Inventario.crear(nodoId, varianteId);
 
-        assertThatThrownBy(() -> inventario.cargar(-1))
+        assertThatThrownBy(() -> inventario.cargar(-1, null))
                 .isInstanceOf(InventarioInvalidoException.class);
         assertThatThrownBy(() -> inventario.aplicarVenta(-1, false))
                 .isInstanceOf(InventarioInvalidoException.class);

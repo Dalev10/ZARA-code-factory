@@ -9,7 +9,7 @@ import java.util.UUID;
  */
 public interface InventarioUseCase {
 
-    MovimientoInventario cargar(UUID nodoId, UUID varianteId, int cantidad);
+    MovimientoInventario cargar(UUID nodoId, UUID varianteId, int cantidad, UUID usuarioId);
 
     MovimientoInventario reponer(UUID nodoId, UUID varianteId, int cantidad);
 

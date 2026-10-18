@@ -86,7 +86,7 @@ class InventarioServiceTest {
         UUID nodoId = UUID.randomUUID();
         UUID varianteId = UUID.randomUUID();
         Inventario inventario = Inventario.crear(nodoId, varianteId);
-        inventario.cargar(5);
+        inventario.cargar(5, null);
         when(repository.buscarPorNodoYVariante(nodoId, varianteId)).thenReturn(Optional.of(inventario));
 
         MovimientoInventario movimiento = servicio.aplicarVenta(nodoId, varianteId, 2, false);
@@ -116,7 +116,7 @@ class InventarioServiceTest {
         UUID nodoId = UUID.randomUUID();
         UUID varianteId = UUID.randomUUID();
         Inventario inventario = Inventario.crear(nodoId, varianteId);
-        inventario.cargar(1);
+        inventario.cargar(1, null);
         when(repository.buscarPorNodoYVariante(nodoId, varianteId)).thenReturn(Optional.of(inventario));
 
         MovimientoInventario movimiento = servicio.aplicarVenta(nodoId, varianteId, 3, true);
@@ -138,7 +138,7 @@ class InventarioServiceTest {
                 Nodo.reconstruir(cdNodoId, TipoNodo.CD, UUID.randomUUID(), null)));
         when(repository.buscarPorNodoYVariante(cdNodoId, varianteId)).thenReturn(Optional.empty());
 
-        servicio.cargar(cdNodoId, varianteId, 4);
+        servicio.cargar(cdNodoId, varianteId, 4, null);
 
         var evento = forClass(ExistenciasActualizadas.class);
         verify(eventos).publishEvent(evento.capture());
@@ -154,7 +154,7 @@ class InventarioServiceTest {
         UUID varianteId = UUID.randomUUID();
         when(nodoRepository.buscarPorId(nodoId)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> servicio.cargar(nodoId, varianteId, 4))
+        assertThatThrownBy(() -> servicio.cargar(nodoId, varianteId, 4, null))
                 .isInstanceOf(NodoNoEncontradoException.class);
         verify(repository, never()).guardar(any());
         verifyNoInteractions(movimientoRepository, eventos);
@@ -166,7 +166,7 @@ class InventarioServiceTest {
         UUID varianteId = UUID.randomUUID();
         when(repository.buscarPorNodoYVariante(nodoId, varianteId)).thenReturn(Optional.empty());
 
-        MovimientoInventario movimiento = servicio.cargar(nodoId, varianteId, 0);
+        MovimientoInventario movimiento = servicio.cargar(nodoId, varianteId, 0, null);
 
         assertThat(movimiento.tipo()).isEqualTo(TipoMovimientoInventario.CARGA_INICIAL);
         assertThat(movimiento.cantidad()).isZero();
@@ -210,7 +210,7 @@ class InventarioServiceTest {
         UUID varianteId = UUID.randomUUID();
         when(repository.buscarPorNodoYVariante(nodoId, varianteId)).thenReturn(Optional.empty());
 
-        MovimientoInventario movimiento = servicio.cargar(nodoId, varianteId, 8);
+        MovimientoInventario movimiento = servicio.cargar(nodoId, varianteId, 8, null);
 
         assertThat(movimiento.tipo()).isEqualTo(TipoMovimientoInventario.CARGA_INICIAL);
         verify(repository).guardar(org.mockito.ArgumentMatchers.argThat(inventario ->
@@ -228,7 +228,7 @@ class InventarioServiceTest {
         Inventario inventario = Inventario.crear(nodoId, varianteId);
         when(repository.buscarPorNodoYVariante(nodoId, varianteId)).thenReturn(Optional.of(inventario));
 
-        assertThatThrownBy(() -> servicio.cargar(nodoId, varianteId, 8))
+        assertThatThrownBy(() -> servicio.cargar(nodoId, varianteId, 8, null))
                 .isInstanceOf(InventarioYaCargadoException.class);
     }
 }

@@ -44,7 +44,7 @@ class InventarioRepositoryAdapterTest {
         UUID nodoId = persistirNodo();
         UUID varianteId = persistirVariante();
         Inventario inventario = Inventario.crear(nodoId, varianteId);
-        inventario.cargar(12);
+        inventario.cargar(12, null);
 
         Inventario guardado = inventarioRepository.guardar(inventario);
         entityManager.flush();

@@ -38,13 +38,13 @@ public class InventarioService {
     private final ApplicationEventPublisher eventos;
 
     @Transactional
-    public MovimientoInventario cargar(UUID nodoId, UUID varianteId, int cantidad) {
+    public MovimientoInventario cargar(UUID nodoId, UUID varianteId, int cantidad, UUID usuarioId) {
         Nodo nodo = buscarNodo(nodoId);
         if (inventarioRepositoryPort.buscarPorNodoYVariante(nodoId, varianteId).isPresent()) {
             throw new InventarioYaCargadoException(nodoId, varianteId);
         }
         Inventario inventario = Inventario.crear(nodoId, varianteId);
-        MovimientoInventario movimiento = inventario.cargar(cantidad);
+        MovimientoInventario movimiento = inventario.cargar(cantidad, usuarioId);
         inventarioRepositoryPort.guardar(inventario);
         registrarMovimiento(nodo, inventario, movimiento);
         return movimiento;

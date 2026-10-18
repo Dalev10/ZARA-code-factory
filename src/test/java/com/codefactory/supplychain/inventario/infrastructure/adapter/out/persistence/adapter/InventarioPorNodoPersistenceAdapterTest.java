@@ -75,7 +75,7 @@ class InventarioPorNodoPersistenceAdapterTest {
                 .executeUpdate();
 
         Inventario inventario = Inventario.crear(nodoId, varianteId);
-        inventario.cargar(9);
+        inventario.cargar(9, null);
         entityManager.getEntityManager().createNativeQuery(
                 "INSERT INTO inventario (id, nodo_id, variante_id, a_la_mano, disponible_para_uso, entrante, saliente, pronosticado) "
                         + "VALUES (:id, :nodo, :variante, 9, 9, 0, 0, 9)")

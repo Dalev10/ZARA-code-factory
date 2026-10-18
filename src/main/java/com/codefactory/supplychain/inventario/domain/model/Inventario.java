@@ -75,13 +75,15 @@ public final class Inventario {
 
     /**
      * Una carga en 0 es válida y deja la variante cargada (D-30).
+     *
+     * @param usuarioId autor de la carga, tomado del token
      */
-    public MovimientoInventario cargar(int cantidad) {
+    public MovimientoInventario cargar(int cantidad, UUID usuarioId) {
         if (cantidad < 0) {
             throw new InventarioInvalidoException("La cantidad cargada no puede ser negativa");
         }
         aLaMano += cantidad;
-        return registrar(TipoMovimientoInventario.CARGA_INICIAL, cantidad, null);
+        return registrar(TipoMovimientoInventario.CARGA_INICIAL, cantidad, null, false, usuarioId);
     }
 
     public MovimientoInventario reponer(int cantidad) {
@@ -96,7 +98,7 @@ public final class Inventario {
             throw new StockInsuficienteException(aLaMano, cantidad);
         }
         aLaMano -= cantidad;
-        return registrar(TipoMovimientoInventario.VENTA, -cantidad, null, forzado);
+        return registrar(TipoMovimientoInventario.VENTA, -cantidad, null, forzado, null);
     }
 
     public MovimientoInventario aplicarAjuste(int delta, String motivo) {
@@ -121,14 +123,15 @@ public final class Inventario {
             TipoMovimientoInventario tipo,
             int cantidad,
             String motivo) {
-        return registrar(tipo, cantidad, motivo, false);
+        return registrar(tipo, cantidad, motivo, false, null);
     }
 
     private MovimientoInventario registrar(
             TipoMovimientoInventario tipo,
             int cantidad,
             String motivo,
-            boolean forzado) {
+            boolean forzado,
+            UUID usuarioId) {
         recalcular();
         return new MovimientoInventario(
                 UUID.randomUUID(),
@@ -136,6 +139,7 @@ public final class Inventario {
                 cantidad,
                 motivo,
                 forzado,
+                usuarioId,
                 aLaMano,
                 Instant.now());
     }

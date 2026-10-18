@@ -12,6 +12,9 @@ import java.util.UUID;
  *
  * {@code forzado} solo puede ser verdadero en una venta que saltó el chequeo
  * de stock suficiente.
+ *
+ * {@code usuarioId} es el autor tomado del token; es {@code null} en los
+ * movimientos que todavía no registran autor.
  */
 public record MovimientoInventario(
         UUID id,
@@ -19,6 +22,7 @@ public record MovimientoInventario(
         int cantidad,
         String motivo,
         boolean forzado,
+        UUID usuarioId,
         int saldoResultante,
         Instant ocurridoEn) {
 

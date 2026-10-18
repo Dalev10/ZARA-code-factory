@@ -17,7 +17,8 @@ class MovimientoInventarioMapperTest {
         UUID nodoId = UUID.randomUUID();
         UUID varianteId = UUID.randomUUID();
         Inventario inventario = Inventario.crear(nodoId, varianteId);
-        MovimientoInventario movimiento = inventario.cargar(7);
+        UUID usuarioId = UUID.randomUUID();
+        MovimientoInventario movimiento = inventario.cargar(7, usuarioId);
 
         MovimientoInventarioEntity entity = new MovimientoInventarioMapper()
                 .toEntity(nodoId, varianteId, movimiento);
@@ -29,6 +30,7 @@ class MovimientoInventarioMapperTest {
         assertThat(entity.getCantidad()).isEqualTo(7);
         assertThat(entity.getOcurridoEn()).isEqualTo(movimiento.ocurridoEn());
         assertThat(entity.isForzado()).isFalse();
+        assertThat(entity.getUsuarioId()).isEqualTo(usuarioId);
     }
 
     @Test

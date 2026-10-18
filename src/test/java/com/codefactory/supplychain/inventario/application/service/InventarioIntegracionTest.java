@@ -106,7 +106,7 @@ class InventarioIntegracionTest {
               Y el kardex tiene exactamente un movimiento VENTA por venta exitosa
               Y las ventas fallidas solo fallan por stock insuficiente o por agotar los reintentos""")
     void ventaConcurrenteNoPierdeDescuentos() throws Exception {
-        inventarioUseCase.cargar(nodoId, varianteId, 10);
+        inventarioUseCase.cargar(nodoId, varianteId, 10, null);
         int ventas = 20;
         CountDownLatch salida = new CountDownLatch(1);
         ExecutorService pool = Executors.newFixedThreadPool(ventas);
@@ -160,7 +160,7 @@ class InventarioIntegracionTest {
               Entonces el a_la_mano sigue en 5
               Y no hay movimiento VENTA ni evento confirmado""")
     void inventarioYKardexSeGuardanAtomicamente() {
-        inventarioUseCase.cargar(nodoId, varianteId, 5);
+        inventarioUseCase.cargar(nodoId, varianteId, 5, null);
         registroEventos.limpiar();
         doThrow(new IllegalStateException("Fallo simulado del kardex"))
                 .when(movimientoRepositoryPort).guardar(any(), any(), any());
@@ -181,7 +181,7 @@ class InventarioIntegracionTest {
               Entonces se publica un evento dentro de una transacción activa
               Y tras el commit el evento coincide con el movimiento y el saldo resultante""")
     void cadaMovimientoPublicaElEventoConElSaldoResultante() {
-        inventarioUseCase.cargar(nodoId, varianteId, 4);
+        inventarioUseCase.cargar(nodoId, varianteId, 4, null);
         registroEventos.limpiar();
 
         MovimientoInventario movimiento = inventarioUseCase.aplicarVenta(nodoId, varianteId, 6, true);
@@ -215,7 +215,7 @@ class InventarioIntegracionTest {
               Y ningún listener AFTER_COMMIT lo recibe
               Y el a_la_mano sigue en 4""")
     void rollbackNoDejaPublicacionEfectiva() {
-        inventarioUseCase.cargar(nodoId, varianteId, 4);
+        inventarioUseCase.cargar(nodoId, varianteId, 4, null);
         registroEventos.limpiar();
 
         transactionTemplate.executeWithoutResult(estado -> {
@@ -238,7 +238,7 @@ class InventarioIntegracionTest {
               Entonces se reintenta, vuelve a leer la fila y termina con éxito
               Y el a_la_mano final es 14 con un solo movimiento VENTA""")
     void conflictoDeVersionSeReintentaReleyendoLaFila() throws Exception {
-        inventarioUseCase.cargar(nodoId, varianteId, 10);
+        inventarioUseCase.cargar(nodoId, varianteId, 10, null);
         clearInvocations(inventarioRepositoryPort);
         AtomicBoolean primeraLectura = new AtomicBoolean(true);
         ExecutorService otraConexion = Executors.newSingleThreadExecutor();
@@ -276,7 +276,7 @@ class InventarioIntegracionTest {
               Cuando se registra una venta normal de 2 unidades
               Entonces se rechaza por stock insuficiente sin reintentar""")
     void errorDeNegocioNoSeReintenta() {
-        inventarioUseCase.cargar(nodoId, varianteId, 1);
+        inventarioUseCase.cargar(nodoId, varianteId, 1, null);
         clearInvocations(inventarioRepositoryPort);
 
         assertThatThrownBy(() -> inventarioUseCase.aplicarVenta(nodoId, varianteId, 2, false))
@@ -292,14 +292,18 @@ class InventarioIntegracionTest {
               Dado un nodo sin fila para la variante X
               Cuando se carga X con 0 unidades
               Entonces existe la fila con a_la_mano 0
-              Y el kardex tiene un movimiento CARGA_INICIAL con cantidad 0""")
+              Y el kardex tiene un movimiento CARGA_INICIAL con cantidad 0 y su autor""")
     void cargaInicialEnCeroDejaLaVarianteCargada() {
-        inventarioUseCase.cargar(nodoId, varianteId, 0);
+        UUID usuarioId = jdbc.queryForObject("SELECT id FROM usuario LIMIT 1", UUID.class);
+
+        inventarioUseCase.cargar(nodoId, varianteId, 0, usuarioId);
 
         assertThat(aLaMano()).isZero();
-        assertThat(jdbc.queryForObject(
-                "SELECT cantidad FROM movimiento_inventario WHERE nodo_id = ? AND variante_id = ? AND tipo = 'CARGA_INICIAL'",
-                Integer.class, nodoId, varianteId)).isZero();
+        assertThat(jdbc.queryForMap(
+                "SELECT cantidad, usuario_id FROM movimiento_inventario WHERE nodo_id = ? AND variante_id = ? AND tipo = 'CARGA_INICIAL'",
+                nodoId, varianteId))
+                .containsEntry("cantidad", 0)
+                .containsEntry("usuario_id", usuarioId);
     }
 
     @Test
