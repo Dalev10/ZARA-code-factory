@@ -12,23 +12,21 @@ import java.util.UUID;
  *
  * {@code forzado} solo puede ser verdadero en una venta que saltó el chequeo
  * de stock suficiente.
- *
- * {@code comentario} acompaña al motivo; es obligatorio en un ajuste por
- * CORRECCION.
- *
- * {@code usuarioId} es el autor tomado del token; es {@code null} en los
- * movimientos que todavía no registran autor.
  */
 public record MovimientoInventario(
         UUID id,
         TipoMovimientoInventario tipo,
         int cantidad,
         String motivo,
-        String comentario,
         boolean forzado,
-        UUID usuarioId,
         int saldoResultante,
-        Instant ocurridoEn) {
+        Instant ocurridoEn,
+        UUID referenciaId) {
+
+    public MovimientoInventario(UUID id, TipoMovimientoInventario tipo, int cantidad, String motivo,
+                                boolean forzado, int saldoResultante, Instant ocurridoEn) {
+        this(id, tipo, cantidad, motivo, forzado, saldoResultante, ocurridoEn, null);
+    }
 
     public MovimientoInventario {
         Objects.requireNonNull(id, "El id del movimiento es obligatorio");
@@ -40,5 +38,9 @@ public record MovimientoInventario(
         if (forzado && tipo != TipoMovimientoInventario.VENTA) {
             throw new IllegalArgumentException("Solo una venta puede ser forzada");
         }
+    }
+
+    public MovimientoInventario conReferencia(UUID referencia) {
+        return new MovimientoInventario(id, tipo, cantidad, motivo, forzado, saldoResultante, ocurridoEn, referencia);
     }
 }

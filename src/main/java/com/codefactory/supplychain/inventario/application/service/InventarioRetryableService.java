@@ -1,7 +1,6 @@
 package com.codefactory.supplychain.inventario.application.service;
 
 import com.codefactory.supplychain.inventario.application.port.in.InventarioUseCase;
-import com.codefactory.supplychain.inventario.domain.model.MotivoAjuste;
 import com.codefactory.supplychain.inventario.domain.model.MovimientoInventario;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.OptimisticLockingFailureException;
@@ -24,8 +23,8 @@ public class InventarioRetryableService implements InventarioUseCase {
 
     @Override
     @Retryable(includes = OptimisticLockingFailureException.class, maxRetries = 3, delay = 10)
-    public MovimientoInventario cargar(UUID nodoId, UUID varianteId, int cantidad, UUID usuarioId) {
-        return inventarioService.cargar(nodoId, varianteId, cantidad, usuarioId);
+    public MovimientoInventario cargar(UUID nodoId, UUID varianteId, int cantidad) {
+        return inventarioService.cargar(nodoId, varianteId, cantidad);
     }
 
     @Override
@@ -46,14 +45,23 @@ public class InventarioRetryableService implements InventarioUseCase {
 
     @Override
     @Retryable(includes = OptimisticLockingFailureException.class, maxRetries = 3, delay = 10)
+    public MovimientoInventario aplicarVentaReferenciada(
+            UUID nodoId,
+            UUID varianteId,
+            int cantidad,
+            boolean forzado,
+            UUID ventaId) {
+        return inventarioService.aplicarVentaReferenciada(nodoId, varianteId, cantidad, forzado, ventaId);
+    }
+
+    @Override
+    @Retryable(includes = OptimisticLockingFailureException.class, maxRetries = 3, delay = 10)
     public MovimientoInventario aplicarAjuste(
             UUID nodoId,
             UUID varianteId,
             int delta,
-            MotivoAjuste motivo,
-            String comentario,
-            UUID usuarioId) {
-        return inventarioService.aplicarAjuste(nodoId, varianteId, delta, motivo, comentario, usuarioId);
+            String motivo) {
+        return inventarioService.aplicarAjuste(nodoId, varianteId, delta, motivo);
     }
 
     @Override
@@ -64,5 +72,16 @@ public class InventarioRetryableService implements InventarioUseCase {
             int cantidad,
             String motivo) {
         return inventarioService.revertir(nodoId, varianteId, cantidad, motivo);
+    }
+
+    @Override
+    @Retryable(includes = OptimisticLockingFailureException.class, maxRetries = 3, delay = 10)
+    public MovimientoInventario revertirVenta(
+            UUID nodoId,
+            UUID varianteId,
+            int cantidad,
+            String motivo,
+            UUID ventaId) {
+        return inventarioService.revertirVenta(nodoId, varianteId, cantidad, motivo, ventaId);
     }
 }
