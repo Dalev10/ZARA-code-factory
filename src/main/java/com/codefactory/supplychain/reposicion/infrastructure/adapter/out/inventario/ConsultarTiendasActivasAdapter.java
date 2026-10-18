@@ -9,10 +9,9 @@ import java.util.UUID;
 
 /**
  * ACL hacia inventario.api: obtiene los ids de todas las tiendas activas para la
- * evaluación masiva (HU-41). Usa {@link ConsultaTiendas} que ya existe desde HU-32
- * (sin cambios pendientes).
+ * evaluación masiva (HU-41). Usa {@link ConsultaTiendas}.
  *
- * Módulo: reposicion — FEAT-09.
+ * Módulo: reposicion.
  */
 @Component
 public class ConsultarTiendasActivasAdapter implements ConsultarTiendasActivasPort {

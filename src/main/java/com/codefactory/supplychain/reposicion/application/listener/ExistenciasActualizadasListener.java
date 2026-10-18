@@ -17,12 +17,12 @@ import com.codefactory.supplychain.inventario.api.ConsultaNodos;
  * 
  * Solo le interesan los movimientos del nodo ALMACEN; los de Bodega o CD los ignora.
  * El listener corre AFTER_COMMIT en su propia transacción (REQUIRES_NEW): si el
- * traspaso falla, la operación de origen —la venta— ya quedó registrada (D-17).
+ * traspaso falla, la operación de origen —la venta— ya quedó registrada.
  * 
  * Tolerante a eventos duplicados: si el traspaso ya no aplica (umbral cubierto o
  * bodega vacía) el caso de uso devuelve vacío sin efecto.
  *
- * Módulo: reposicion — Reposición interna (FEAT-09).
+ * Módulo: reposicion — Reposición interna.
  */
 @Component
 public class ExistenciasActualizadasListener {
