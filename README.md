@@ -55,9 +55,14 @@ reacciona a un hecho de otro módulo sigue esta forma:
 public void alOcurrirAlgo(AlgoOcurrio evento) { ... }
 ```
 
-Corre en el mismo hilo, después del commit y antes de responder al cliente; si
-falla, Spring lo registra en el log y la operación de origen queda confirmada.
-Spring no arranca si el listener declara `@Transactional` sin `REQUIRES_NEW`.
+Por defecto, corre en el mismo hilo después del commit y antes de responder al
+cliente; si falla, Spring lo registra en el log y la operación de origen queda
+confirmada. `ExistenciasActualizadasListener` es la excepción: despacha el
+procesamiento a un executor acotado para que el commit de Inventario libere su
+conexión antes de que Ventas abra su transacción `REQUIRES_NEW`. Sus efectos
+pueden completarse después de responder; la reconciliación de HU-37 corrige
+diferencias. Spring no arranca si un listener declara `@Transactional` sin
+`REQUIRES_NEW`.
 Comportamiento fijado en `EventosReintentosZonaHorariaTest`.
 
 ## Primeros pasos

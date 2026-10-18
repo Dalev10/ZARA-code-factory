@@ -159,4 +159,25 @@ class TiendaServiceTest {
 
         assertThat(servicio.buscarTodas(List.of(id))).containsExactly(new TiendaResumen(id, "Norte", true));
     }
+
+    @Test
+    void consultaNodosDevuelveElIdDelAlmacenDeLaTienda() {
+        UUID tiendaId = UUID.randomUUID();
+        Nodo almacen = Nodo.crearParaTienda(tiendaId, TipoNodo.ALMACEN);
+        when(nodoRepositoryPort.buscarPorTiendaYTipo(tiendaId, TipoNodo.ALMACEN))
+                .thenReturn(Optional.of(almacen));
+
+        assertThat(servicio.buscarAlmacen(tiendaId)).contains(almacen.getId());
+        verify(nodoRepositoryPort).buscarPorTiendaYTipo(tiendaId, TipoNodo.ALMACEN);
+    }
+
+    @Test
+    void consultaNodosNoUsaLaBodegaTiendaComoAlmacen() {
+        UUID tiendaId = UUID.randomUUID();
+        when(nodoRepositoryPort.buscarPorTiendaYTipo(tiendaId, TipoNodo.ALMACEN))
+                .thenReturn(Optional.empty());
+
+        assertThat(servicio.buscarAlmacen(tiendaId)).isEmpty();
+        verify(nodoRepositoryPort).buscarPorTiendaYTipo(tiendaId, TipoNodo.ALMACEN);
+    }
 }

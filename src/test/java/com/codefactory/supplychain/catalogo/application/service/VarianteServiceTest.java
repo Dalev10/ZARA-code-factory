@@ -1,5 +1,6 @@
 package com.codefactory.supplychain.catalogo.application.service;
 
+import com.codefactory.supplychain.catalogo.api.VarianteResumen;
 import com.codefactory.supplychain.catalogo.application.exception.CatalogoRecursoNoEncontradoException;
 import com.codefactory.supplychain.catalogo.application.exception.SkuDuplicadoException;
 import com.codefactory.supplychain.catalogo.application.port.out.TemplateRepository;
@@ -92,6 +93,22 @@ class VarianteServiceTest {
 
         assertThatThrownBy(() -> servicio.obtenerPorSku("NO-EXISTE"))
                 .isInstanceOf(CatalogoRecursoNoEncontradoException.class);
+    }
+
+    @Test
+    void consultaPublicaPorSkuDevuelveUnResumenDeLaVariante() {
+        Variante variante = new Variante("SKU-001", template(), "M", "Rojo");
+        when(varianteRepository.findBySku("SKU-001")).thenReturn(Optional.of(variante));
+
+        assertThat(servicio.buscarPorSku("SKU-001"))
+                .contains(new VarianteResumen(variante.getId(), "SKU-001"));
+    }
+
+    @Test
+    void consultaPublicaPorSkuDevuelveVacioCuandoNoExiste() {
+        when(varianteRepository.findBySku("NO-EXISTE")).thenReturn(Optional.empty());
+
+        assertThat(servicio.buscarPorSku("NO-EXISTE")).isEmpty();
     }
 
     @Test

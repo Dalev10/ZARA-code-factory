@@ -1,6 +1,7 @@
 package com.codefactory.supplychain.catalogo.application.service;
 
-import java.util.UUID;
+import com.codefactory.supplychain.catalogo.api.ConsultaVariantes;
+import com.codefactory.supplychain.catalogo.api.VarianteResumen;
 import com.codefactory.supplychain.catalogo.application.exception.CatalogoRecursoNoEncontradoException;
 import com.codefactory.supplychain.catalogo.application.exception.SkuDuplicadoException;
 import com.codefactory.supplychain.catalogo.application.port.in.VarianteUseCase;
@@ -8,6 +9,8 @@ import com.codefactory.supplychain.catalogo.application.port.out.TemplateReposit
 import com.codefactory.supplychain.catalogo.application.port.out.VarianteRepository;
 import com.codefactory.supplychain.catalogo.domain.model.Template;
 import com.codefactory.supplychain.catalogo.domain.model.Variante;
+import java.util.Optional;
+import java.util.UUID;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -30,7 +33,7 @@ import org.springframework.transaction.annotation.Transactional;
  */
 @Service
 @Transactional(readOnly = true)
-public class VarianteService implements VarianteUseCase {
+public class VarianteService implements VarianteUseCase, ConsultaVariantes {
 
     private final VarianteRepository varianteRepository;
     private final TemplateRepository templateRepository;
@@ -60,6 +63,12 @@ public class VarianteService implements VarianteUseCase {
     public Variante obtenerPorSku(String sku) {
         return varianteRepository.findBySku(sku)
                 .orElseThrow(() -> CatalogoRecursoNoEncontradoException.varianteConSku(sku));
+    }
+
+    @Override
+    public Optional<VarianteResumen> buscarPorSku(String sku) {
+        return varianteRepository.findBySku(sku)
+                .map(variante -> new VarianteResumen(variante.getId(), variante.getSku()));
     }
 
     @Override

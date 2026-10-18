@@ -1,5 +1,6 @@
 package com.codefactory.supplychain.inventario.application.service;
 
+import com.codefactory.supplychain.inventario.api.ConsultaNodos;
 import com.codefactory.supplychain.inventario.api.ConsultaTiendas;
 import com.codefactory.supplychain.inventario.api.TiendaResumen;
 import com.codefactory.supplychain.inventario.application.port.in.TiendaUseCase;
@@ -32,7 +33,7 @@ import java.util.UUID;
  */
 @Service
 @RequiredArgsConstructor
-public class TiendaService implements TiendaUseCase, ConsultaTiendas {
+public class TiendaService implements TiendaUseCase, ConsultaTiendas, ConsultaNodos {
 
     private final TiendaRepositoryPort tiendaRepositoryPort;
     private final NodoRepositoryPort nodoRepositoryPort;
@@ -88,6 +89,11 @@ public class TiendaService implements TiendaUseCase, ConsultaTiendas {
     @Override
     public List<TiendaResumen> buscarTodas(Collection<UUID> tiendaIds) {
         return tiendaRepositoryPort.buscarPorIds(tiendaIds).stream().map(TiendaService::resumir).toList();
+    }
+
+    @Override
+    public Optional<UUID> buscarAlmacen(UUID tiendaId) {
+        return nodoRepositoryPort.buscarPorTiendaYTipo(tiendaId, TipoNodo.ALMACEN).map(Nodo::getId);
     }
 
     private static TiendaResumen resumir(Tienda tienda) {
