@@ -116,6 +116,9 @@ class PrioridadTiendaCdPersistenceAdapterTest {
         UUID cd = crearCd();
         jdbc.update("INSERT INTO tienda_cd_prioridad (id, tienda_id, cd_id, orden_prioridad) VALUES (?,?,?,1)",
                 UUID.randomUUID(), tienda, cd);
+        // uq_prioridad_tienda_cd es DEFERRABLE INITIALLY DEFERRED (V23): se valida al commit.
+        // El test hace rollback, así que se fuerza la verificación inmediata.
+        jdbc.execute("SET CONSTRAINTS uq_prioridad_tienda_cd IMMEDIATE");
 
         assertThatThrownBy(() -> jdbc.update(
                 "INSERT INTO tienda_cd_prioridad (id, tienda_id, cd_id, orden_prioridad) VALUES (?,?,?,2)",

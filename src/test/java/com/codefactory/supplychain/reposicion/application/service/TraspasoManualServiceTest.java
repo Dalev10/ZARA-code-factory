@@ -39,7 +39,7 @@ class TraspasoManualServiceTest {
 
     @BeforeEach
     void stubRepository() {
-        when(traspasoRepository.guardar(any())).thenAnswer(inv -> inv.getArgument(0));
+        lenient().when(traspasoRepository.guardar(any())).thenAnswer(inv -> inv.getArgument(0));
     }
 
     @Nested

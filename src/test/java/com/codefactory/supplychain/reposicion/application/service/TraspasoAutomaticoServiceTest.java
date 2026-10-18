@@ -41,7 +41,7 @@ class TraspasoAutomaticoServiceTest {
     @BeforeEach
     void stubRepository() {
         // Por defecto, guardar devuelve lo que recibe
-        when(traspasoRepository.guardar(any())).thenAnswer(inv -> inv.getArgument(0));
+        lenient().when(traspasoRepository.guardar(any())).thenAnswer(inv -> inv.getArgument(0));
     }
 
     @Nested
