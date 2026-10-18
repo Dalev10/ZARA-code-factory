@@ -1,6 +1,10 @@
 package com.codefactory.supplychain.catalogo.application.service;
 
+import java.util.List;
+import java.util.Set;
 import java.util.UUID;
+import com.codefactory.supplychain.catalogo.api.ConsultaVariantes;
+import com.codefactory.supplychain.catalogo.api.VarianteResumen;
 import com.codefactory.supplychain.catalogo.application.exception.CatalogoRecursoNoEncontradoException;
 import com.codefactory.supplychain.catalogo.application.exception.SkuDuplicadoException;
 import com.codefactory.supplychain.catalogo.application.port.in.VarianteUseCase;
@@ -27,10 +31,13 @@ import org.springframework.transaction.annotation.Transactional;
  * instancia de {@code Variante} con el mismo id (usando el constructor de
  * reconstitución que el propio dominio ya expone para este fin) y
  * guardándola a través del puerto de salida.
+ * <p>
+ * También implementa {@link ConsultaVariantes}, la consulta de solo lectura que
+ * catalogo publica en su paquete api para otros módulos (ARQUITECTURA.md).
  */
 @Service
 @Transactional(readOnly = true)
-public class VarianteService implements VarianteUseCase {
+public class VarianteService implements VarianteUseCase, ConsultaVariantes {
 
     private final VarianteRepository varianteRepository;
     private final TemplateRepository templateRepository;
@@ -89,6 +96,16 @@ public class VarianteService implements VarianteUseCase {
         // físico no debería violar ninguna FK entrante de otra entidad
         // del módulo catalogo en este MVP.
         varianteRepository.deleteById(id);
+    }
+
+    @Override
+    public List<VarianteResumen> buscarPorSkus(Set<String> skus) {
+        if (skus.isEmpty()) {
+            return List.of();
+        }
+        return varianteRepository.findBySkuIn(skus).stream()
+                .map(variante -> new VarianteResumen(variante.getId(), variante.getSku()))
+                .toList();
     }
 
     private Template obtenerTemplateExistente(UUID templateId) {
