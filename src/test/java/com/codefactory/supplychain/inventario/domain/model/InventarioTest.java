@@ -1,5 +1,6 @@
 package com.codefactory.supplychain.inventario.domain.model;
 
+import com.codefactory.supplychain.inventario.domain.exception.AjusteDejaStockNegativoException;
 import com.codefactory.supplychain.inventario.domain.exception.InventarioInvalidoException;
 import com.codefactory.supplychain.inventario.domain.exception.StockInsuficienteException;
 import org.junit.jupiter.api.Test;
@@ -102,7 +103,7 @@ class InventarioTest {
         Inventario inventario = Inventario.crear(nodoId, varianteId);
         inventario.cargar(10, null);
 
-        inventario.aplicarAjuste(-3, "Conteo físico");
+        inventario.aplicarAjuste(-3, MotivoAjuste.CONTEO_FISICO, null, null);
 
         assertThat(inventario.getALaMano()).isEqualTo(7);
         assertThat(inventario.getDisponible()).isEqualTo(7);
@@ -112,9 +113,57 @@ class InventarioTest {
     @Test
     void ajusteQueDejaStockNegativoEsRechazado() {
         Inventario inventario = Inventario.crear(nodoId, varianteId);
+        inventario.cargar(1, null);
 
-        assertThatThrownBy(() -> inventario.aplicarAjuste(-1, "Conteo físico"))
+        assertThatThrownBy(() -> inventario.aplicarAjuste(-2, MotivoAjuste.MERMA, null, null))
+                .isInstanceOf(AjusteDejaStockNegativoException.class);
+        assertThat(inventario.getALaMano()).isEqualTo(1);
+    }
+
+    @Test
+    void ajustePuedeDejarElStockExactamenteEnCero() {
+        Inventario inventario = Inventario.crear(nodoId, varianteId);
+        inventario.cargar(2, null);
+
+        MovimientoInventario movimiento = inventario.aplicarAjuste(-2, MotivoAjuste.MERMA, null, null);
+
+        verificarInvariantes(inventario, movimiento);
+        assertThat(inventario.getALaMano()).isZero();
+    }
+
+    @Test
+    void ajustePorCorreccionExigeComentario() {
+        Inventario inventario = Inventario.crear(nodoId, varianteId);
+        inventario.cargar(2, null);
+
+        assertThatThrownBy(() -> inventario.aplicarAjuste(1, MotivoAjuste.CORRECCION, null, null))
                 .isInstanceOf(InventarioInvalidoException.class);
+        assertThatThrownBy(() -> inventario.aplicarAjuste(1, MotivoAjuste.CORRECCION, "  ", null))
+                .isInstanceOf(InventarioInvalidoException.class);
+        assertThat(inventario.getALaMano()).isEqualTo(2);
+    }
+
+    @Test
+    void ajusteSinMotivoEsRechazado() {
+        Inventario inventario = Inventario.crear(nodoId, varianteId);
+
+        assertThatThrownBy(() -> inventario.aplicarAjuste(1, null, null, null))
+                .isInstanceOf(InventarioInvalidoException.class);
+    }
+
+    @Test
+    void ajusteRegistraMotivoComentarioYAutor() {
+        Inventario inventario = Inventario.crear(nodoId, varianteId);
+        inventario.cargar(2, null);
+        UUID usuarioId = UUID.randomUUID();
+
+        MovimientoInventario movimiento = inventario.aplicarAjuste(
+                -1, MotivoAjuste.CORRECCION, "Error de digitación", usuarioId);
+
+        assertThat(movimiento.motivo()).isEqualTo("CORRECCION");
+        assertThat(movimiento.comentario()).isEqualTo("Error de digitación");
+        assertThat(movimiento.usuarioId()).isEqualTo(usuarioId);
+        verificarInvariantes(inventario, movimiento);
     }
 
     @Test
@@ -145,7 +194,7 @@ class InventarioTest {
         Inventario inventario = Inventario.crear(nodoId, varianteId);
         inventario.cargar(2, null);
 
-        MovimientoInventario movimiento = inventario.aplicarAjuste(3, "INGRESO_MANUAL");
+        MovimientoInventario movimiento = inventario.aplicarAjuste(3, MotivoAjuste.INGRESO_MANUAL, null, null);
 
         assertThat(movimiento.tipo()).isEqualTo(TipoMovimientoInventario.AJUSTE);
         assertThat(movimiento.cantidad()).isEqualTo(3);
@@ -159,7 +208,7 @@ class InventarioTest {
         Inventario inventario = Inventario.crear(nodoId, varianteId);
         inventario.cargar(2, null);
 
-        assertThatThrownBy(() -> inventario.aplicarAjuste(0, "CORRECCION"))
+        assertThatThrownBy(() -> inventario.aplicarAjuste(0, MotivoAjuste.CONTEO_FISICO, null, null))
                 .isInstanceOf(InventarioInvalidoException.class);
         assertThat(inventario.getALaMano()).isEqualTo(2);
     }
@@ -182,8 +231,8 @@ class InventarioTest {
         verificarInvariantes(inventario, inventario.cargar(10, null));
         verificarInvariantes(inventario, inventario.reponer(2));
         verificarInvariantes(inventario, inventario.aplicarVenta(4, false));
-        verificarInvariantes(inventario, inventario.aplicarAjuste(3, "INGRESO_MANUAL"));
-        verificarInvariantes(inventario, inventario.aplicarAjuste(-1, "MERMA"));
+        verificarInvariantes(inventario, inventario.aplicarAjuste(3, MotivoAjuste.INGRESO_MANUAL, null, null));
+        verificarInvariantes(inventario, inventario.aplicarAjuste(-1, MotivoAjuste.MERMA, null, null));
         verificarInvariantes(inventario, inventario.revertir(4, "Venta anulada"));
         verificarInvariantes(inventario, inventario.aplicarVenta(20, true));
 
@@ -219,6 +268,7 @@ class InventarioTest {
                 TipoMovimientoInventario.AJUSTE,
                 1,
                 "Conteo físico",
+                null,
                 true,
                 null,
                 1,

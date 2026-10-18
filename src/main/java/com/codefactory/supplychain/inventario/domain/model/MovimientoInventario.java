@@ -13,6 +13,9 @@ import java.util.UUID;
  * {@code forzado} solo puede ser verdadero en una venta que saltó el chequeo
  * de stock suficiente.
  *
+ * {@code comentario} acompaña al motivo; es obligatorio en un ajuste por
+ * CORRECCION.
+ *
  * {@code usuarioId} es el autor tomado del token; es {@code null} en los
  * movimientos que todavía no registran autor.
  */
@@ -21,6 +24,7 @@ public record MovimientoInventario(
         TipoMovimientoInventario tipo,
         int cantidad,
         String motivo,
+        String comentario,
         boolean forzado,
         UUID usuarioId,
         int saldoResultante,

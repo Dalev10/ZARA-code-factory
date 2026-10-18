@@ -1,5 +1,6 @@
 package com.codefactory.supplychain.inventario.domain.model;
 
+import com.codefactory.supplychain.inventario.domain.exception.AjusteDejaStockNegativoException;
 import com.codefactory.supplychain.inventario.domain.exception.InventarioInvalidoException;
 import com.codefactory.supplychain.inventario.domain.exception.StockInsuficienteException;
 
@@ -83,7 +84,7 @@ public final class Inventario {
             throw new InventarioInvalidoException("La cantidad cargada no puede ser negativa");
         }
         aLaMano += cantidad;
-        return registrar(TipoMovimientoInventario.CARGA_INICIAL, cantidad, null, false, usuarioId);
+        return registrar(TipoMovimientoInventario.CARGA_INICIAL, cantidad, null, null, false, usuarioId);
     }
 
     public MovimientoInventario reponer(int cantidad) {
@@ -98,19 +99,35 @@ public final class Inventario {
             throw new StockInsuficienteException(aLaMano, cantidad);
         }
         aLaMano -= cantidad;
-        return registrar(TipoMovimientoInventario.VENTA, -cantidad, null, forzado, null);
+        return registrar(TipoMovimientoInventario.VENTA, -cantidad, null, null, forzado, null);
     }
 
-    public MovimientoInventario aplicarAjuste(int delta, String motivo) {
+    /**
+     * Corrige la fila con un motivo cerrado (D-29). A diferencia de la venta
+     * forzada, nunca deja {@code aLaMano} en negativo.
+     *
+     * @param comentario obligatorio cuando el motivo es CORRECCION
+     * @param usuarioId  autor del ajuste, tomado del token
+     */
+    public MovimientoInventario aplicarAjuste(
+            int delta,
+            MotivoAjuste motivo,
+            String comentario,
+            UUID usuarioId) {
+        if (motivo == null) {
+            throw new InventarioInvalidoException("El ajuste debe tener un motivo");
+        }
+        if (motivo == MotivoAjuste.CORRECCION && (comentario == null || comentario.isBlank())) {
+            throw new InventarioInvalidoException("Un ajuste por CORRECCION exige comentario");
+        }
         if (delta == 0) {
             throw new InventarioInvalidoException("El ajuste debe modificar el inventario");
         }
         if (aLaMano + delta < 0) {
-            throw new InventarioInvalidoException(
-                    "Un ajuste no puede dejar aLaMano por debajo de cero");
+            throw new AjusteDejaStockNegativoException(aLaMano, delta);
         }
         aLaMano += delta;
-        return registrar(TipoMovimientoInventario.AJUSTE, delta, motivo);
+        return registrar(TipoMovimientoInventario.AJUSTE, delta, motivo.name(), comentario, false, usuarioId);
     }
 
     public MovimientoInventario revertir(int cantidad, String motivo) {
@@ -123,13 +140,14 @@ public final class Inventario {
             TipoMovimientoInventario tipo,
             int cantidad,
             String motivo) {
-        return registrar(tipo, cantidad, motivo, false, null);
+        return registrar(tipo, cantidad, motivo, null, false, null);
     }
 
     private MovimientoInventario registrar(
             TipoMovimientoInventario tipo,
             int cantidad,
             String motivo,
+            String comentario,
             boolean forzado,
             UUID usuarioId) {
         recalcular();
@@ -138,6 +156,7 @@ public final class Inventario {
                 tipo,
                 cantidad,
                 motivo,
+                comentario,
                 forzado,
                 usuarioId,
                 aLaMano,

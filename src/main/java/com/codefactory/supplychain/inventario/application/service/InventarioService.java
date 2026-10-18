@@ -11,6 +11,7 @@ import com.codefactory.supplychain.inventario.domain.exception.InventarioYaCarga
 import com.codefactory.supplychain.inventario.domain.exception.NodoNoEncontradoException;
 import com.codefactory.supplychain.inventario.domain.exception.VarianteNoCargadaException;
 import com.codefactory.supplychain.inventario.domain.model.Inventario;
+import com.codefactory.supplychain.inventario.domain.model.MotivoAjuste;
 import com.codefactory.supplychain.inventario.domain.model.MovimientoInventario;
 import com.codefactory.supplychain.inventario.domain.model.Nodo;
 import lombok.RequiredArgsConstructor;
@@ -69,8 +70,11 @@ public class InventarioService {
             UUID nodoId,
             UUID varianteId,
             int delta,
-            String motivo) {
-        return ejecutar(nodoId, varianteId, inventario -> inventario.aplicarAjuste(delta, motivo));
+            MotivoAjuste motivo,
+            String comentario,
+            UUID usuarioId) {
+        return ejecutar(nodoId, varianteId,
+                inventario -> inventario.aplicarAjuste(delta, motivo, comentario, usuarioId));
     }
 
     @Transactional

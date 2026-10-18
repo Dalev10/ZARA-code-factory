@@ -3,11 +3,15 @@ package com.codefactory.supplychain.inventario.application.service;
 import com.codefactory.supplychain.inventario.api.ExistenciasActualizadas;
 import com.codefactory.supplychain.inventario.api.TipoMovimientoKardex;
 import com.codefactory.supplychain.inventario.api.TipoNodoInventario;
+import com.codefactory.supplychain.inventario.application.port.in.AjustarInventarioUseCase;
+import com.codefactory.supplychain.inventario.application.port.in.AjusteInventarioComando;
 import com.codefactory.supplychain.inventario.application.port.in.InventarioUseCase;
 import com.codefactory.supplychain.inventario.application.port.out.InventarioRepositoryPort;
 import com.codefactory.supplychain.inventario.application.port.out.MovimientoInventarioRepositoryPort;
 import com.codefactory.supplychain.inventario.domain.exception.StockInsuficienteException;
+import com.codefactory.supplychain.inventario.domain.model.MotivoAjuste;
 import com.codefactory.supplychain.inventario.domain.model.MovimientoInventario;
+import com.codefactory.supplychain.shared.security.UsuarioActual;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -32,6 +36,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CountDownLatch;
@@ -69,6 +74,9 @@ class InventarioIntegracionTest {
 
     @Autowired
     private InventarioUseCase inventarioUseCase;
+
+    @Autowired
+    private AjustarInventarioUseCase ajustarInventarioUseCase;
 
     @Autowired
     private JdbcTemplate jdbc;
@@ -147,6 +155,57 @@ class InventarioIntegracionTest {
             assertThat(aLaMano()).isEqualTo(10 - exitosas).isNotNegative();
             assertThat(contarMovimientos("VENTA")).isEqualTo(exitosas);
             assertThat(registroEventos.confirmados()).hasSize(1 + exitosas);
+        } finally {
+            pool.shutdownNow();
+        }
+    }
+
+    @Test
+    @DisplayName("""
+            Escenario: ajustes concurrentes no pierden actualizaciones
+              Dado un nodo con variante cargada con 10 unidades
+              Cuando 10 ajustes INGRESO_MANUAL de +1 llegan simultáneamente
+              Entonces el a_la_mano final es 10 más los ajustes exitosos
+              Y el kardex tiene exactamente un movimiento AJUSTE por ajuste exitoso
+              Y los ajustes fallidos solo fallan por agotar los reintentos""")
+    void ajustesConcurrentesNoPierdenActualizaciones() throws Exception {
+        inventarioUseCase.cargar(nodoId, varianteId, 10, null);
+        UUID usuarioId = jdbc.queryForObject("SELECT id FROM usuario LIMIT 1", UUID.class);
+        UsuarioActual usuario = new UsuarioActual(usuarioId, Set.of("inventario:administrar"), Set.of(tiendaId));
+        String sku = "SKU-" + varianteId;
+        int ajustes = 10;
+        CountDownLatch salida = new CountDownLatch(1);
+        ExecutorService pool = Executors.newFixedThreadPool(ajustes);
+        List<Future<?>> resultados = new ArrayList<>();
+        try {
+            for (int i = 0; i < ajustes; i++) {
+                resultados.add(pool.submit(() -> {
+                    salida.await();
+                    return ajustarInventarioUseCase.ajustar(new AjusteInventarioComando(
+                            nodoId, sku, 1, MotivoAjuste.INGRESO_MANUAL, null, usuario));
+                }));
+            }
+            salida.countDown();
+
+            int exitosos = 0;
+            int reintentosAgotados = 0;
+            for (Future<?> resultado : resultados) {
+                try {
+                    resultado.get(60, TimeUnit.SECONDS);
+                    exitosos++;
+                } catch (java.util.concurrent.ExecutionException e) {
+                    if (e.getCause() instanceof OptimisticLockingFailureException) {
+                        reintentosAgotados++;
+                    } else {
+                        throw e;
+                    }
+                }
+            }
+
+            assertThat(exitosos + reintentosAgotados).isEqualTo(ajustes);
+            assertThat(exitosos).isPositive();
+            assertThat(aLaMano()).isEqualTo(10 + exitosos);
+            assertThat(contarMovimientos("AJUSTE")).isEqualTo(exitosos);
         } finally {
             pool.shutdownNow();
         }
