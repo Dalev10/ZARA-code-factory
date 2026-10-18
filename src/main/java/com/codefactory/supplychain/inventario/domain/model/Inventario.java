@@ -73,8 +73,13 @@ public final class Inventario {
         return new Inventario(id, nodoId, varianteId, aLaMano, entrante, saliente, version);
     }
 
+    /**
+     * Una carga en 0 es válida y deja la variante cargada (D-30).
+     */
     public MovimientoInventario cargar(int cantidad) {
-        validarCantidadPositiva(cantidad);
+        if (cantidad < 0) {
+            throw new InventarioInvalidoException("La cantidad cargada no puede ser negativa");
+        }
         aLaMano += cantidad;
         return registrar(TipoMovimientoInventario.CARGA_INICIAL, cantidad, null);
     }

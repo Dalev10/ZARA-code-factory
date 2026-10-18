@@ -2,16 +2,20 @@ package com.codefactory.supplychain.inventario.application.service;
 
 import com.codefactory.supplychain.inventario.api.ExistenciasActualizadas;
 import com.codefactory.supplychain.inventario.api.TipoMovimientoKardex;
+import com.codefactory.supplychain.inventario.api.TipoNodoInventario;
 import com.codefactory.supplychain.inventario.application.port.in.InventarioUseCase;
 import com.codefactory.supplychain.inventario.application.port.out.InventarioRepositoryPort;
 import com.codefactory.supplychain.inventario.application.port.out.MovimientoInventarioRepositoryPort;
+import com.codefactory.supplychain.inventario.application.port.out.NodoRepositoryPort;
 import com.codefactory.supplychain.inventario.domain.exception.InventarioYaCargadoException;
+import com.codefactory.supplychain.inventario.domain.exception.NodoNoEncontradoException;
 import com.codefactory.supplychain.inventario.domain.exception.VarianteNoCargadaException;
 import com.codefactory.supplychain.inventario.domain.model.Inventario;
 import com.codefactory.supplychain.inventario.domain.model.MovimientoInventario;
+import com.codefactory.supplychain.inventario.domain.model.Nodo;
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
@@ -30,17 +34,19 @@ public class InventarioService {
 
     private final InventarioRepositoryPort inventarioRepositoryPort;
     private final MovimientoInventarioRepositoryPort movimientoInventarioRepositoryPort;
+    private final NodoRepositoryPort nodoRepositoryPort;
     private final ApplicationEventPublisher eventos;
 
     @Transactional
     public MovimientoInventario cargar(UUID nodoId, UUID varianteId, int cantidad) {
+        Nodo nodo = buscarNodo(nodoId);
         if (inventarioRepositoryPort.buscarPorNodoYVariante(nodoId, varianteId).isPresent()) {
             throw new InventarioYaCargadoException(nodoId, varianteId);
         }
         Inventario inventario = Inventario.crear(nodoId, varianteId);
         MovimientoInventario movimiento = inventario.cargar(cantidad);
         inventarioRepositoryPort.guardar(inventario);
-        registrarMovimiento(inventario, movimiento);
+        registrarMovimiento(nodo, inventario, movimiento);
         return movimiento;
     }
 
@@ -82,13 +88,20 @@ public class InventarioService {
             Function<Inventario, MovimientoInventario> operacion) {
         Inventario inventario = inventarioRepositoryPort.buscarPorNodoYVariante(nodoId, varianteId)
                 .orElseThrow(() -> new VarianteNoCargadaException(nodoId, varianteId));
+        Nodo nodo = buscarNodo(nodoId);
         MovimientoInventario movimiento = operacion.apply(inventario);
         inventarioRepositoryPort.guardar(inventario);
-        registrarMovimiento(inventario, movimiento);
+        registrarMovimiento(nodo, inventario, movimiento);
         return movimiento;
     }
 
+    private Nodo buscarNodo(UUID nodoId) {
+        return nodoRepositoryPort.buscarPorId(nodoId)
+                .orElseThrow(() -> new NodoNoEncontradoException(nodoId));
+    }
+
     private void registrarMovimiento(
+            Nodo nodo,
             Inventario inventario,
             MovimientoInventario movimiento) {
 
@@ -96,7 +109,7 @@ public class InventarioService {
                 inventario.getNodoId(),
                 inventario.getVarianteId(),
                 movimiento);
-        publicarExistenciasActualizadas(inventario, movimiento);
+        publicarExistenciasActualizadas(nodo, inventario, movimiento);
     }
     
     /**
@@ -107,15 +120,19 @@ public class InventarioService {
      * solo después de que la transacción se haya completado con éxito.
      */
     private void publicarExistenciasActualizadas(
+            Nodo nodo,
             Inventario inventario,
             MovimientoInventario movimiento) {
         eventos.publishEvent(new ExistenciasActualizadas(
                 inventario.getNodoId(),
+                TipoNodoInventario.valueOf(nodo.getTipo().name()),
+                nodo.getTiendaId(),
                 inventario.getVarianteId(),
                 movimiento.id(),
                 TipoMovimientoKardex.valueOf(movimiento.tipo().name()),
                 movimiento.forzado(),
                 null,
+                inventario.getALaMano() - movimiento.cantidad(),
                 inventario.getALaMano(),
                 inventario.getDisponible(),
                 inventario.getEntrante(),

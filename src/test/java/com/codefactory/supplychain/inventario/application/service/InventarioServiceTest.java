@@ -1,12 +1,17 @@
 package com.codefactory.supplychain.inventario.application.service;
 
 import com.codefactory.supplychain.inventario.api.ExistenciasActualizadas;
+import com.codefactory.supplychain.inventario.api.TipoNodoInventario;
 import com.codefactory.supplychain.inventario.application.port.out.InventarioRepositoryPort;
 import com.codefactory.supplychain.inventario.application.port.out.MovimientoInventarioRepositoryPort;
+import com.codefactory.supplychain.inventario.application.port.out.NodoRepositoryPort;
+import com.codefactory.supplychain.inventario.domain.exception.NodoNoEncontradoException;
 import com.codefactory.supplychain.inventario.domain.exception.VarianteNoCargadaException;
 import com.codefactory.supplychain.inventario.domain.exception.InventarioYaCargadoException;
 import com.codefactory.supplychain.inventario.domain.model.Inventario;
 import com.codefactory.supplychain.inventario.domain.model.MovimientoInventario;
+import com.codefactory.supplychain.inventario.domain.model.Nodo;
+import com.codefactory.supplychain.inventario.domain.model.TipoNodo;
 import com.codefactory.supplychain.inventario.domain.model.TipoMovimientoInventario;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -30,15 +35,21 @@ class InventarioServiceTest {
 
     private InventarioRepositoryPort repository;
     private MovimientoInventarioRepositoryPort movimientoRepository;
+    private NodoRepositoryPort nodoRepository;
     private org.springframework.context.ApplicationEventPublisher eventos;
     private InventarioService servicio;
+
+    private final UUID tiendaId = UUID.randomUUID();
 
     @BeforeEach
     void setUp() {
         repository = mock(InventarioRepositoryPort.class);
         movimientoRepository = mock(MovimientoInventarioRepositoryPort.class);
+        nodoRepository = mock(NodoRepositoryPort.class);
         eventos = mock(org.springframework.context.ApplicationEventPublisher.class);
-        servicio = new InventarioService(repository, movimientoRepository, eventos);
+        when(nodoRepository.buscarPorId(any())).thenAnswer(invocacion -> Optional.of(
+                Nodo.reconstruir(invocacion.getArgument(0), TipoNodo.ALMACEN, null, tiendaId)));
+        servicio = new InventarioService(repository, movimientoRepository, nodoRepository, eventos);
     }
 
     @Test
@@ -87,9 +98,12 @@ class InventarioServiceTest {
         var evento = forClass(ExistenciasActualizadas.class);
         verify(eventos).publishEvent(evento.capture());
         assertThat(evento.getValue().nodoId()).isEqualTo(nodoId);
+        assertThat(evento.getValue().tipoNodo()).isEqualTo(TipoNodoInventario.ALMACEN);
+        assertThat(evento.getValue().tiendaId()).isEqualTo(tiendaId);
         assertThat(evento.getValue().varianteId()).isEqualTo(varianteId);
         assertThat(evento.getValue().movimientoId()).isEqualTo(movimiento.id());
         assertThat(evento.getValue().tipoMovimiento().name()).isEqualTo(movimiento.tipo().name());
+        assertThat(evento.getValue().aLaManoAnterior()).isEqualTo(5);
         assertThat(evento.getValue().aLaMano()).isEqualTo(3);
         assertThat(evento.getValue().disponibleParaUso()).isEqualTo(3);
         assertThat(evento.getValue().pronosticado()).isEqualTo(3);
@@ -112,7 +126,54 @@ class InventarioServiceTest {
         var evento = forClass(ExistenciasActualizadas.class);
         verify(eventos).publishEvent(evento.capture());
         assertThat(evento.getValue().forzado()).isTrue();
+        assertThat(evento.getValue().aLaManoAnterior()).isEqualTo(1);
         assertThat(evento.getValue().aLaMano()).isEqualTo(-2);
+    }
+
+    @Test
+    void elEventoDeUnCdNoLlevaTienda() {
+        UUID cdNodoId = UUID.randomUUID();
+        UUID varianteId = UUID.randomUUID();
+        when(nodoRepository.buscarPorId(cdNodoId)).thenReturn(Optional.of(
+                Nodo.reconstruir(cdNodoId, TipoNodo.CD, UUID.randomUUID(), null)));
+        when(repository.buscarPorNodoYVariante(cdNodoId, varianteId)).thenReturn(Optional.empty());
+
+        servicio.cargar(cdNodoId, varianteId, 4);
+
+        var evento = forClass(ExistenciasActualizadas.class);
+        verify(eventos).publishEvent(evento.capture());
+        assertThat(evento.getValue().tipoNodo()).isEqualTo(TipoNodoInventario.CD);
+        assertThat(evento.getValue().tiendaId()).isNull();
+        assertThat(evento.getValue().aLaManoAnterior()).isZero();
+        assertThat(evento.getValue().aLaMano()).isEqualTo(4);
+    }
+
+    @Test
+    void rechazaCargarEnUnNodoInexistenteSinGuardarNada() {
+        UUID nodoId = UUID.randomUUID();
+        UUID varianteId = UUID.randomUUID();
+        when(nodoRepository.buscarPorId(nodoId)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> servicio.cargar(nodoId, varianteId, 4))
+                .isInstanceOf(NodoNoEncontradoException.class);
+        verify(repository, never()).guardar(any());
+        verifyNoInteractions(movimientoRepository, eventos);
+    }
+
+    @Test
+    void cargaEnCeroDejaLaVarianteCargada() {
+        UUID nodoId = UUID.randomUUID();
+        UUID varianteId = UUID.randomUUID();
+        when(repository.buscarPorNodoYVariante(nodoId, varianteId)).thenReturn(Optional.empty());
+
+        MovimientoInventario movimiento = servicio.cargar(nodoId, varianteId, 0);
+
+        assertThat(movimiento.tipo()).isEqualTo(TipoMovimientoInventario.CARGA_INICIAL);
+        assertThat(movimiento.cantidad()).isZero();
+        verify(repository).guardar(org.mockito.ArgumentMatchers.argThat(inventario ->
+                inventario.getALaMano() == 0));
+        verify(movimientoRepository).guardar(eq(nodoId), eq(varianteId), same(movimiento));
+        verify(eventos).publishEvent(any(ExistenciasActualizadas.class));
     }
 
     @Test

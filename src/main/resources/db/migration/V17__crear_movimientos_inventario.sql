@@ -35,7 +35,8 @@ CREATE TABLE movimiento_inventario (
             'TRASPASO_ENTRADA'
         )
     ),
-    cantidad      INT NOT NULL CHECK (cantidad <> 0),
+    -- D-30: la carga inicial en 0 registra "se contó y no había".
+    cantidad      INT NOT NULL CHECK (cantidad <> 0 OR tipo = 'CARGA_INICIAL'),
     motivo        VARCHAR(100) CHECK (motivo IS NULL OR btrim(motivo) <> ''),
     comentario    VARCHAR(500),
     referencia_id UUID,

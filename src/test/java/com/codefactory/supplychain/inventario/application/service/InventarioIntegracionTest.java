@@ -2,6 +2,7 @@ package com.codefactory.supplychain.inventario.application.service;
 
 import com.codefactory.supplychain.inventario.api.ExistenciasActualizadas;
 import com.codefactory.supplychain.inventario.api.TipoMovimientoKardex;
+import com.codefactory.supplychain.inventario.api.TipoNodoInventario;
 import com.codefactory.supplychain.inventario.application.port.in.InventarioUseCase;
 import com.codefactory.supplychain.inventario.application.port.out.InventarioRepositoryPort;
 import com.codefactory.supplychain.inventario.application.port.out.MovimientoInventarioRepositoryPort;
@@ -16,6 +17,7 @@ import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.event.EventListener;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ActiveProfiles;
@@ -83,11 +85,13 @@ class InventarioIntegracionTest {
     @MockitoSpyBean
     private MovimientoInventarioRepositoryPort movimientoRepositoryPort;
 
+    private UUID tiendaId;
     private UUID nodoId;
     private UUID varianteId;
 
     @BeforeEach
     void setUp() {
+        tiendaId = UUID.randomUUID();
         nodoId = crearAlmacen();
         varianteId = crearVariante();
         registroEventos.limpiar();
@@ -186,9 +190,12 @@ class InventarioIntegracionTest {
         assertThat(registroEventos.confirmados()).singleElement().satisfies(evento -> {
             assertThat(evento.nodoId()).isEqualTo(nodoId);
             assertThat(evento.varianteId()).isEqualTo(varianteId);
+            assertThat(evento.tipoNodo()).isEqualTo(TipoNodoInventario.ALMACEN);
+            assertThat(evento.tiendaId()).isEqualTo(tiendaId);
             assertThat(evento.movimientoId()).isEqualTo(movimiento.id());
             assertThat(evento.tipoMovimiento()).isEqualTo(TipoMovimientoKardex.VENTA);
             assertThat(evento.forzado()).isTrue();
+            assertThat(evento.aLaManoAnterior()).isEqualTo(4);
             assertThat(evento.aLaMano()).isEqualTo(-2);
             assertThat(evento.disponibleParaUso()).isEqualTo(-2);
             assertThat(evento.pronosticado()).isEqualTo(-2);
@@ -279,6 +286,34 @@ class InventarioIntegracionTest {
         assertThat(aLaMano()).isEqualTo(1);
     }
 
+    @Test
+    @DisplayName("""
+            Escenario: una carga inicial en 0 deja la variante cargada
+              Dado un nodo sin fila para la variante X
+              Cuando se carga X con 0 unidades
+              Entonces existe la fila con a_la_mano 0
+              Y el kardex tiene un movimiento CARGA_INICIAL con cantidad 0""")
+    void cargaInicialEnCeroDejaLaVarianteCargada() {
+        inventarioUseCase.cargar(nodoId, varianteId, 0);
+
+        assertThat(aLaMano()).isZero();
+        assertThat(jdbc.queryForObject(
+                "SELECT cantidad FROM movimiento_inventario WHERE nodo_id = ? AND variante_id = ? AND tipo = 'CARGA_INICIAL'",
+                Integer.class, nodoId, varianteId)).isZero();
+    }
+
+    @Test
+    @DisplayName("""
+            Escenario: la base rechaza movimientos en 0 que no son carga inicial
+              Cuando se intenta guardar un movimiento AJUSTE con cantidad 0
+              Entonces la base rechaza la operación""")
+    void laBaseRechazaMovimientosEnCeroQueNoSonCarga() {
+        assertThatThrownBy(() -> jdbc.update("""
+                INSERT INTO movimiento_inventario (nodo_id, variante_id, tipo, cantidad)
+                VALUES (?, ?, 'AJUSTE', 0)""", nodoId, varianteId))
+                .isInstanceOf(DataIntegrityViolationException.class);
+    }
+
     private int aLaMano() {
         return jdbc.queryForObject(
                 "SELECT a_la_mano FROM inventario WHERE nodo_id = ? AND variante_id = ?",
@@ -292,7 +327,6 @@ class InventarioIntegracionTest {
     }
 
     private UUID crearAlmacen() {
-        UUID tiendaId = UUID.randomUUID();
         jdbc.update("INSERT INTO tienda (id, nombre, ubicacion) VALUES (?, ?, 'Medellín')",
                 tiendaId, "Tienda Inventario " + tiendaId);
         UUID almacenId = UUID.randomUUID();
