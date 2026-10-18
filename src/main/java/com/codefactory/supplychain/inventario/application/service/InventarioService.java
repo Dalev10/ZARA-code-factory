@@ -114,6 +114,7 @@ public class InventarioService {
                 inventario.getVarianteId(),
                 movimiento.id(),
                 TipoMovimientoKardex.valueOf(movimiento.tipo().name()),
+                movimiento.forzado(),
                 null,
                 inventario.getALaMano(),
                 inventario.getDisponible(),

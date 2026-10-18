@@ -54,6 +54,9 @@ public class MovimientoInventarioEntity {
     @Column(name = "usuario_id")
     private UUID usuarioId;
 
+    @Column(name = "forzado", nullable = false)
+    private boolean forzado;
+
     @Column(name = "ocurrido_en", nullable = false)
     private Instant ocurridoEn;
 

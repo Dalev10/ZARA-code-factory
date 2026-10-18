@@ -12,6 +12,7 @@ public record ExistenciasActualizadas(
         UUID varianteId,
         UUID movimientoId,
         TipoMovimientoKardex tipoMovimiento,
+        boolean forzado,
         UUID referenciaId,
         int aLaMano,
         int disponibleParaUso,

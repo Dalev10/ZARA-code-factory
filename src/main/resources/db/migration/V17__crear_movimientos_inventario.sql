@@ -40,7 +40,10 @@ CREATE TABLE movimiento_inventario (
     comentario    VARCHAR(500),
     referencia_id UUID,
     usuario_id    UUID REFERENCES usuario(id),
-    ocurrido_en   TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
+    forzado       BOOLEAN NOT NULL DEFAULT FALSE,
+    ocurrido_en   TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT chk_movimiento_inventario_forzado_solo_venta
+        CHECK (NOT forzado OR tipo = 'VENTA')
 );
 
 CREATE INDEX idx_movimiento_inventario_nodo_variante_fecha

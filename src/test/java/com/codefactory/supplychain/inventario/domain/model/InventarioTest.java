@@ -47,6 +47,7 @@ class InventarioTest {
 
         assertThat(movimiento.tipo()).isEqualTo(TipoMovimientoInventario.VENTA);
         assertThat(movimiento.cantidad()).isEqualTo(-4);
+        assertThat(movimiento.forzado()).isFalse();
         assertThat(inventario.getALaMano()).isEqualTo(6);
         assertThat(inventario.getDisponible()).isEqualTo(6);
         assertThat(inventario.getPronosticado()).isEqualTo(6);
@@ -69,6 +70,8 @@ class InventarioTest {
         MovimientoInventario movimiento = inventario.aplicarVenta(4, true);
 
         assertThat(movimiento.cantidad()).isEqualTo(-4);
+        assertThat(movimiento.forzado()).isTrue();
+        assertThat(movimiento.saldoResultante()).isEqualTo(-4);
         assertThat(inventario.getALaMano()).isEqualTo(-4);
         assertThat(inventario.getDisponible()).isEqualTo(-4);
         assertThat(inventario.getPronosticado()).isEqualTo(-4);
@@ -115,6 +118,19 @@ class InventarioTest {
 
         assertThat(movimiento.tipo()).isEqualTo(TipoMovimientoInventario.REPOSICION);
         assertThat(inventario.getALaMano()).isEqualTo(3);
+    }
+
+    @Test
+    void soloUnaVentaPuedeRegistrarseComoForzada() {
+        assertThatThrownBy(() -> new MovimientoInventario(
+                UUID.randomUUID(),
+                TipoMovimientoInventario.AJUSTE,
+                1,
+                "Conteo físico",
+                true,
+                1,
+                java.time.Instant.now()))
+                .isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test

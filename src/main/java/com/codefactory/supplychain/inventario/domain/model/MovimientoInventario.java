@@ -9,12 +9,16 @@ import java.util.UUID;
  *
  * La cantidad representa el delta aplicado a {@code aLaMano}: es positiva
  * cuando aumenta y negativa cuando disminuye.
+ *
+ * {@code forzado} solo puede ser verdadero en una venta que saltó el chequeo
+ * de stock suficiente.
  */
 public record MovimientoInventario(
         UUID id,
         TipoMovimientoInventario tipo,
         int cantidad,
         String motivo,
+        boolean forzado,
         int saldoResultante,
         Instant ocurridoEn) {
 
@@ -24,6 +28,9 @@ public record MovimientoInventario(
         Objects.requireNonNull(ocurridoEn, "La fecha del movimiento es obligatoria");
         if (motivo != null && motivo.isBlank()) {
             throw new IllegalArgumentException("El motivo no puede estar vacío");
+        }
+        if (forzado && tipo != TipoMovimientoInventario.VENTA) {
+            throw new IllegalArgumentException("Solo una venta puede ser forzada");
         }
     }
 }

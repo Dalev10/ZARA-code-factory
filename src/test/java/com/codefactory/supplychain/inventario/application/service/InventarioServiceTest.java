@@ -73,6 +73,25 @@ class InventarioServiceTest {
         assertThat(evento.getValue().disponibleParaUso()).isEqualTo(3);
         assertThat(evento.getValue().pronosticado()).isEqualTo(3);
         assertThat(evento.getValue().ocurridoEn()).isEqualTo(movimiento.ocurridoEn());
+        assertThat(evento.getValue().forzado()).isFalse();
+    }
+
+    @Test
+    void ventaForzadaConservaLaTrazabilidadEnElEvento() {
+        UUID nodoId = UUID.randomUUID();
+        UUID varianteId = UUID.randomUUID();
+        Inventario inventario = Inventario.crear(nodoId, varianteId);
+        inventario.cargar(1);
+        when(repository.buscarPorNodoYVariante(nodoId, varianteId)).thenReturn(Optional.of(inventario));
+
+        MovimientoInventario movimiento = servicio.aplicarVenta(nodoId, varianteId, 3, true);
+
+        assertThat(movimiento.forzado()).isTrue();
+        verify(movimientoRepository).guardar(eq(nodoId), eq(varianteId), same(movimiento));
+        var evento = forClass(ExistenciasActualizadas.class);
+        verify(eventos).publishEvent(evento.capture());
+        assertThat(evento.getValue().forzado()).isTrue();
+        assertThat(evento.getValue().aLaMano()).isEqualTo(-2);
     }
 
     @Test

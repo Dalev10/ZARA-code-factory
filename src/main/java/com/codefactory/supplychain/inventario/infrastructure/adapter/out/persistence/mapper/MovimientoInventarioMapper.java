@@ -23,6 +23,7 @@ public class MovimientoInventarioMapper {
                 .tipo(movimiento.tipo())
                 .cantidad(movimiento.cantidad())
                 .motivo(movimiento.motivo())
+                .forzado(movimiento.forzado())
                 .ocurridoEn(movimiento.ocurridoEn())
                 .build();
     }

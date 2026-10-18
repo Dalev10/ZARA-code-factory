@@ -91,7 +91,7 @@ public final class Inventario {
             throw new StockInsuficienteException(aLaMano, cantidad);
         }
         aLaMano -= cantidad;
-        return registrar(TipoMovimientoInventario.VENTA, -cantidad, null);
+        return registrar(TipoMovimientoInventario.VENTA, -cantidad, null, forzado);
     }
 
     public MovimientoInventario aplicarAjuste(int delta, String motivo) {
@@ -116,12 +116,21 @@ public final class Inventario {
             TipoMovimientoInventario tipo,
             int cantidad,
             String motivo) {
+        return registrar(tipo, cantidad, motivo, false);
+    }
+
+    private MovimientoInventario registrar(
+            TipoMovimientoInventario tipo,
+            int cantidad,
+            String motivo,
+            boolean forzado) {
         recalcular();
         return new MovimientoInventario(
                 UUID.randomUUID(),
                 tipo,
                 cantidad,
                 motivo,
+                forzado,
                 aLaMano,
                 Instant.now());
     }
