@@ -1,10 +1,9 @@
-package com.codefactory.supplychain.reposicion.application.listener;
+package com.codefactory.supplychain.reposicion.infrastructure.adapter.in.eventos;
 
 import com.codefactory.supplychain.inventario.api.ExistenciasActualizadas;
 import com.codefactory.supplychain.inventario.api.TipoMovimientoKardex;
 import com.codefactory.supplychain.inventario.api.TipoNodoInventario;
 import com.codefactory.supplychain.reposicion.application.port.in.TraspasoAutomaticoUseCase;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,12 +21,11 @@ import org.springframework.transaction.event.TransactionalEventListener;
  * Ignora movimientos de traspaso para evitar bucle: un traspaso genera
  * TRASPASO_SALIDA y TRASPASO_ENTRADA, que volverían a activar este listener.
  * <p>
- * Corre AFTER_COMMIT en su propia transacción (REQUIRES_NEW): si el traspaso
- * falla, la venta ya quedó registrada. Es asíncrono ({@code eventosReposicionExecutor})
- * para que el hilo de la venta libere su conexión antes de abrir la nueva
- * transacción; si no, con ventas concurrentes se agota el pool de conexiones.
+ * Corre AFTER_COMMIT, en el mismo hilo y en su propia transacción (D-16): el
+ * traspaso ya se ve al recibir la respuesta de la venta (D-18) y, si falla, la
+ * venta queda registrada igual (D-17).
  *
- * Módulo: reposicion.
+ * Módulo: reposicion — HU-48.
  */
 @Component("reposicionExistenciasActualizadasListener")
 public class ExistenciasActualizadasListener {
@@ -40,7 +38,6 @@ public class ExistenciasActualizadasListener {
 
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    @Async("eventosReposicionExecutor")
     public void onExistenciasActualizadas(ExistenciasActualizadas evento) {
         if (evento.tipoMovimiento() == TipoMovimientoKardex.TRASPASO_SALIDA
                 || evento.tipoMovimiento() == TipoMovimientoKardex.TRASPASO_ENTRADA) {

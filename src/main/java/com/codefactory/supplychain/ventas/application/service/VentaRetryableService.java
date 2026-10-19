@@ -20,7 +20,7 @@ public class VentaRetryableService implements RegistrarVentaUseCase {
 
     @Override
     @Retryable(includes = {OptimisticLockingFailureException.class, DataIntegrityViolationException.class},
-            maxRetries = 3, delay = 10)
+            maxRetries = 3, delay = 10, jitter = 10, multiplier = 2)
     public ResultadoVenta registrar(Comando comando) {
         return ventaService.registrar(comando);
     }

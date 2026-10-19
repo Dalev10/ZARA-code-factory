@@ -1,4 +1,4 @@
-package com.codefactory.supplychain.reposicion.application.listener;
+package com.codefactory.supplychain.reposicion.infrastructure.adapter.in.eventos;
 
 import com.codefactory.supplychain.inventario.api.ExistenciasActualizadas;
 import com.codefactory.supplychain.inventario.api.TipoMovimientoKardex;

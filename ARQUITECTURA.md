@@ -93,9 +93,8 @@ un hecho, evento*.
   reacciona tiene el listener en `infrastructure/adapter/in/eventos/`, con la forma
   `@TransactionalEventListener(phase = AFTER_COMMIT)` + `@Transactional(propagation =
   REQUIRES_NEW)` (ver README), y el listener solo invoca un caso de uso del propio módulo.
-  Si una transacción consumidora necesita una conexión adicional mientras conserva la
-  conexión de origen, el despacho puede ser asíncrono para evitar agotar el pool; los
-  efectos derivados son entonces eventuales y requieren una estrategia de reconciliación.
+  Es síncrono (D-16): corre en el mismo hilo, así que sus efectos ya se ven cuando el
+  cliente recibe la respuesta (D-18). No se usa `@Async`.
 
 ### 4.4 Lo que nunca se hace
 

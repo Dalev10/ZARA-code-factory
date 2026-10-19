@@ -27,14 +27,14 @@ public class InventarioRetryableService implements InventarioUseCase {
 
     @Override
     @Retryable(includes = {OptimisticLockingFailureException.class, DataIntegrityViolationException.class},
-            maxRetries = 3, delay = 10)
+            maxRetries = 3, delay = 10, jitter = 10, multiplier = 2)
     public MovimientoInventario cargar(UUID nodoId, UUID varianteId, int cantidad, UUID usuarioId) {
         return inventarioService.cargar(nodoId, varianteId, cantidad, usuarioId);
     }
 
     @Override
     @Retryable(includes = {OptimisticLockingFailureException.class, DataIntegrityViolationException.class},
-            maxRetries = 3, delay = 10)
+            maxRetries = 3, delay = 10, jitter = 10, multiplier = 2)
     public MovimientoInventario aplicarVenta(UUID nodoId, UUID varianteId, int cantidad, boolean forzado,
                                              UUID ventaId) {
         return inventarioService.aplicarVenta(nodoId, varianteId, cantidad, forzado, ventaId);
@@ -42,7 +42,7 @@ public class InventarioRetryableService implements InventarioUseCase {
 
     @Override
     @Retryable(includes = {OptimisticLockingFailureException.class, DataIntegrityViolationException.class},
-            maxRetries = 3, delay = 10)
+            maxRetries = 3, delay = 10, jitter = 10, multiplier = 2)
     public MovimientoInventario aplicarAjuste(UUID nodoId, UUID varianteId, int delta, MotivoAjuste motivo,
                                               String comentario, UUID usuarioId) {
         return inventarioService.aplicarAjuste(nodoId, varianteId, delta, motivo, comentario, usuarioId);
@@ -50,14 +50,14 @@ public class InventarioRetryableService implements InventarioUseCase {
 
     @Override
     @Retryable(includes = {OptimisticLockingFailureException.class, DataIntegrityViolationException.class},
-            maxRetries = 3, delay = 10)
+            maxRetries = 3, delay = 10, jitter = 10, multiplier = 2)
     public MovimientoInventario revertir(UUID nodoId, UUID varianteId, int cantidad, UUID ventaId) {
         return inventarioService.revertir(nodoId, varianteId, cantidad, ventaId);
     }
 
     @Override
     @Retryable(includes = {OptimisticLockingFailureException.class, DataIntegrityViolationException.class},
-            maxRetries = 3, delay = 10)
+            maxRetries = 3, delay = 10, jitter = 10, multiplier = 2)
     public void trasladar(UUID nodoOrigenId, UUID nodoDestinoId, UUID varianteId, int cantidad, UUID traspasoId) {
         inventarioService.trasladar(nodoOrigenId, nodoDestinoId, varianteId, cantidad, traspasoId);
     }
