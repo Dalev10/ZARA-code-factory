@@ -94,6 +94,8 @@ class VarianteServiceTest {
                 .isInstanceOf(CatalogoRecursoNoEncontradoException.class);
     }
 
+
+
     @Test
     void listarDelegaAlRepositorio() {
         Variante variante = new Variante("SKU-001", template(), "M", "Rojo");
@@ -138,4 +140,6 @@ class VarianteServiceTest {
         assertThatThrownBy(() -> servicio.eliminar(id)).isInstanceOf(CatalogoRecursoNoEncontradoException.class);
         verify(varianteRepository, never()).deleteById(any());
     }
+
+
 }

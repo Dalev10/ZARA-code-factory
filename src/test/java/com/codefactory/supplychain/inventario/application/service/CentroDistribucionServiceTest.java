@@ -1,5 +1,6 @@
 package com.codefactory.supplychain.inventario.application.service;
 
+import com.codefactory.supplychain.inventario.application.port.in.PrioridadTiendaCdUseCase;
 import com.codefactory.supplychain.inventario.application.dto.CentroDistribucionConNodo;
 import com.codefactory.supplychain.inventario.application.port.out.CentroDistribucionRepository;
 import com.codefactory.supplychain.inventario.application.port.out.NodoRepositoryPort;
@@ -13,6 +14,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
+
 
 import java.util.List;
 import java.util.Optional;
@@ -31,12 +33,13 @@ class CentroDistribucionServiceTest {
     private CentroDistribucionRepository centroDistribucionRepository;
     private NodoRepositoryPort nodoRepositoryPort;
     private CentroDistribucionService servicio;
+    private PrioridadTiendaCdUseCase prioridadTiendaCdUseCase = mock(PrioridadTiendaCdUseCase.class);
 
     @BeforeEach
     void setUp() {
         centroDistribucionRepository = mock(CentroDistribucionRepository.class);
         nodoRepositoryPort = mock(NodoRepositoryPort.class);
-        servicio = new CentroDistribucionService(centroDistribucionRepository, nodoRepositoryPort);
+        servicio = new CentroDistribucionService(centroDistribucionRepository, nodoRepositoryPort, prioridadTiendaCdUseCase);
     }
 
     @Test

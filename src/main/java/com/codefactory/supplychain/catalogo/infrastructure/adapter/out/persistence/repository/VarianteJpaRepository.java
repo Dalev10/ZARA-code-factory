@@ -4,6 +4,8 @@ import java.util.UUID;
 import com.codefactory.supplychain.catalogo.infrastructure.adapter.out.persistence.entity.VarianteEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -16,6 +18,8 @@ import java.util.Optional;
 public interface VarianteJpaRepository extends JpaRepository<VarianteEntity, UUID> {
 
     Optional<VarianteEntity> findBySku(String sku);
+
+    List<VarianteEntity> findBySkuIn(Collection<String> skus);
 
     boolean existsBySku(String sku);
 }

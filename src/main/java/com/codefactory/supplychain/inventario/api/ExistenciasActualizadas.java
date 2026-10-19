@@ -9,10 +9,14 @@ import java.util.UUID;
  */
 public record ExistenciasActualizadas(
         UUID nodoId,
+        TipoNodoInventario tipoNodo,
+        UUID tiendaId,
         UUID varianteId,
         UUID movimientoId,
         TipoMovimientoKardex tipoMovimiento,
+        boolean forzado,
         UUID referenciaId,
+        int aLaManoAnterior,
         int aLaMano,
         int disponibleParaUso,
         int entrante,

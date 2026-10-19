@@ -21,4 +21,15 @@ class GlobalExceptionHandlerTest {
         assertThat(respuesta.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
         assertThat(respuesta.getBody()).isEqualTo(new ErrorResponse("No tiene asignada esta tienda"));
     }
+
+    @Test
+    void unaRecursoEnUsoExceptionSeTraduceA409ConSuMensaje() {
+        RecursoEnUsoException excepcion = new RecursoEnUsoException("El CD tiene prioridades asignadas") {
+        };
+
+        ResponseEntity<ErrorResponse> respuesta = handler.handleRecursoEnUso(excepcion);
+
+        assertThat(respuesta.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
+        assertThat(respuesta.getBody()).isEqualTo(new ErrorResponse("El CD tiene prioridades asignadas"));
+    }
 }

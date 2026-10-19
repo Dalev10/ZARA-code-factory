@@ -17,6 +17,7 @@ import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
+import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -67,6 +68,19 @@ class VariantePersistenceAdapterTest {
         Variante recuperada = varianteRepository.findById(guardada.getId()).orElseThrow();
         assertThat(recuperada.getSku()).isEqualTo("SKU-001");
         assertThat(recuperada.getTemplate().getId()).isEqualTo(template.getId());
+    }
+
+    @Test
+    void buscaVariasPorSkuEnUnaSolaConsulta() {
+        Template template = templatePersistido();
+        varianteRepository.save(new Variante("SKU-LOTE-1", template, null, null));
+        varianteRepository.save(new Variante("SKU-LOTE-2", template, null, null));
+        entityManager.flush();
+        entityManager.clear();
+
+        assertThat(varianteRepository.findBySkuIn(List.of("SKU-LOTE-1", "SKU-LOTE-2", "SKU-NO-EXISTE")))
+                .extracting(Variante::getSku)
+                .containsExactlyInAnyOrder("SKU-LOTE-1", "SKU-LOTE-2");
     }
 
     @Test

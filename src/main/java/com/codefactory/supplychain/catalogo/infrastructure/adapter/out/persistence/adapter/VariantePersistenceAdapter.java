@@ -10,6 +10,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 
+import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -52,6 +54,13 @@ public class VariantePersistenceAdapter implements VarianteRepository {
     public Optional<Variante> findBySku(String sku) {
         return varianteJpaRepository.findBySku(sku)
                 .map(variantePersistenceMapper::toDomain);
+    }
+
+    @Override
+    public List<Variante> findBySkuIn(Collection<String> skus) {
+        return varianteJpaRepository.findBySkuIn(skus).stream()
+                .map(variantePersistenceMapper::toDomain)
+                .toList();
     }
 
     @Override
