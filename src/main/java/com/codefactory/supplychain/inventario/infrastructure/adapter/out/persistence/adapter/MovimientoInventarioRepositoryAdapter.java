@@ -11,7 +11,10 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
 
+import com.codefactory.supplychain.inventario.api.MovimientoKardex;
+
 import java.time.Instant;
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -43,5 +46,13 @@ public class MovimientoInventarioRepositoryAdapter
             Pageable pageable) {
         return repository.buscarKardex(nodoId, tipo, desde, hasta, pageable)
                 .map(mapper::toConsulta);
+    }
+
+    @Override
+    public List<MovimientoKardex> buscarPorNodoYVariante(UUID nodoId, UUID varianteId, Instant desde, Instant hasta) {
+        return repository.findByNodoIdAndVarianteIdAndOcurridoEnBetweenOrderByOcurridoEnAscIdAsc(
+                        nodoId, varianteId, desde, hasta).stream()
+                .map(mapper::toKardex)
+                .toList();
     }
 }

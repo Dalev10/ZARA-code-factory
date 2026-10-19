@@ -1,6 +1,7 @@
 package com.codefactory.supplychain.inventario.application.service;
 
 import org.junit.jupiter.api.Test;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.resilience.annotation.Retryable;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,7 +25,8 @@ class InventarioRetryableServiceTest {
                     assertThat(retryable).isNotNull();
                     assertThat(retryable.maxRetries()).isEqualTo(3);
                     assertThat(retryable.includes())
-                            .containsExactly(OptimisticLockingFailureException.class);
+                            .containsExactly(OptimisticLockingFailureException.class,
+                                    DataIntegrityViolationException.class);
                     assertThat(metodo.isAnnotationPresent(Transactional.class)).isFalse();
                 });
 

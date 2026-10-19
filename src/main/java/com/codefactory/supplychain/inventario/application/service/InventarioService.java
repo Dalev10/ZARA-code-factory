@@ -9,7 +9,6 @@ import com.codefactory.supplychain.inventario.application.port.out.MovimientoInv
 import com.codefactory.supplychain.inventario.application.port.out.NodoRepositoryPort;
 import com.codefactory.supplychain.inventario.domain.exception.InventarioYaCargadoException;
 import com.codefactory.supplychain.inventario.domain.exception.NodoNoEncontradoException;
-import com.codefactory.supplychain.inventario.domain.exception.VarianteNoCargadaException;
 import com.codefactory.supplychain.inventario.domain.model.Inventario;
 import com.codefactory.supplychain.inventario.domain.model.MotivoAjuste;
 import com.codefactory.supplychain.inventario.domain.model.MovimientoInventario;
@@ -23,11 +22,11 @@ import java.util.UUID;
 import java.util.function.Function;
 
 /**
- * Orquesta operaciones sobre un Inventario existente.
+ * Orquesta las operaciones sobre el agregado Inventario.
  *
- * La búsqueda previa es deliberada: el agregado nunca se crea implícitamente
- * durante una operación, porque la carga inicial pertenece a un caso de uso
- * explícito.
+ * Filas por demanda (D-25): una variante sin fila en el nodo tiene stock 0 y
+ * la fila se crea con la primera operación que la necesita. La carga inicial
+ * es la excepción: solo crea filas nuevas (D-28).
  */
 @Service
 @RequiredArgsConstructor
@@ -52,17 +51,13 @@ public class InventarioService {
     }
 
     @Transactional
-    public MovimientoInventario reponer(UUID nodoId, UUID varianteId, int cantidad) {
-        return ejecutar(nodoId, varianteId, inventario -> inventario.reponer(cantidad));
-    }
-
-    @Transactional
     public MovimientoInventario aplicarVenta(
             UUID nodoId,
             UUID varianteId,
             int cantidad,
-            boolean forzado) {
-        return ejecutar(nodoId, varianteId, inventario -> inventario.aplicarVenta(cantidad, forzado));
+            boolean forzado,
+            UUID ventaId) {
+        return ejecutar(nodoId, varianteId, inventario -> inventario.aplicarVenta(cantidad, forzado, ventaId));
     }
 
     @Transactional
@@ -78,21 +73,24 @@ public class InventarioService {
     }
 
     @Transactional
-    public MovimientoInventario revertir(
-            UUID nodoId,
-            UUID varianteId,
-            int cantidad,
-            String motivo) {
-        return ejecutar(nodoId, varianteId, inventario -> inventario.revertir(cantidad, motivo));
+    public MovimientoInventario revertir(UUID nodoId, UUID varianteId, int cantidad, UUID ventaId) {
+        return ejecutar(nodoId, varianteId, inventario -> inventario.revertir(cantidad, ventaId));
+    }
+
+    /** Salida y entrada en la misma transacción; el origen se bloquea primero (D-24). */
+    @Transactional
+    public void trasladar(UUID nodoOrigenId, UUID nodoDestinoId, UUID varianteId, int cantidad, UUID traspasoId) {
+        ejecutar(nodoOrigenId, varianteId, inventario -> inventario.despacharTraspaso(cantidad, traspasoId));
+        ejecutar(nodoDestinoId, varianteId, inventario -> inventario.recibirTraspaso(cantidad, traspasoId));
     }
 
     private MovimientoInventario ejecutar(
             UUID nodoId,
             UUID varianteId,
             Function<Inventario, MovimientoInventario> operacion) {
-        Inventario inventario = inventarioRepositoryPort.buscarPorNodoYVariante(nodoId, varianteId)
-                .orElseThrow(() -> new VarianteNoCargadaException(nodoId, varianteId));
         Nodo nodo = buscarNodo(nodoId);
+        Inventario inventario = inventarioRepositoryPort.buscarPorNodoYVariante(nodoId, varianteId)
+                .orElseGet(() -> Inventario.crear(nodoId, varianteId));
         MovimientoInventario movimiento = operacion.apply(inventario);
         inventarioRepositoryPort.guardar(inventario);
         registrarMovimiento(nodo, inventario, movimiento);
@@ -135,7 +133,7 @@ public class InventarioService {
                 movimiento.id(),
                 TipoMovimientoKardex.valueOf(movimiento.tipo().name()),
                 movimiento.forzado(),
-                null,
+                movimiento.referenciaId(),
                 inventario.getALaMano() - movimiento.cantidad(),
                 inventario.getALaMano(),
                 inventario.getDisponible(),

@@ -116,17 +116,33 @@ class AjusteInventarioControllerTest {
 
     @Test
     @DisplayName("""
-            Escenario: no se ajusta una variante no cargada
+            Escenario: ajuste positivo sobre una variante sin fila (D-25)
               Dado un Almacén sin fila para la variante Z
-              Cuando se registra un ajuste sobre Z
-              Entonces la respuesta es 409 indicando que la variante no está cargada (hoy 400)
-              Y no se crea ninguna fila""")
-    void noSeAjustaUnaVarianteNoCargada() throws Exception {
+              Cuando se registra un ajuste de +3 sobre Z
+              Entonces la respuesta es 201
+              Y la fila se crea con 3 unidades""")
+    void ajustePositivoCreaLaFilaPorDemanda() throws Exception {
         String z = crearVariante();
 
         ajustar(almacenId, supervisor, z, 3, "INGRESO_MANUAL", null)
+                .andExpect(status().isCreated());
+
+        assertThat(aLaMano(almacenId, z)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("""
+            Escenario: ajuste negativo sobre una variante sin fila
+              Dado un Almacén sin fila para la variante Z
+              Cuando se registra un ajuste de -1 sobre Z
+              Entonces la respuesta es 400 porque dejaría el stock negativo
+              Y no se crea ninguna fila""")
+    void ajusteNegativoSinFilaSeRechaza() throws Exception {
+        String z = crearVariante();
+
+        ajustar(almacenId, supervisor, z, -1, "MERMA", null)
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.mensaje").value(containsString("no está cargada")));
+                .andExpect(jsonPath("$.mensaje").value(containsString("negativo")));
 
         assertThat(jdbc.queryForObject("SELECT count(*) FROM inventario WHERE nodo_id = ?",
                 Integer.class, almacenId)).isZero();

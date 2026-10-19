@@ -9,6 +9,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -34,4 +35,7 @@ public interface MovimientoInventarioJpaRepository
             @Param("desde") Instant desde,
             @Param("hasta") Instant hasta,
             Pageable pageable);
+
+    List<MovimientoInventarioEntity> findByNodoIdAndVarianteIdAndOcurridoEnBetweenOrderByOcurridoEnAscIdAsc(
+            UUID nodoId, UUID varianteId, Instant desde, Instant hasta);
 }

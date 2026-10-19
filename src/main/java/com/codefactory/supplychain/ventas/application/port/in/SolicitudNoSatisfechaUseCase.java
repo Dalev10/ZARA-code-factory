@@ -29,7 +29,6 @@ public interface SolicitudNoSatisfechaUseCase {
      * @throws com.codefactory.supplychain.ventas.domain.exception.AccesoTiendaProhibidoException sin acceso a la tienda
      * @throws com.codefactory.supplychain.ventas.domain.exception.VarianteNoEncontradaException variante fuera de catálogo
      * @throws com.codefactory.supplychain.ventas.domain.exception.ClaveIdempotenciaReutilizadaException clave usada con otros datos
-     * @throws com.codefactory.supplychain.ventas.domain.exception.IntegracionInventarioPendienteException contrato de Inventario sin implementar
      */
     ResultadoRegistro registrar(RegistrarComando comando);
 

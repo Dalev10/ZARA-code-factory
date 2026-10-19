@@ -18,6 +18,9 @@ import java.util.UUID;
  *
  * {@code usuarioId} es el autor tomado del token; es {@code null} en los
  * movimientos que todavía no registran autor.
+ *
+ * {@code referenciaId} es la venta o el traspaso que originó el movimiento;
+ * {@code null} en cargas y ajustes.
  */
 public record MovimientoInventario(
         UUID id,
@@ -27,6 +30,7 @@ public record MovimientoInventario(
         String comentario,
         boolean forzado,
         UUID usuarioId,
+        UUID referenciaId,
         int saldoResultante,
         Instant ocurridoEn) {
 

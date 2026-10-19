@@ -29,8 +29,6 @@ public interface VentanaQuiebreUseCase {
 
     /**
      * Reconstruye los periodos de quiebre desde el kardex real. Idempotente y no destructiva.
-     *
-     * @throws com.codefactory.supplychain.ventas.domain.exception.IntegracionInventarioPendienteException contrato de Inventario sin implementar
      */
     ResultadoReconciliacion reconciliar(ReconciliarComando comando);
 }

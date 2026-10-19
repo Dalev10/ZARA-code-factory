@@ -54,7 +54,7 @@ class MovimientoInventarioMapperTest {
     void mapeaVentaForzada() {
         UUID nodoId = UUID.randomUUID();
         UUID varianteId = UUID.randomUUID();
-        MovimientoInventario movimiento = Inventario.crear(nodoId, varianteId).aplicarVenta(2, true);
+        MovimientoInventario movimiento = Inventario.crear(nodoId, varianteId).aplicarVenta(2, true, UUID.randomUUID());
 
         MovimientoInventarioEntity entity = new MovimientoInventarioMapper()
                 .toEntity(nodoId, varianteId, movimiento);

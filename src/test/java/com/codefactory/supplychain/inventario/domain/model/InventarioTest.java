@@ -64,7 +64,7 @@ class InventarioTest {
         Inventario inventario = Inventario.crear(nodoId, varianteId);
         inventario.cargar(10, null);
 
-        MovimientoInventario movimiento = inventario.aplicarVenta(4, false);
+        MovimientoInventario movimiento = inventario.aplicarVenta(4, false, UUID.randomUUID());
 
         assertThat(movimiento.tipo()).isEqualTo(TipoMovimientoInventario.VENTA);
         assertThat(movimiento.cantidad()).isEqualTo(-4);
@@ -79,7 +79,7 @@ class InventarioTest {
         Inventario inventario = Inventario.crear(nodoId, varianteId);
         inventario.cargar(3, null);
 
-        assertThatThrownBy(() -> inventario.aplicarVenta(4, false))
+        assertThatThrownBy(() -> inventario.aplicarVenta(4, false, UUID.randomUUID()))
                 .isInstanceOf(StockInsuficienteException.class);
         assertThat(inventario.getALaMano()).isEqualTo(3);
     }
@@ -88,7 +88,7 @@ class InventarioTest {
     void ventaForzadaPermiteStockNegativo() {
         Inventario inventario = Inventario.crear(nodoId, varianteId);
 
-        MovimientoInventario movimiento = inventario.aplicarVenta(4, true);
+        MovimientoInventario movimiento = inventario.aplicarVenta(4, true, UUID.randomUUID());
 
         assertThat(movimiento.cantidad()).isEqualTo(-4);
         assertThat(movimiento.forzado()).isTrue();
@@ -170,23 +170,39 @@ class InventarioTest {
     void revertirRegistraAnulacionYReponeStock() {
         Inventario inventario = Inventario.crear(nodoId, varianteId);
         inventario.cargar(2, null);
-        inventario.aplicarVenta(2, false);
+        inventario.aplicarVenta(2, false, UUID.randomUUID());
 
-        MovimientoInventario movimiento = inventario.revertir(2, "Venta anulada");
+        MovimientoInventario movimiento = inventario.revertir(2, UUID.randomUUID());
 
         assertThat(movimiento.tipo()).isEqualTo(TipoMovimientoInventario.ANULACION_VENTA);
         assertThat(inventario.getALaMano()).isEqualTo(2);
     }
 
     @Test
-    void reponerRegistraReposicion() {
+    void recibirTraspasoRegistraEntradaConSuReferencia() {
         Inventario inventario = Inventario.crear(nodoId, varianteId);
-        inventario.aplicarVenta(2, true);
+        inventario.aplicarVenta(2, true, UUID.randomUUID());
+        UUID traspasoId = UUID.randomUUID();
 
-        MovimientoInventario movimiento = inventario.reponer(5);
+        MovimientoInventario movimiento = inventario.recibirTraspaso(5, traspasoId);
 
-        assertThat(movimiento.tipo()).isEqualTo(TipoMovimientoInventario.REPOSICION);
+        assertThat(movimiento.tipo()).isEqualTo(TipoMovimientoInventario.TRASPASO_ENTRADA);
+        assertThat(movimiento.referenciaId()).isEqualTo(traspasoId);
         assertThat(inventario.getALaMano()).isEqualTo(3);
+    }
+
+    @Test
+    void despacharTraspasoNuncaDejaElOrigenEnNegativo() {
+        Inventario inventario = Inventario.crear(nodoId, varianteId);
+        inventario.cargar(2, null);
+
+        assertThatThrownBy(() -> inventario.despacharTraspaso(3, UUID.randomUUID()))
+                .isInstanceOf(StockInsuficienteException.class);
+        MovimientoInventario movimiento = inventario.despacharTraspaso(2, UUID.randomUUID());
+
+        assertThat(movimiento.tipo()).isEqualTo(TipoMovimientoInventario.TRASPASO_SALIDA);
+        assertThat(movimiento.cantidad()).isEqualTo(-2);
+        assertThat(inventario.getALaMano()).isZero();
     }
 
     @Test
@@ -218,7 +234,7 @@ class InventarioTest {
         Inventario inventario = Inventario.crear(nodoId, varianteId);
         inventario.cargar(3, null);
 
-        MovimientoInventario movimiento = inventario.aplicarVenta(3, false);
+        MovimientoInventario movimiento = inventario.aplicarVenta(3, false, UUID.randomUUID());
 
         assertThat(movimiento.saldoResultante()).isZero();
         assertThat(inventario.getALaMano()).isZero();
@@ -229,12 +245,12 @@ class InventarioTest {
         Inventario inventario = Inventario.crear(nodoId, varianteId);
 
         verificarInvariantes(inventario, inventario.cargar(10, null));
-        verificarInvariantes(inventario, inventario.reponer(2));
-        verificarInvariantes(inventario, inventario.aplicarVenta(4, false));
+        verificarInvariantes(inventario, inventario.recibirTraspaso(2, UUID.randomUUID()));
+        verificarInvariantes(inventario, inventario.aplicarVenta(4, false, UUID.randomUUID()));
         verificarInvariantes(inventario, inventario.aplicarAjuste(3, MotivoAjuste.INGRESO_MANUAL, null, null));
         verificarInvariantes(inventario, inventario.aplicarAjuste(-1, MotivoAjuste.MERMA, null, null));
-        verificarInvariantes(inventario, inventario.revertir(4, "Venta anulada"));
-        verificarInvariantes(inventario, inventario.aplicarVenta(20, true));
+        verificarInvariantes(inventario, inventario.revertir(4, UUID.randomUUID()));
+        verificarInvariantes(inventario, inventario.aplicarVenta(20, true, UUID.randomUUID()));
 
         assertThat(inventario.getALaMano()).isEqualTo(-6);
     }
@@ -271,6 +287,7 @@ class InventarioTest {
                 null,
                 true,
                 null,
+                null,
                 1,
                 java.time.Instant.now()))
                 .isInstanceOf(IllegalArgumentException.class);
@@ -282,11 +299,11 @@ class InventarioTest {
 
         assertThatThrownBy(() -> inventario.cargar(-1, null))
                 .isInstanceOf(InventarioInvalidoException.class);
-        assertThatThrownBy(() -> inventario.aplicarVenta(-1, false))
+        assertThatThrownBy(() -> inventario.aplicarVenta(-1, false, UUID.randomUUID()))
                 .isInstanceOf(InventarioInvalidoException.class);
-        assertThatThrownBy(() -> inventario.revertir(0, "Anulación"))
+        assertThatThrownBy(() -> inventario.revertir(0, UUID.randomUUID()))
                 .isInstanceOf(InventarioInvalidoException.class);
-        assertThatThrownBy(() -> inventario.reponer(0))
+        assertThatThrownBy(() -> inventario.recibirTraspaso(0, UUID.randomUUID()))
                 .isInstanceOf(InventarioInvalidoException.class);
     }
 

@@ -38,10 +38,8 @@ import java.util.UUID;
 public interface ConsultaKardex {
 
     /**
-     * Consulta los movimientos de una variante en un nodo dentro de un rango.
-     *
-     * TODO: confirmar con Altamiranda y Cerquera si el rango
-     * debe ser inclusivo y qué ordenamiento necesitan.
+     * Movimientos de una variante en un nodo con fecha entre {@code desde} y
+     * {@code hasta} (ambos inclusive), del más antiguo al más reciente.
      */
     List<MovimientoKardex> consultarMovimientos(
             UUID nodoId,

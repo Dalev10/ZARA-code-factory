@@ -84,22 +84,38 @@ public final class Inventario {
             throw new InventarioInvalidoException("La cantidad cargada no puede ser negativa");
         }
         aLaMano += cantidad;
-        return registrar(TipoMovimientoInventario.CARGA_INICIAL, cantidad, null, null, false, usuarioId);
+        return registrar(TipoMovimientoInventario.CARGA_INICIAL, cantidad, null, null, false, usuarioId, null);
     }
 
-    public MovimientoInventario reponer(int cantidad) {
-        validarCantidadPositiva(cantidad);
-        aLaMano += cantidad;
-        return registrar(TipoMovimientoInventario.REPOSICION, cantidad, null);
-    }
-
-    public MovimientoInventario aplicarVenta(int cantidad, boolean forzado) {
+    /**
+     * Sin {@code forzado}, rechaza la venta si supera {@code aLaMano}. Forzada,
+     * puede dejar el saldo negativo (D-35).
+     *
+     * @param ventaId venta que origina el movimiento (referencia del kardex)
+     */
+    public MovimientoInventario aplicarVenta(int cantidad, boolean forzado, UUID ventaId) {
         validarCantidadPositiva(cantidad);
         if (!forzado && cantidad > aLaMano) {
             throw new StockInsuficienteException(aLaMano, cantidad);
         }
         aLaMano -= cantidad;
-        return registrar(TipoMovimientoInventario.VENTA, -cantidad, null, null, forzado, null);
+        return registrar(TipoMovimientoInventario.VENTA, -cantidad, null, null, forzado, null, ventaId);
+    }
+
+    /** Salida de un traspaso interno: nunca deja el nodo de origen en negativo (D-56). */
+    public MovimientoInventario despacharTraspaso(int cantidad, UUID traspasoId) {
+        validarCantidadPositiva(cantidad);
+        if (cantidad > aLaMano) {
+            throw new StockInsuficienteException(aLaMano, cantidad);
+        }
+        aLaMano -= cantidad;
+        return registrar(TipoMovimientoInventario.TRASPASO_SALIDA, -cantidad, null, null, false, null, traspasoId);
+    }
+
+    public MovimientoInventario recibirTraspaso(int cantidad, UUID traspasoId) {
+        validarCantidadPositiva(cantidad);
+        aLaMano += cantidad;
+        return registrar(TipoMovimientoInventario.TRASPASO_ENTRADA, cantidad, null, null, false, null, traspasoId);
     }
 
     /**
@@ -127,20 +143,14 @@ public final class Inventario {
             throw new AjusteDejaStockNegativoException(aLaMano, delta);
         }
         aLaMano += delta;
-        return registrar(TipoMovimientoInventario.AJUSTE, delta, motivo.name(), comentario, false, usuarioId);
+        return registrar(TipoMovimientoInventario.AJUSTE, delta, motivo.name(), comentario, false, usuarioId, null);
     }
 
-    public MovimientoInventario revertir(int cantidad, String motivo) {
+    /** Devuelve al nodo las unidades de una venta anulada. */
+    public MovimientoInventario revertir(int cantidad, UUID ventaId) {
         validarCantidadPositiva(cantidad);
         aLaMano += cantidad;
-        return registrar(TipoMovimientoInventario.ANULACION_VENTA, cantidad, motivo);
-    }
-
-    private MovimientoInventario registrar(
-            TipoMovimientoInventario tipo,
-            int cantidad,
-            String motivo) {
-        return registrar(tipo, cantidad, motivo, null, false, null);
+        return registrar(TipoMovimientoInventario.ANULACION_VENTA, cantidad, null, null, false, null, ventaId);
     }
 
     private MovimientoInventario registrar(
@@ -149,7 +159,8 @@ public final class Inventario {
             String motivo,
             String comentario,
             boolean forzado,
-            UUID usuarioId) {
+            UUID usuarioId,
+            UUID referenciaId) {
         recalcular();
         return new MovimientoInventario(
                 UUID.randomUUID(),
@@ -159,6 +170,7 @@ public final class Inventario {
                 comentario,
                 forzado,
                 usuarioId,
+                referenciaId,
                 aLaMano,
                 Instant.now());
     }

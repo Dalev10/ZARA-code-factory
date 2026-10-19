@@ -31,7 +31,7 @@ public class GestionVentanasQuiebreService implements GestionarVentanasQuiebreUs
 
     private static final String CARGA_INICIAL = "CARGA_INICIAL";
     private static final Set<String> MOVIMIENTOS_QUE_SOLO_SUMAN =
-            Set.of("ANULACION_VENTA", "REPOSICION", "TRASPASO_ENTRADA");
+            Set.of("ANULACION_VENTA", "TRASPASO_ENTRADA");
 
     private final VentanaQuiebreRepositoryPort ventanas;
     private final AlmacenTiendaPort almacenes;

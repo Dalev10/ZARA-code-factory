@@ -6,31 +6,19 @@ import com.codefactory.supplychain.inventario.domain.model.MovimientoInventario;
 import java.util.UUID;
 
 /**
- * Casos de uso internos para modificar un Inventario ya cargado.
+ * Casos de uso internos que modifican existencias. Cada operación registra su
+ * movimiento en el kardex y publica {@code ExistenciasActualizadas}.
  */
 public interface InventarioUseCase {
 
     MovimientoInventario cargar(UUID nodoId, UUID varianteId, int cantidad, UUID usuarioId);
 
-    MovimientoInventario reponer(UUID nodoId, UUID varianteId, int cantidad);
+    MovimientoInventario aplicarVenta(UUID nodoId, UUID varianteId, int cantidad, boolean forzado, UUID ventaId);
 
-    MovimientoInventario aplicarVenta(
-            UUID nodoId,
-            UUID varianteId,
-            int cantidad,
-            boolean forzado);
+    MovimientoInventario aplicarAjuste(UUID nodoId, UUID varianteId, int delta, MotivoAjuste motivo,
+                                       String comentario, UUID usuarioId);
 
-    MovimientoInventario aplicarAjuste(
-            UUID nodoId,
-            UUID varianteId,
-            int delta,
-            MotivoAjuste motivo,
-            String comentario,
-            UUID usuarioId);
+    MovimientoInventario revertir(UUID nodoId, UUID varianteId, int cantidad, UUID ventaId);
 
-    MovimientoInventario revertir(
-            UUID nodoId,
-            UUID varianteId,
-            int cantidad,
-            String motivo);
+    void trasladar(UUID nodoOrigenId, UUID nodoDestinoId, UUID varianteId, int cantidad, UUID traspasoId);
 }

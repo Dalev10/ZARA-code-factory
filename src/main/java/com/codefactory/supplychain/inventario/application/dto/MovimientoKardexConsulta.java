@@ -6,8 +6,7 @@ import java.time.Instant;
 import java.util.UUID;
 
 /**
- * Movimiento del kardex tal como lo muestra una consulta. No lleva saldo
- * resultante: la tabla {@code movimiento_inventario} no lo persiste.
+ * Movimiento del kardex tal como lo muestra la consulta HTTP (HU-39).
  */
 public record MovimientoKardexConsulta(
         UUID id,

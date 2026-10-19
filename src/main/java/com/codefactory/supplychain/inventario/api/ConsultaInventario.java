@@ -37,20 +37,15 @@ public interface ConsultaInventario {
     /**
      * Consulta las magnitudes de una variante en un nodo.
      *
-     * Devuelve {@code Optional.empty()} si la variante no tiene carga inicial en
-     * el nodo; no se interpreta como stock cero.
-     *
-     * TODO: confirmar con Altamiranda y Cerquera las
-     * magnitudes, filtros y comportamiento cuando no exista inventario.
+     * Devuelve {@code Optional.empty()} si la variante no tiene fila en el nodo:
+     * su stock es 0 (D-25), pero el consumidor puede distinguir "nunca se movió".
      */
     Optional<StockResumen> consultarStock(UUID nodoId, UUID varianteId);
 
     /**
      * Consulta las existencias de todas las variantes almacenadas en un nodo.
-     * Una lista vacía significa que el nodo no tiene cargas.
-     *
-     * TODO: confirmar con Altamiranda y Cerquera si deben
-     * incluirse variantes con saldo cero.
+     * Incluye las filas con saldo cero o negativo; una lista vacía significa que
+     * el nodo no tiene filas.
      */
     List<StockResumen> consultarExistenciasPorNodo(UUID nodoId);
 }
