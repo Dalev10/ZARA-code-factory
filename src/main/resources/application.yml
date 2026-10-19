@@ -29,9 +29,9 @@ spring:
       # conexión mientras el traspaso automático abre otra (REQUIRES_NEW) y este,
       # a su vez, una tercera para la ventana de quiebre. Con 5 conexiones, cinco
       # ventas simultáneas podían bloquearse esperando la segunda. El pooler de
-      # Supabase (Supavisor, modo session) limita las conexiones del proyecto:
-      # el valor debe quedar por debajo de ese límite, contando a los demás
-      # clientes (Studio, scripts). Se ajusta con DB_POOL_MAX_SIZE.
+      # Supabase (Supavisor, modo session) limita las conexiones del proyecto a
+      # 15 (Pool Size, verificado el 2026-10-19): 10 para la app deja 5 para
+      # Studio y scripts. Se ajusta con DB_POOL_MAX_SIZE.
       maximum-pool-size: ${DB_POOL_MAX_SIZE:10}
 
   jpa:

@@ -6,6 +6,11 @@ import org.junit.jupiter.api.Test;
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.equalTo;
 
+/**
+ * HU-06 (Sprint 1). El defecto D-01 (bloquear la desactivación de una Tienda con Bodega) quedó
+ * superado por el Sprint 2: toda Tienda tiene Bodega (D-55) y desactivarla es una baja lógica
+ * que conserva su información y cierra sus ventanas de quiebre (D-50).
+ */
 class EliminarTiendaIT extends AbstractCasoPruebaIT {
 
     @Test
@@ -32,7 +37,7 @@ class EliminarTiendaIT extends AbstractCasoPruebaIT {
     }
 
     @Test
-    @DisplayName("CP-002 — Bloquear eliminación de Tienda con Bodega_Tienda asociada [defecto D-01]")
+    @DisplayName("CP-002 — Desactivar una Tienda con Bodega_Tienda la deja INACTIVA (D-55, D-50)")
     void cpHu06002_bloquearEliminacionConBodegaAsociada() {
         String tokenAdmin = iniciarSesionComoAdmin();
         String tiendaId = given().header("Authorization", "Bearer " + tokenAdmin)
@@ -46,16 +51,17 @@ class EliminarTiendaIT extends AbstractCasoPruebaIT {
         bodegaDeTienda(tokenAdmin, tiendaId);
 
         given().header("Authorization", "Bearer " + tokenAdmin)
-                .when().delete("/tiendas/" + tiendaId);
+                .when().delete("/tiendas/" + tiendaId)
+                .then().statusCode(204);
 
         given().header("Authorization", "Bearer " + tokenAdmin)
                 .when().get("/tiendas/" + tiendaId)
                 .then().statusCode(200)
-                .body("estado", equalTo("ACTIVA"));
+                .body("estado", equalTo("INACTIVA"));
     }
 
     @Test
-    @DisplayName("CP-003 — Validar que existen operaciones/información asociada antes de eliminar [defecto D-01]")
+    @DisplayName("CP-003 — Desactivar una Tienda conserva su Bodega_Tienda y su información (baja lógica)")
     void cpHu06003_validarInformacionAsociadaAntesDeEliminar() {
         String tokenAdmin = iniciarSesionComoAdmin();
         String tiendaId = given().header("Authorization", "Bearer " + tokenAdmin)
@@ -69,7 +75,8 @@ class EliminarTiendaIT extends AbstractCasoPruebaIT {
         String bodegaId = bodegaDeTienda(tokenAdmin, tiendaId);
 
         given().header("Authorization", "Bearer " + tokenAdmin)
-                .when().delete("/tiendas/" + tiendaId);
+                .when().delete("/tiendas/" + tiendaId)
+                .then().statusCode(204);
 
         given().header("Authorization", "Bearer " + tokenAdmin)
                 .when().get("/bodegas-tienda/" + bodegaId)
@@ -78,7 +85,7 @@ class EliminarTiendaIT extends AbstractCasoPruebaIT {
         given().header("Authorization", "Bearer " + tokenAdmin)
                 .when().get("/tiendas/" + tiendaId)
                 .then().statusCode(200)
-                .body("estado", equalTo("ACTIVA"));
+                .body("estado", equalTo("INACTIVA"));
     }
 
     @Test
