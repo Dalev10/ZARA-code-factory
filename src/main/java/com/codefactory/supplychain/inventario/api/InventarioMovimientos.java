@@ -40,16 +40,16 @@ import java.util.UUID;
  * <ul>
  *   <li>Es síncrono (D-15): el consumidor necesita saber si el movimiento se
  *       aplicó.</li>
- *   <li>Opera solo sobre filas cargadas: una variante sin carga inicial en el
- *       nodo se rechaza siempre, incluso con {@code forzado = true}.</li>
- *   <li>Cada operación registra un movimiento en el kardex y publica
- *       {@link ExistenciasActualizadas}.</li>
+ *   <li>Filas por demanda (D-25): una variante sin fila en el nodo tiene stock 0
+ *       y la fila se crea con el primer movimiento.</li>
+ *   <li>Cada operación registra un movimiento en el kardex, con la venta o el
+ *       traspaso como {@code referencia_id}, y publica {@link ExistenciasActualizadas}.</li>
  *   <li>Transacción: si el llamador ya tiene una abierta, la operación se une
  *       a ella y el movimiento se revierte junto con el llamador. En ese caso
  *       el reintento optimista de inventario no puede actuar, porque el
  *       conflicto de versión aparece al confirmar la transacción del
  *       llamador; el reintento debe ir en el punto de entrada del llamador,
- *       fuera de su transacción (AGENTS.md §7).</li>
+ *       fuera de su transacción (como {@code VentaRetryableService}).</li>
  * </ul>
  */
 public interface InventarioMovimientos {
@@ -60,10 +60,7 @@ public interface InventarioMovimientos {
      * Sin {@code forzado}, lanza {@link StockInsuficienteException} si
      * {@code cantidad} supera el {@code aLaMano}. Con {@code forzado}, el
      * descuento se aplica aunque el saldo quede negativo y el movimiento queda
-     * marcado como forzado (D-35).
-     *
-     * TODO: confirmar con Altamiranda los identificadores, cantidad,
-     * semántica de idempotencia y quién puede solicitar una venta forzada.
+     * marcado como forzado (D-35). Quién puede forzar lo decide ventas.
      */
     void descontarPorVenta(
             UUID nodoId,
@@ -75,19 +72,14 @@ public interface InventarioMovimientos {
     /**
      * Revierte el descuento producido por una venta anulada. Devuelve
      * {@code cantidad} unidades al nodo con un movimiento ANULACION_VENTA.
-     *
-     * TODO: confirmar con Altamiranda y Cerquera si esta
-     * operación debe tener un contrato o evento adicional.
      */
     void revertirPorAnulacion(UUID nodoId, UUID varianteId, int cantidad, UUID ventaId);
 
     /**
      * Traslada existencias entre dos nodos: TRASPASO_SALIDA en el origen y
      * TRASPASO_ENTRADA en el destino, en la misma transacción y bloqueando
-     * Bodega antes que Almacén (D-24).
-     *
-     * TODO: confirmar con Cerquera los datos del
-     * traspaso, sus reglas de idempotencia y la semántica de cantidades.
+     * el origen antes que el destino (D-24). Lanza {@link StockInsuficienteException}
+     * si el origen no tiene {@code cantidad} unidades: nunca queda en negativo (D-56).
      */
     void trasladar(UUID nodoOrigenId, UUID nodoDestinoId, UUID varianteId, int cantidad, UUID traspasoId);
 }

@@ -3,47 +3,34 @@ package com.codefactory.supplychain.qa;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.UUID;
-
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.equalTo;
 
+/**
+ * HU-09 (Sprint 1) actualizada por D-55 (HU-34, Sprint 2): la Bodega_Tienda pertenece a
+ * su tienda y no se reasigna por API.
+ */
 class ModificarBodegaTiendaIT extends AbstractCasoPruebaIT {
 
+    private static String tiendaId;
     private static String bodegaId;
-    private static String tiendaDestinoId;
 
     private void asegurarFixture(String tokenAdmin) {
         if (bodegaId == null) {
-            String tiendaOrigenId = given().header("Authorization", "Bearer " + tokenAdmin)
+            tiendaId = given().header("Authorization", "Bearer " + tokenAdmin)
                     .contentType("application/json")
                     .body("""
                             {"nombre": "%s", "ubicacion": "Girardota, Antioquia"}
-                            """.formatted(unico("Tienda HU09 Origen")))
+                            """.formatted(unico("Tienda HU09")))
                     .when().post("/tiendas")
                     .then().statusCode(201)
                     .extract().path("id");
-            bodegaId = given().header("Authorization", "Bearer " + tokenAdmin)
-                    .contentType("application/json")
-                    .body("""
-                            {"tiendaId": "%s"}
-                            """.formatted(tiendaOrigenId))
-                    .when().post("/bodegas-tienda")
-                    .then().statusCode(201)
-                    .extract().path("id");
-            tiendaDestinoId = given().header("Authorization", "Bearer " + tokenAdmin)
-                    .contentType("application/json")
-                    .body("""
-                            {"nombre": "%s", "ubicacion": "Barbosa, Antioquia"}
-                            """.formatted(unico("Tienda HU09 Destino")))
-                    .when().post("/tiendas")
-                    .then().statusCode(201)
-                    .extract().path("id");
+            bodegaId = bodegaDeTienda(tokenAdmin, tiendaId);
         }
     }
 
     @Test
-    @DisplayName("CP-001 — Modificar Bodega_Tienda reasignándola a otra Tienda existente")
+    @DisplayName("CP-001 — Modificar una Bodega_Tienda por API ya no está permitido (405)")
     void cpHu09001_modificarBodegaReasignandoATiendaExistente() {
         String tokenAdmin = iniciarSesionComoAdmin();
         asegurarFixture(tokenAdmin);
@@ -52,39 +39,20 @@ class ModificarBodegaTiendaIT extends AbstractCasoPruebaIT {
                 .contentType("application/json")
                 .body("""
                         {"tiendaId": "%s"}
-                        """.formatted(tiendaDestinoId))
+                        """.formatted(tiendaId))
                 .when().put("/bodegas-tienda/" + bodegaId)
-                .then().statusCode(200)
-                .body("tiendaId", equalTo(tiendaDestinoId));
+                .then().statusCode(405);
     }
 
     @Test
-    @DisplayName("CP-002 — Rechazar modificación de Bodega_Tienda a una Tienda inexistente")
+    @DisplayName("CP-002 — La Bodega_Tienda sigue asociada a su Tienda")
     void cpHu09002_rechazarModificacionATiendaInexistente() {
         String tokenAdmin = iniciarSesionComoAdmin();
         asegurarFixture(tokenAdmin);
 
         given().header("Authorization", "Bearer " + tokenAdmin)
-                .contentType("application/json")
-                .body("""
-                        {"tiendaId": "%s"}
-                        """.formatted(UUID.randomUUID()))
-                .when().put("/bodegas-tienda/" + bodegaId)
-                .then().statusCode(404);
-    }
-
-    @Test
-    @DisplayName("CP-003 — Rechazar modificación de Bodega_Tienda con información inválida")
-    void cpHu09003_rechazarModificacionInvalida() {
-        String tokenAdmin = iniciarSesionComoAdmin();
-        asegurarFixture(tokenAdmin);
-
-        given().header("Authorization", "Bearer " + tokenAdmin)
-                .contentType("application/json")
-                .body("""
-                        {"tiendaId": null}
-                        """)
-                .when().put("/bodegas-tienda/" + bodegaId)
-                .then().statusCode(400);
+                .when().get("/bodegas-tienda/" + bodegaId)
+                .then().statusCode(200)
+                .body("tiendaId", equalTo(tiendaId));
     }
 }

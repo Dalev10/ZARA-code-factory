@@ -6,7 +6,7 @@ import java.util.UUID;
 /**
  * Resuelve el umbral que aplica a una variante en una tienda (D-58). Hoy el umbral es
  * constante: la tienda se recibe pero se ignora, para que el Sprint 4 pueda hacerlo
- * dinámico sin cambiar el contrato ni a quien lo usa (el traspaso automático, HU-39).
+ * dinámico sin cambiar el contrato ni a quien lo usa (el traspaso automático, HU-48).
  */
 public interface ResolverUmbralPort {
 

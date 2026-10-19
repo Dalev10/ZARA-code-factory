@@ -30,13 +30,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
- * Criterios de aceptación de HU-29 (ajuste de inventario) de extremo a
+ * Criterios de aceptación de HU-38 (ajuste de inventario) de extremo a
  * extremo, contra PostgreSQL real.
- *
- * TODO(shared): los criterios "no puede dejar el stock en negativo" (422) y
- * "no se ajusta una variante no cargada" (409) responden hoy 400, porque
- * GlobalExceptionHandler traduce toda ReglaDeNegocioException a 400. Al
- * cambiar shared/, actualizar los status esperados de esos dos escenarios.
  */
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -101,7 +96,7 @@ class AjusteInventarioControllerTest {
             Escenario: el ajuste no puede dejar el stock en negativo
               Dado un Almacén con la variante X con 1 unidad
               Cuando se registra un ajuste de -2 unidades
-              Entonces la respuesta es 422 (hoy 400, pendiente del cambio en shared)
+              Entonces la respuesta es 400
               Y el stock sigue en 1""")
     void elAjusteNoPuedeDejarElStockEnNegativo() throws Exception {
         String x = crearVarianteCargada(almacenId, 1);
@@ -116,17 +111,33 @@ class AjusteInventarioControllerTest {
 
     @Test
     @DisplayName("""
-            Escenario: no se ajusta una variante no cargada
+            Escenario: ajuste positivo sobre una variante sin fila (D-25)
               Dado un Almacén sin fila para la variante Z
-              Cuando se registra un ajuste sobre Z
-              Entonces la respuesta es 409 indicando que la variante no está cargada (hoy 400)
-              Y no se crea ninguna fila""")
-    void noSeAjustaUnaVarianteNoCargada() throws Exception {
+              Cuando se registra un ajuste de +3 sobre Z
+              Entonces la respuesta es 201
+              Y la fila se crea con 3 unidades""")
+    void ajustePositivoCreaLaFilaPorDemanda() throws Exception {
         String z = crearVariante();
 
         ajustar(almacenId, supervisor, z, 3, "INGRESO_MANUAL", null)
+                .andExpect(status().isCreated());
+
+        assertThat(aLaMano(almacenId, z)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("""
+            Escenario: ajuste negativo sobre una variante sin fila
+              Dado un Almacén sin fila para la variante Z
+              Cuando se registra un ajuste de -1 sobre Z
+              Entonces la respuesta es 400 porque dejaría el stock negativo
+              Y no se crea ninguna fila""")
+    void ajusteNegativoSinFilaSeRechaza() throws Exception {
+        String z = crearVariante();
+
+        ajustar(almacenId, supervisor, z, -1, "MERMA", null)
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.mensaje").value(containsString("no está cargada")));
+                .andExpect(jsonPath("$.mensaje").value(containsString("negativo")));
 
         assertThat(jdbc.queryForObject("SELECT count(*) FROM inventario WHERE nodo_id = ?",
                 Integer.class, almacenId)).isZero();

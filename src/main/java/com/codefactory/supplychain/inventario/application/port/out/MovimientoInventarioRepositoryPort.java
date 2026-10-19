@@ -1,5 +1,6 @@
 package com.codefactory.supplychain.inventario.application.port.out;
 
+import com.codefactory.supplychain.inventario.api.MovimientoKardex;
 import com.codefactory.supplychain.inventario.application.dto.MovimientoKardexConsulta;
 import com.codefactory.supplychain.inventario.domain.model.MovimientoInventario;
 import com.codefactory.supplychain.inventario.domain.model.TipoMovimientoInventario;
@@ -7,6 +8,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -29,4 +31,10 @@ public interface MovimientoInventarioRepositoryPort {
             Instant desde,
             Instant hasta,
             Pageable pageable);
+
+    /**
+     * Movimientos de una variante en un nodo entre {@code desde} y {@code hasta}
+     * (inclusive), del más antiguo al más reciente.
+     */
+    List<MovimientoKardex> buscarPorNodoYVariante(UUID nodoId, UUID varianteId, Instant desde, Instant hasta);
 }

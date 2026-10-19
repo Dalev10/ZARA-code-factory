@@ -1,4 +1,4 @@
-package com.codefactory.supplychain.reposicion.application.listener;
+package com.codefactory.supplychain.reposicion.infrastructure.adapter.in.eventos;
 
 import com.codefactory.supplychain.inventario.api.ExistenciasActualizadas;
 import com.codefactory.supplychain.inventario.api.TipoMovimientoKardex;
@@ -70,12 +70,21 @@ class ExistenciasActualizadasListenerTest {
     class NodoNoAlmacen {
 
         @Test
-        @DisplayName("ignora eventos de nodo tipo BODEGA_TIENDA")
-        void ignoraEventosDeBodega() {
+        @DisplayName("ignora una disminución en la Bodega")
+        void ignoraDisminucionEnBodega() {
             listener.onExistenciasActualizadas(
-                    evento(TipoNodoInventario.BODEGA_TIENDA, TIENDA_ID, TipoMovimientoKardex.VENTA));
+                    evento(TipoNodoInventario.BODEGA_TIENDA, TIENDA_ID, TipoMovimientoKardex.AJUSTE));
 
             verifyNoInteractions(traspasoAutomatico);
+        }
+
+        @Test
+        @DisplayName("evalúa la tienda ante un aumento en la Bodega (D-53)")
+        void evaluaAnteAumentoEnBodega() {
+            listener.onExistenciasActualizadas(evento(TipoNodoInventario.BODEGA_TIENDA, TIENDA_ID,
+                    TipoMovimientoKardex.CARGA_INICIAL, 0, 8));
+
+            verify(traspasoAutomatico).evaluar(TIENDA_ID, VARIANTE_ID);
         }
 
         @Test
@@ -127,6 +136,12 @@ class ExistenciasActualizadasListenerTest {
 
     private static ExistenciasActualizadas evento(TipoNodoInventario tipoNodo, UUID tiendaId,
                                                   TipoMovimientoKardex tipoMovimiento) {
+        return evento(tipoNodo, tiendaId, tipoMovimiento, 12, 10);
+    }
+
+    private static ExistenciasActualizadas evento(TipoNodoInventario tipoNodo, UUID tiendaId,
+                                                  TipoMovimientoKardex tipoMovimiento,
+                                                  int aLaManoAnterior, int aLaMano) {
         return new ExistenciasActualizadas(
                 NODO_ID,            // nodoId
                 tipoNodo,           // tipoNodo
@@ -136,8 +151,8 @@ class ExistenciasActualizadasListenerTest {
                 tipoMovimiento,     // tipoMovimiento
                 false,              // forzado
                 null,               // referenciaId
-                12,                 // aLaManoAnterior
-                10,                 // aLaMano
+                aLaManoAnterior,    // aLaManoAnterior
+                aLaMano,            // aLaMano
                 3,                  // disponibleParaUso
                 0,                  // entrante
                 0,                  // saliente

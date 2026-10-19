@@ -1,5 +1,7 @@
 package com.codefactory.supplychain.inventario.infrastructure.adapter.out.persistence.mapper;
 
+import com.codefactory.supplychain.inventario.api.MovimientoKardex;
+import com.codefactory.supplychain.inventario.api.TipoMovimientoKardex;
 import com.codefactory.supplychain.inventario.application.dto.MovimientoKardexConsulta;
 import com.codefactory.supplychain.inventario.domain.model.MovimientoInventario;
 import com.codefactory.supplychain.inventario.infrastructure.adapter.out.persistence.entity.MovimientoInventarioEntity;
@@ -27,6 +29,8 @@ public class MovimientoInventarioMapper {
                 .comentario(movimiento.comentario())
                 .forzado(movimiento.forzado())
                 .usuarioId(movimiento.usuarioId())
+                .referenciaId(movimiento.referenciaId())
+                .saldoResultante(movimiento.saldoResultante())
                 .ocurridoEn(movimiento.ocurridoEn())
                 .build();
     }
@@ -41,6 +45,17 @@ public class MovimientoInventarioMapper {
                 entity.getComentario(),
                 entity.isForzado(),
                 entity.getUsuarioId(),
+                entity.getOcurridoEn());
+    }
+
+    public MovimientoKardex toKardex(MovimientoInventarioEntity entity) {
+        return new MovimientoKardex(
+                entity.getId(),
+                entity.getNodoId(),
+                entity.getVarianteId(),
+                TipoMovimientoKardex.valueOf(entity.getTipo().name()),
+                entity.getCantidad(),
+                entity.getSaldoResultante(),
                 entity.getOcurridoEn());
     }
 }

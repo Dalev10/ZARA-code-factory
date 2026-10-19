@@ -1,5 +1,6 @@
 package com.codefactory.supplychain.inventario.application.service;
 
+import com.codefactory.supplychain.inventario.api.TiendaDesactivada;
 import com.codefactory.supplychain.inventario.api.TiendaResumen;
 import com.codefactory.supplychain.inventario.application.port.out.NodoRepositoryPort;
 import com.codefactory.supplychain.inventario.application.port.out.TiendaRepositoryPort;
@@ -12,6 +13,7 @@ import com.codefactory.supplychain.inventario.domain.model.Tienda;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 
@@ -26,19 +28,22 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 class TiendaServiceTest {
 
     private TiendaRepositoryPort tiendaRepositoryPort;
     private NodoRepositoryPort nodoRepositoryPort;
+    private ApplicationEventPublisher eventos;
     private TiendaService servicio;
 
     @BeforeEach
     void setUp() {
         tiendaRepositoryPort = mock(TiendaRepositoryPort.class);
         nodoRepositoryPort = mock(NodoRepositoryPort.class);
-        servicio = new TiendaService(tiendaRepositoryPort, nodoRepositoryPort);
+        eventos = mock(ApplicationEventPublisher.class);
+        servicio = new TiendaService(tiendaRepositoryPort, nodoRepositoryPort, eventos);
     }
 
     @Test
@@ -120,6 +125,19 @@ class TiendaServiceTest {
         ArgumentCaptor<Tienda> captor = ArgumentCaptor.forClass(Tienda.class);
         verify(tiendaRepositoryPort).guardar(captor.capture());
         assertThat(captor.getValue().estaActiva()).isFalse();
+        verify(eventos).publishEvent(new TiendaDesactivada(tienda.getId(), captor.getValue().getActualizadoEn()));
+    }
+
+    @Test
+    void desactivarUnaTiendaYaInactivaNoPublicaDeNuevo() {
+        Tienda tienda = Tienda.reconstruir(UUID.randomUUID(), "Tienda Centro", "Bogotá",
+                EstadoTienda.INACTIVA, Instant.now(), Instant.now());
+        when(tiendaRepositoryPort.buscarPorId(tienda.getId())).thenReturn(Optional.of(tienda));
+
+        servicio.desactivar(tienda.getId());
+
+        verify(tiendaRepositoryPort, never()).guardar(any());
+        verifyNoInteractions(eventos);
     }
 
     @Test

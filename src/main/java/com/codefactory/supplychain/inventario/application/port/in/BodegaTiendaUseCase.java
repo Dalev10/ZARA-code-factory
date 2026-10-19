@@ -8,19 +8,15 @@ import org.springframework.data.domain.Pageable;
 import java.util.UUID;
 
 /**
+ * Consulta de Bodegas_Tienda. Solo lectura: la Bodega se crea con su tienda (D-55).
+ *
  * Módulo: inventario — Red de nodos (CD, Tienda/Almacén, Bodega_Tienda) e inventario polimórfico sobre ellos.
  */
 public interface BodegaTiendaUseCase {
-
-    Nodo registrar(UUID tiendaId);
 
     BodegaTiendaConsulta consultarPorId(UUID id);
 
     BodegaTiendaConsulta consultarPorTiendaId(UUID tiendaId);
 
     Page<Nodo> listarTodas(Pageable pageable);
-
-    Nodo modificar(UUID id, UUID nuevaTiendaId);
-
-    void eliminar(UUID id);
 }

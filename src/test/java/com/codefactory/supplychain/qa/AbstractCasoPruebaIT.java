@@ -86,6 +86,14 @@ abstract class AbstractCasoPruebaIT {
         return iniciarSesion(ADMIN_EMAIL, ADMIN_PASSWORD);
     }
 
+    /** La Bodega_Tienda se crea con su tienda (D-55): se consulta, no se registra. */
+    protected String bodegaDeTienda(String tokenAdmin, String tiendaId) {
+        return given().header("Authorization", "Bearer " + tokenAdmin)
+                .when().get("/bodegas-tienda/tienda/" + tiendaId)
+                .then().statusCode(200)
+                .extract().path("id");
+    }
+
     protected String registrarUsuario(String tokenAdmin, String email, String nombreCompleto, String password) {
         return given()
                 .header("Authorization", "Bearer " + tokenAdmin)

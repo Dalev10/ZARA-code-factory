@@ -1,14 +1,17 @@
 package com.codefactory.supplychain.reposicion.application.service;
 
-import com.codefactory.supplychain.reposicion.domain.exception.BodegaInsuficienteException;
-import com.codefactory.supplychain.reposicion.application.port.out.ConsultarExistenciasPort;
 import com.codefactory.supplychain.reposicion.application.port.out.EjecutarTraspasoPort;
 import com.codefactory.supplychain.reposicion.application.port.out.TraspasoInternoRepository;
+import com.codefactory.supplychain.reposicion.application.port.out.VarianteConsultaPort;
+import com.codefactory.supplychain.reposicion.application.port.out.VarianteConsultaPort.VarianteConsultada;
+import com.codefactory.supplychain.reposicion.domain.exception.BodegaInsuficienteException;
+import com.codefactory.supplychain.reposicion.domain.exception.ReposicionRecursoNoEncontradoException;
+import com.codefactory.supplychain.reposicion.domain.exception.TiendaNoPermitidaException;
 import com.codefactory.supplychain.reposicion.domain.model.OrigenTraspaso;
 import com.codefactory.supplychain.reposicion.domain.model.TraspasoInterno;
+import com.codefactory.supplychain.shared.security.UsuarioActual;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -16,97 +19,83 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.when;
 
-@DisplayName("TraspasoManualService")
+@DisplayName("TraspasoManualService (HU-49)")
 @ExtendWith(MockitoExtension.class)
 class TraspasoManualServiceTest {
 
-    @Mock ConsultarExistenciasPort consultarExistencias;
+    private static final UUID TIENDA_ID = UUID.randomUUID();
+    private static final UUID VARIANTE_ID = UUID.randomUUID();
+    private static final UsuarioActual OPERARIO =
+            new UsuarioActual(UUID.randomUUID(), Set.of("reposicion:administrar"), Set.of(TIENDA_ID));
+
+    @Mock VarianteConsultaPort variantes;
     @Mock EjecutarTraspasoPort ejecutarTraspaso;
     @Mock TraspasoInternoRepository traspasoRepository;
 
     @InjectMocks
     TraspasoManualService servicio;
 
-    private static final UUID TIENDA_ID      = UUID.randomUUID();
-    private static final UUID VARIANTE_ID    = UUID.randomUUID();
-    private static final UUID REGISTRADO_POR = UUID.randomUUID();
-
     @BeforeEach
-    void stubRepository() {
+    void setUp() {
         lenient().when(traspasoRepository.guardar(any())).thenAnswer(inv -> inv.getArgument(0));
+        lenient().when(variantes.buscar(VARIANTE_ID))
+                .thenReturn(Optional.of(new VarianteConsultada(VARIANTE_ID, UUID.randomUUID())));
     }
 
-    @Nested
-    @DisplayName("registro exitoso")
-    class RegistroExitoso {
+    @Test
+    @DisplayName("persiste un traspaso MANUAL con el usuario del token como registrador")
+    void persisteConRegistradorYOrigenManual() {
+        when(ejecutarTraspaso.traspasar(eq(TIENDA_ID), eq(VARIANTE_ID), eq(7), any())).thenReturn(true);
 
-        @Test
-        @DisplayName("persiste traspaso MANUAL con el registrador correcto cuando hay stock suficiente")
-        void persiste_con_registrador_y_origen_manual() {
-            when(consultarExistencias.consultarStockBodega(TIENDA_ID, VARIANTE_ID))
-                    .thenReturn(Optional.of(20));
+        TraspasoInterno resultado = servicio.registrar(OPERARIO, TIENDA_ID, VARIANTE_ID, 7);
 
-            TraspasoInterno resultado = servicio.registrar(TIENDA_ID, VARIANTE_ID, 7, REGISTRADO_POR);
-
-            assertThat(resultado.getCantidad()).isEqualTo(7);
-            assertThat(resultado.getOrigen()).isEqualTo(OrigenTraspaso.MANUAL);
-            assertThat(resultado.getRegistradoPor()).isEqualTo(REGISTRADO_POR);
-            assertThat(resultado.getTiendaId()).isEqualTo(TIENDA_ID);
-            assertThat(resultado.getVarianteId()).isEqualTo(VARIANTE_ID);
-
-            verify(ejecutarTraspaso).traspasar(TIENDA_ID, VARIANTE_ID, 7, resultado.getId());
-            verify(traspasoRepository).guardar(any());
-        }
-
-        @Test
-        @DisplayName("traspaso exactamente igual al stock disponible en Bodega es válido (límite)")
-        void traspaso_exactamente_el_stock_disponible() {
-            when(consultarExistencias.consultarStockBodega(TIENDA_ID, VARIANTE_ID))
-                    .thenReturn(Optional.of(5));
-
-            TraspasoInterno resultado = servicio.registrar(TIENDA_ID, VARIANTE_ID, 5, REGISTRADO_POR);
-
-            assertThat(resultado.getCantidad()).isEqualTo(5);
-            verify(ejecutarTraspaso).traspasar(TIENDA_ID, VARIANTE_ID, 5, resultado.getId());
-        }
+        assertThat(resultado.getOrigen()).isEqualTo(OrigenTraspaso.MANUAL);
+        assertThat(resultado.getRegistradoPor()).isEqualTo(OPERARIO.id());
+        assertThat(resultado.getCantidad()).isEqualTo(7);
+        verify(ejecutarTraspaso).traspasar(TIENDA_ID, VARIANTE_ID, 7, resultado.getId());
+        verify(traspasoRepository).guardar(resultado);
     }
 
-    @Nested
-    @DisplayName("stock insuficiente")
-    class StockInsuficiente {
+    @Test
+    @DisplayName("si la Bodega no alcanza, responde conflicto y no guarda el traspaso (D-56)")
+    void bodegaInsuficienteNoGuarda() {
+        when(ejecutarTraspaso.traspasar(eq(TIENDA_ID), eq(VARIANTE_ID), eq(10), any())).thenReturn(false);
 
-        @Test
-        @DisplayName("lanza BodegaInsuficienteException si la cantidad supera el stock de la Bodega (D-56)")
-        void lanza_cuando_bodega_insuficiente() {
-            when(consultarExistencias.consultarStockBodega(TIENDA_ID, VARIANTE_ID))
-                    .thenReturn(Optional.of(3));
+        assertThatThrownBy(() -> servicio.registrar(OPERARIO, TIENDA_ID, VARIANTE_ID, 10))
+                .isInstanceOf(BodegaInsuficienteException.class);
+        verifyNoInteractions(traspasoRepository);
+    }
 
-            assertThatThrownBy(() ->
-                    servicio.registrar(TIENDA_ID, VARIANTE_ID, 10, REGISTRADO_POR))
-                    .isInstanceOf(BodegaInsuficienteException.class)
-                    .hasMessageContaining("disponible=3")
-                    .hasMessageContaining("solicitado=10");
+    @Test
+    @DisplayName("una tienda no asignada se rechaza antes de tocar inventario")
+    void tiendaNoAsignadaSeRechaza() {
+        UUID otraTienda = UUID.randomUUID();
 
-            verifyNoInteractions(ejecutarTraspaso, traspasoRepository);
-        }
+        assertThatThrownBy(() -> servicio.registrar(OPERARIO, otraTienda, VARIANTE_ID, 1))
+                .isInstanceOf(TiendaNoPermitidaException.class);
+        verifyNoInteractions(ejecutarTraspaso, traspasoRepository);
+    }
 
-        @Test
-        @DisplayName("lanza BodegaInsuficienteException si la Bodega no tiene fila (stock=0)")
-        void lanza_cuando_bodega_sin_fila() {
-            when(consultarExistencias.consultarStockBodega(TIENDA_ID, VARIANTE_ID))
-                    .thenReturn(Optional.empty()); // sin fila → 0
+    @Test
+    @DisplayName("una variante inexistente responde 404")
+    void varianteInexistente() {
+        UUID desconocida = UUID.randomUUID();
+        when(variantes.buscar(desconocida)).thenReturn(Optional.empty());
 
-            assertThatThrownBy(() ->
-                    servicio.registrar(TIENDA_ID, VARIANTE_ID, 1, REGISTRADO_POR))
-                    .isInstanceOf(BodegaInsuficienteException.class);
-
-            verifyNoInteractions(ejecutarTraspaso, traspasoRepository);
-        }
+        assertThatThrownBy(() -> servicio.registrar(OPERARIO, TIENDA_ID, desconocida, 1))
+                .isInstanceOf(ReposicionRecursoNoEncontradoException.class);
+        verifyNoInteractions(ejecutarTraspaso, traspasoRepository);
     }
 }

@@ -45,18 +45,24 @@ public class AccesoNodoInventario {
     /**
      * Verifica que el nodo está en el alcance del usuario para consultarlo.
      * El scope {@code inventario:consultar} lo exige el controlador. Un CD no
-     * pertenece a ninguna tienda, así que solo lo ve quien opera todas.
+     * pertenece a ninguna tienda: lo ve quien opera todas o quien administra
+     * inventario de CD (D-31).
      */
     public Nodo exigirVisibilidad(UUID nodoId, UsuarioActual usuario) {
         Nodo nodo = nodoRepositoryPort.buscarPorId(nodoId)
                 .orElseThrow(() -> new NodoNoEncontradoException(nodoId));
         boolean visible = nodo.getTipo() == TipoNodo.CD
-                ? usuario.tieneScope(UsuarioActual.SCOPE_OPERAR_TODAS_LAS_TIENDAS)
+                ? puedeVerCds(usuario)
                 : usuario.puedeOperarEn(nodo.getTiendaId());
         if (!visible) {
             throw new NodoNoEncontradoException(nodoId);
         }
         return nodo;
+    }
+
+    static boolean puedeVerCds(UsuarioActual usuario) {
+        return usuario.tieneScope(UsuarioActual.SCOPE_OPERAR_TODAS_LAS_TIENDAS)
+                || usuario.tieneScope(SCOPE_INVENTARIO_CD);
     }
 
     private static void exigirScope(UsuarioActual usuario, String scope) {

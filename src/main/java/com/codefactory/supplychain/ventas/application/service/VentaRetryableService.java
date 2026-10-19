@@ -8,7 +8,7 @@ import org.springframework.resilience.annotation.Retryable;
 import org.springframework.stereotype.Service;
 
 /**
- * Punto de entrada de HU-31 con reintento por conflicto de versión del inventario (D-24).
+ * Punto de entrada de HU-40 con reintento por conflicto de versión del inventario (D-24).
  * El conflicto aparece al confirmar la transacción de {@link VentaService}, por eso el
  * reintento envuelve a esa transacción y no puede vivir dentro de ella.
  */
@@ -20,7 +20,7 @@ public class VentaRetryableService implements RegistrarVentaUseCase {
 
     @Override
     @Retryable(includes = {OptimisticLockingFailureException.class, DataIntegrityViolationException.class},
-            maxRetries = 3, delay = 10)
+            maxRetries = 3, delay = 10, jitter = 10, multiplier = 2)
     public ResultadoVenta registrar(Comando comando) {
         return ventaService.registrar(comando);
     }

@@ -29,14 +29,6 @@ class EliminarTiendaIT extends AbstractCasoPruebaIT {
                 .when().get("/tiendas/" + tiendaId)
                 .then().statusCode(200)
                 .body("estado", equalTo("INACTIVA"));
-
-        given().header("Authorization", "Bearer " + tokenAdmin)
-                .contentType("application/json")
-                .body("""
-                        {"tiendaId": "%s"}
-                        """.formatted(tiendaId))
-                .when().post("/bodegas-tienda")
-                .then().statusCode(400);
     }
 
     @Test
@@ -51,13 +43,7 @@ class EliminarTiendaIT extends AbstractCasoPruebaIT {
                 .when().post("/tiendas")
                 .then().statusCode(201)
                 .extract().path("id");
-        given().header("Authorization", "Bearer " + tokenAdmin)
-                .contentType("application/json")
-                .body("""
-                        {"tiendaId": "%s"}
-                        """.formatted(tiendaId))
-                .when().post("/bodegas-tienda")
-                .then().statusCode(201);
+        bodegaDeTienda(tokenAdmin, tiendaId);
 
         given().header("Authorization", "Bearer " + tokenAdmin)
                 .when().delete("/tiendas/" + tiendaId);
@@ -80,14 +66,7 @@ class EliminarTiendaIT extends AbstractCasoPruebaIT {
                 .when().post("/tiendas")
                 .then().statusCode(201)
                 .extract().path("id");
-        String bodegaId = given().header("Authorization", "Bearer " + tokenAdmin)
-                .contentType("application/json")
-                .body("""
-                        {"tiendaId": "%s"}
-                        """.formatted(tiendaId))
-                .when().post("/bodegas-tienda")
-                .then().statusCode(201)
-                .extract().path("id");
+        String bodegaId = bodegaDeTienda(tokenAdmin, tiendaId);
 
         given().header("Authorization", "Bearer " + tokenAdmin)
                 .when().delete("/tiendas/" + tiendaId);

@@ -79,6 +79,12 @@ public final class TraspasoInterno {
                 OrigenTraspaso.AUTOMATICO, null, Instant.now());
     }
 
+    /** Traspaso que un operario ejecutó físicamente; la cantidad la decide él (D-56). */
+    public static TraspasoInterno registrarManual(UUID varianteId, UUID tiendaId, int cantidad, UUID registradoPor) {
+        return new TraspasoInterno(UUID.randomUUID(), varianteId, tiendaId, cantidad,
+                OrigenTraspaso.MANUAL, registradoPor, Instant.now());
+    }
+
     /**
      * Reconstruye un traspaso desde la persistencia (todos los campos conocidos).
      */

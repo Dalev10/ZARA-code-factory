@@ -24,7 +24,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.UUID;
 
 /**
- * Administración de umbrales de reposición interna (HU-38, D-57): protegida por el scope
+ * Administración de umbrales de reposición interna (HU-47, D-57): protegida por el scope
  * {@code reposicion:administrar}.
  */
 @RestController

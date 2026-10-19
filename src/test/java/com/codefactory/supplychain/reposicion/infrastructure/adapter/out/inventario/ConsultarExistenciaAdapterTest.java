@@ -110,37 +110,30 @@ class ConsultarExistenciasAdapterTest {
     class VariantesConInventario {
 
         @Test
-        @DisplayName("devuelve los ids de todas las variantes con stock en el almacén")
-        void devuelveListaDeVariantes() {
+        @DisplayName("une sin repetir las variantes del Almacén y de la Bodega")
+        void uneVariantesDeAlmacenYBodega() {
             UUID variante1 = UUID.randomUUID();
             UUID variante2 = UUID.randomUUID();
+            UUID nodoBodega = UUID.randomUUID();
             when(consultarNodos.buscarNodoAlmacen(TIENDA_ID)).thenReturn(Optional.of(NODO_ALMACEN));
+            when(consultarNodos.buscarNodoBodega(TIENDA_ID)).thenReturn(Optional.of(nodoBodega));
             when(consultaInventario.consultarExistenciasPorNodo(NODO_ALMACEN)).thenReturn(List.of(
-                    new StockResumen(NODO_ALMACEN, variante1, 5, 5, 0, 0, 0),
-                    new StockResumen(NODO_ALMACEN, variante2, 2, 2, 0, 0, 0)
-            ));
+                    new StockResumen(NODO_ALMACEN, variante1, 5, 5, 0, 0, 0)));
+            when(consultaInventario.consultarExistenciasPorNodo(nodoBodega)).thenReturn(List.of(
+                    new StockResumen(nodoBodega, variante1, 8, 8, 0, 0, 0),
+                    new StockResumen(nodoBodega, variante2, 2, 2, 0, 0, 0)));
 
-            List<UUID> resultado = adaptador.variantesConInventarioEnAlmacen(TIENDA_ID);
-
-            assertThat(resultado).containsExactlyInAnyOrder(variante1, variante2);
+            assertThat(adaptador.variantesConInventario(TIENDA_ID)).containsExactly(variante1, variante2);
         }
 
         @Test
-        @DisplayName("devuelve lista vacía si la tienda no tiene nodo de almacén")
-        void devuelveVacioSiNoHayNodoAlmacen() {
+        @DisplayName("devuelve lista vacía si la tienda no tiene nodos")
+        void devuelveVacioSinNodos() {
             when(consultarNodos.buscarNodoAlmacen(TIENDA_ID)).thenReturn(Optional.empty());
+            when(consultarNodos.buscarNodoBodega(TIENDA_ID)).thenReturn(Optional.empty());
 
-            assertThat(adaptador.variantesConInventarioEnAlmacen(TIENDA_ID)).isEmpty();
+            assertThat(adaptador.variantesConInventario(TIENDA_ID)).isEmpty();
             verifyNoInteractions(consultaInventario);
-        }
-
-        @Test
-        @DisplayName("devuelve lista vacía si el nodo no tiene ninguna fila de inventario")
-        void devuelveVacioSiAlmacenSinInventario() {
-            when(consultarNodos.buscarNodoAlmacen(TIENDA_ID)).thenReturn(Optional.of(NODO_ALMACEN));
-            when(consultaInventario.consultarExistenciasPorNodo(NODO_ALMACEN)).thenReturn(List.of());
-
-            assertThat(adaptador.variantesConInventarioEnAlmacen(TIENDA_ID)).isEmpty();
         }
     }
 }

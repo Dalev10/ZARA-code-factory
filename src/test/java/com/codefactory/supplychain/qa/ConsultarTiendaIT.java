@@ -24,14 +24,7 @@ class ConsultarTiendaIT extends AbstractCasoPruebaIT {
                     .then().statusCode(201)
                     .extract().path("id");
 
-            bodegaId = given().header("Authorization", "Bearer " + tokenAdmin)
-                    .contentType("application/json")
-                    .body("""
-                            {"tiendaId": "%s"}
-                            """.formatted(tiendaId))
-                    .when().post("/bodegas-tienda")
-                    .then().statusCode(201)
-                    .extract().path("id");
+            bodegaId = bodegaDeTienda(tokenAdmin, tiendaId);
         }
     }
 

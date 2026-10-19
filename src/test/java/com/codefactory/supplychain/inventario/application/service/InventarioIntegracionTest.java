@@ -56,7 +56,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 /**
- * Pruebas de integración de HU-27 contra PostgreSQL real: concurrencia con
+ * Pruebas de integración de HU-36 contra PostgreSQL real: concurrencia con
  * bloqueo optimista (D-24), atomicidad inventario + kardex, publicación de
  * ExistenciasActualizadas y reintento optimista real.
  *
@@ -80,6 +80,9 @@ class InventarioIntegracionTest {
 
     @Autowired
     private JdbcTemplate jdbc;
+
+    @Autowired
+    private com.codefactory.supplychain.inventario.api.ConsultaKardex consultaKardex;
 
     @Autowired
     private TransactionTemplate transactionTemplate;
@@ -123,7 +126,7 @@ class InventarioIntegracionTest {
             for (int i = 0; i < ventas; i++) {
                 resultados.add(pool.submit(() -> {
                     salida.await();
-                    return inventarioUseCase.aplicarVenta(nodoId, varianteId, 1, false);
+                    return inventarioUseCase.aplicarVenta(nodoId, varianteId, 1, false, UUID.randomUUID());
                 }));
             }
             salida.countDown();
@@ -224,7 +227,7 @@ class InventarioIntegracionTest {
         doThrow(new IllegalStateException("Fallo simulado del kardex"))
                 .when(movimientoRepositoryPort).guardar(any(), any(), any());
 
-        assertThatThrownBy(() -> inventarioUseCase.aplicarVenta(nodoId, varianteId, 2, false))
+        assertThatThrownBy(() -> inventarioUseCase.aplicarVenta(nodoId, varianteId, 2, false, UUID.randomUUID()))
                 .isInstanceOf(IllegalStateException.class);
 
         assertThat(aLaMano()).isEqualTo(5);
@@ -243,7 +246,7 @@ class InventarioIntegracionTest {
         inventarioUseCase.cargar(nodoId, varianteId, 4, null);
         registroEventos.limpiar();
 
-        MovimientoInventario movimiento = inventarioUseCase.aplicarVenta(nodoId, varianteId, 6, true);
+        MovimientoInventario movimiento = inventarioUseCase.aplicarVenta(nodoId, varianteId, 6, true, UUID.randomUUID());
 
         assertThat(registroEventos.publicadosEnTransaccion()).containsExactly(true);
         assertThat(registroEventos.confirmados()).singleElement().satisfies(evento -> {
@@ -278,7 +281,7 @@ class InventarioIntegracionTest {
         registroEventos.limpiar();
 
         transactionTemplate.executeWithoutResult(estado -> {
-            inventarioUseCase.aplicarVenta(nodoId, varianteId, 1, false);
+            inventarioUseCase.aplicarVenta(nodoId, varianteId, 1, false, UUID.randomUUID());
             estado.setRollbackOnly();
         });
 
@@ -317,7 +320,7 @@ class InventarioIntegracionTest {
                 return leido;
             }).when(inventarioRepositoryPort).buscarPorNodoYVariante(nodoId, varianteId);
 
-            MovimientoInventario movimiento = inventarioUseCase.aplicarVenta(nodoId, varianteId, 1, false);
+            MovimientoInventario movimiento = inventarioUseCase.aplicarVenta(nodoId, varianteId, 1, false, UUID.randomUUID());
 
             assertThat(movimiento.saldoResultante()).isEqualTo(14);
             assertThat(aLaMano()).isEqualTo(14);
@@ -338,7 +341,7 @@ class InventarioIntegracionTest {
         inventarioUseCase.cargar(nodoId, varianteId, 1, null);
         clearInvocations(inventarioRepositoryPort);
 
-        assertThatThrownBy(() -> inventarioUseCase.aplicarVenta(nodoId, varianteId, 2, false))
+        assertThatThrownBy(() -> inventarioUseCase.aplicarVenta(nodoId, varianteId, 2, false, UUID.randomUUID()))
                 .isInstanceOf(StockInsuficienteException.class);
 
         verify(inventarioRepositoryPort, times(1)).buscarPorNodoYVariante(nodoId, varianteId);
@@ -387,6 +390,52 @@ class InventarioIntegracionTest {
         return jdbc.queryForObject(
                 "SELECT count(*) FROM movimiento_inventario WHERE nodo_id = ? AND variante_id = ? AND tipo = ?",
                 Integer.class, nodoId, varianteId, tipo);
+    }
+
+    @Test
+    @DisplayName("""
+            Escenario: el kardex guarda saldo y referencia, y ConsultaKardex los expone
+              Dada una Bodega con 5 unidades y un Almacén sin fila
+              Cuando se trasladan 3 unidades y luego se vende 1 en el Almacén
+              Entonces el kardex del Almacén muestra saldos 3 y 2 con el traspaso y la venta como referencia
+              Y la Bodega queda en 2""")
+    void elKardexGuardaSaldoYReferenciaDeCadaMovimiento() {
+        UUID bodegaId = UUID.randomUUID();
+        jdbc.update("INSERT INTO nodo (id, tipo, tienda_id) VALUES (?, 'BODEGA_TIENDA', ?)", bodegaId, tiendaId);
+        inventarioUseCase.cargar(bodegaId, varianteId, 5, null);
+        UUID traspasoId = UUID.randomUUID();
+        UUID ventaId = UUID.randomUUID();
+
+        inventarioUseCase.trasladar(bodegaId, nodoId, varianteId, 3, traspasoId);
+        inventarioUseCase.aplicarVenta(nodoId, varianteId, 1, false, ventaId);
+
+        var kardex = consultaKardex.consultarMovimientos(nodoId, varianteId,
+                java.time.Instant.EPOCH, java.time.Instant.now().plusSeconds(60));
+        assertThat(kardex)
+                .extracting(m -> m.tipo(), m -> m.cantidad(), m -> m.saldoResultante())
+                .containsExactly(
+                        org.assertj.core.groups.Tuple.tuple(TipoMovimientoKardex.TRASPASO_ENTRADA, 3, 3),
+                        org.assertj.core.groups.Tuple.tuple(TipoMovimientoKardex.VENTA, -1, 2));
+        assertThat(jdbc.queryForList(
+                "SELECT referencia_id FROM movimiento_inventario WHERE nodo_id = ? ORDER BY ocurrido_en",
+                UUID.class, nodoId)).containsExactly(traspasoId, ventaId);
+        assertThat(jdbc.queryForObject("SELECT a_la_mano FROM inventario WHERE nodo_id = ? AND variante_id = ?",
+                Integer.class, bodegaId, varianteId)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Las filas de una variante en CD se consultan aparte de las de tiendas")
+    void buscaLasFilasDeUnaVarianteEnCds() {
+        UUID cdId = UUID.randomUUID();
+        jdbc.update("INSERT INTO cd (id, nombre, ubicacion) VALUES (?, ?, 'Bogotá')", cdId, "CD " + cdId);
+        UUID nodoCd = UUID.randomUUID();
+        jdbc.update("INSERT INTO nodo (id, tipo, cd_id) VALUES (?, 'CD', ?)", nodoCd, cdId);
+        inventarioUseCase.cargar(nodoCd, varianteId, 7, null);
+        inventarioUseCase.cargar(nodoId, varianteId, 2, null);
+
+        assertThat(inventarioRepositoryPort.buscarPorVarianteEnCds(varianteId))
+                .extracting(i -> i.getNodoId(), i -> i.getALaMano())
+                .containsExactly(org.assertj.core.groups.Tuple.tuple(nodoCd, 7));
     }
 
     private UUID crearAlmacen() {

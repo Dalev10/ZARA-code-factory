@@ -27,10 +27,9 @@ import org.springframework.web.bind.annotation.RestController;
 import java.time.Instant;
 import java.util.UUID;
 
-/** HU-37. Todo el controlador exige el scope inventario:administrar (según la especificación). */
+/** HU-46. Consultar exige ventas:consultar (D-45); reconciliar, inventario:administrar (D-49). */
 @RestController
 @RequestMapping("/api/v1/ventanas-quiebre")
-@PreAuthorize("hasAuthority('inventario:administrar')")
 public class VentanaQuiebreController {
 
     private final VentanaQuiebreUseCase useCase;
@@ -40,6 +39,7 @@ public class VentanaQuiebreController {
     }
 
     @GetMapping
+    @PreAuthorize("hasAuthority('ventas:consultar')")
     public ResponseEntity<Page<VentanaQuiebreResponse>> consultar(
             @AuthenticationPrincipal UsuarioActual usuario,
             @RequestParam(required = false) UUID tiendaId,
@@ -54,12 +54,14 @@ public class VentanaQuiebreController {
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasAuthority('ventas:consultar')")
     public ResponseEntity<VentanaQuiebreResponse> obtener(@AuthenticationPrincipal UsuarioActual usuario,
                                                           @PathVariable UUID id) {
         return ResponseEntity.ok(VentanaQuiebreResponse.desde(useCase.obtener(usuario, id)));
     }
 
     @PostMapping("/reconciliar")
+    @PreAuthorize("hasAuthority('inventario:administrar')")
     public ResponseEntity<ReconciliacionResponse> reconciliar(@AuthenticationPrincipal UsuarioActual usuario,
                                                               @Valid @RequestBody ReconciliarVentanasRequest request) {
         return ResponseEntity.ok(ReconciliacionResponse.desde(useCase.reconciliar(new ReconciliarComando(

@@ -19,7 +19,7 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- * HU-42: prioridad de CDs para una tienda.
+ * HU-51: prioridad de CDs para una tienda.
  * <p>
  * PUT reemplaza la lista completa. El UNIQUE DEFERRABLE de V23 garantiza que
  * reordenar no viola unicidad en pasos intermedios del mismo flush.

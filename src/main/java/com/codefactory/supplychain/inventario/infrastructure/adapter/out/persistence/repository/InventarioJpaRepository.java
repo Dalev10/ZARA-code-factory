@@ -12,8 +12,7 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- * Repositorio JPA TEMPORAL para la proyección de Inventario usada por
- * BodegaTienda.
+ * Repositorio JPA del agregado Inventario.
  *
  * Módulo: inventario — Red de nodos (CD, Tienda/Almacén, Bodega_Tienda) e inventario polimórfico sobre ellos.
  */
@@ -38,4 +37,12 @@ public interface InventarioJpaRepository extends JpaRepository<InventarioJpaEnti
     List<InventarioJpaEntity> buscarPorVarianteEnTiendas(
             @Param("varianteId") UUID varianteId,
             @Param("tiendaIds") Collection<UUID> tiendaIds);
+
+    @Query("""
+            SELECT i FROM InventarioJpaEntity i, NodoEntity n
+             WHERE n.id = i.nodoId
+               AND i.varianteId = :varianteId
+               AND n.tipo = com.codefactory.supplychain.inventario.domain.model.TipoNodo.CD
+             ORDER BY n.id""")
+    List<InventarioJpaEntity> buscarPorVarianteEnCds(@Param("varianteId") UUID varianteId);
 }

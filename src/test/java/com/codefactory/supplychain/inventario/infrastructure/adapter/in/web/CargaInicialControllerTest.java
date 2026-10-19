@@ -33,7 +33,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
- * Criterios de aceptación de HU-28 (carga inicial) de extremo a extremo,
+ * Criterios de aceptación de HU-37 (carga inicial) de extremo a extremo,
  * contra PostgreSQL real: endpoint, autorización por tipo de nodo (D-31),
  * validación del lote (D-30) y solo filas nuevas (D-28).
  */

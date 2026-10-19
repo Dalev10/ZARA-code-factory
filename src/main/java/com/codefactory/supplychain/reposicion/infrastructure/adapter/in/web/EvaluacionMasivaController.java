@@ -15,7 +15,7 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- * HU-41: evaluación masiva de reposición interna.
+ * HU-50: evaluación masiva de reposición interna.
  * Protegida por {@code reposicion:administrar}.
  */
 @RestController

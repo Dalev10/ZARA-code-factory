@@ -31,7 +31,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
- * Criterios de aceptación de HU-30 (consultas de inventario y kardex) de
+ * Criterios de aceptación de HU-39 (consultas de inventario y kardex) de
  * extremo a extremo, contra PostgreSQL real.
  */
 @SpringBootTest
@@ -207,10 +207,11 @@ class ConsultaInventarioControllerTest {
         return sku;
     }
 
+    /** El saldo no se verifica aquí: la consulta HTTP del kardex no lo expone. */
     private void registrarMovimiento(UUID nodoId, String sku, String tipo, int cantidad, Instant ocurridoEn) {
         jdbc.update("""
-                INSERT INTO movimiento_inventario (id, nodo_id, variante_id, tipo, cantidad, ocurrido_en)
-                VALUES (?, ?, ?, ?, ?, ?)""",
+                INSERT INTO movimiento_inventario (id, nodo_id, variante_id, tipo, cantidad, saldo_resultante, ocurrido_en)
+                VALUES (?, ?, ?, ?, ?, 0, ?)""",
                 UUID.randomUUID(), nodoId, varianteId(sku), tipo, cantidad, Timestamp.from(ocurridoEn));
     }
 

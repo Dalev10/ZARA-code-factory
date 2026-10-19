@@ -11,7 +11,7 @@ import java.util.UUID;
  * El orden determina qué CD se intenta abastecer primero; cada tienda tiene su
  * propio rango de órdenes, que deben ser positivos y sin huecos.
  *
- * Módulo: inventario (HU-42).
+ * Módulo: inventario (HU-51).
  */
 @Getter
 @ToString

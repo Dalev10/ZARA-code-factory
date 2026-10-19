@@ -7,7 +7,7 @@ import java.math.BigDecimal;
 import java.util.List;
 import java.util.UUID;
 
-/** HU-31: registrar una venta por lote (una transacción, varias líneas). */
+/** HU-40: registrar una venta por lote (una transacción, varias líneas). */
 public interface RegistrarVentaUseCase {
 
     ResultadoVenta registrar(Comando comando);

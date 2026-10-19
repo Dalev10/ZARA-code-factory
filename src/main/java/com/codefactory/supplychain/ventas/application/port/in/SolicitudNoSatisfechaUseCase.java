@@ -9,7 +9,7 @@ import org.springframework.data.domain.Pageable;
 import java.time.Instant;
 import java.util.UUID;
 
-/** Casos de uso HU-34 (registrar) y HU-35 (consultar y anular) de solicitudes no satisfechas. */
+/** Casos de uso HU-43 (registrar) y HU-44 (consultar y anular) de solicitudes no satisfechas. */
 public interface SolicitudNoSatisfechaUseCase {
 
     /** {@code cantidad} nula equivale a 1. El usuario sale del token, nunca del cuerpo. */
@@ -29,7 +29,6 @@ public interface SolicitudNoSatisfechaUseCase {
      * @throws com.codefactory.supplychain.ventas.domain.exception.AccesoTiendaProhibidoException sin acceso a la tienda
      * @throws com.codefactory.supplychain.ventas.domain.exception.VarianteNoEncontradaException variante fuera de catálogo
      * @throws com.codefactory.supplychain.ventas.domain.exception.ClaveIdempotenciaReutilizadaException clave usada con otros datos
-     * @throws com.codefactory.supplychain.ventas.domain.exception.IntegracionInventarioPendienteException contrato de Inventario sin implementar
      */
     ResultadoRegistro registrar(RegistrarComando comando);
 

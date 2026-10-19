@@ -6,7 +6,7 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- * HU-41: evalúa la reposición interna de una o varias tiendas de golpe.
+ * HU-50: evalúa la reposición interna de una o varias tiendas de golpe.
  * Para cada tienda activa con umbral configurado, aplica la misma lógica que el
  * traspaso automático individual.
  */

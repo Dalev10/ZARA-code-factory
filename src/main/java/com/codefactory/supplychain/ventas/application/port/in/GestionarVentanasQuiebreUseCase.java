@@ -3,14 +3,14 @@ package com.codefactory.supplychain.ventas.application.port.in;
 import java.time.Instant;
 import java.util.UUID;
 
-/** HU-36: apertura y cierre automáticos de ventanas de quiebre. Lo invocan los listeners de eventos. */
+/** HU-45: apertura y cierre automáticos de ventanas de quiebre. Lo invocan los listeners de eventos. */
 public interface GestionarVentanasQuiebreUseCase {
 
     /**
-     * Hecho de Inventario traducido al lenguaje de ventas. {@code tipoMovimiento} es el nombre del tipo
-     * de movimiento de kardex (CARGA_INICIAL, VENTA, AJUSTE, ...).
+     * Hecho de Inventario traducido al lenguaje de ventas. {@code tiendaId} es la tienda dueña del
+     * Almacén; {@code null} si el movimiento no ocurrió en un Almacén (CD o Bodega).
      */
-    record ExistenciasCambiadas(UUID nodoId, UUID varianteId, String tipoMovimiento, boolean forzado,
+    record ExistenciasCambiadas(UUID tiendaId, UUID varianteId, boolean forzado, int aLaManoAnterior,
                                 int aLaMano, Instant ocurridoEn) {
     }
 

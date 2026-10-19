@@ -88,6 +88,18 @@ class ConsultaInventarioServiceTest {
     }
 
     @Test
+    void stockDeVarianteDelOperadorDeCdIncluyeLosCds() {
+        UsuarioActual usuario = new UsuarioActual(
+                UUID.randomUUID(), Set.of("inventario:consultar", "inventario-cd:administrar"), Set.of());
+        when(inventario.buscarPorVarianteEnCds(varianteId)).thenReturn(List.of());
+
+        servicio.stockDeVariante(varianteId, usuario);
+
+        verify(inventario).buscarPorVarianteEnCds(varianteId);
+        verify(inventario, never()).buscarPorVarianteEnTiendas(any(), any());
+    }
+
+    @Test
     void kardexSinFechasNoAcotaElRango() {
         UsuarioActual usuario = new UsuarioActual(
                 UUID.randomUUID(),

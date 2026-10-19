@@ -1,16 +1,19 @@
 package com.codefactory.supplychain.qa;
 
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.equalTo;
 
+/**
+ * HU-10 (Sprint 1) actualizada por D-55 (HU-34, Sprint 2): sin Bodega_Tienda no hay
+ * traspasos, así que no se elimina por API.
+ */
 class EliminarBodegaTiendaIT extends AbstractCasoPruebaIT {
 
     @Test
-    @DisplayName("CP-001 — Eliminar Bodega_Tienda sin inventario asociado")
+    @DisplayName("CP-001 — Eliminar una Bodega_Tienda por API ya no está permitido (405) y se conserva")
     void cpHu10001_eliminarBodegaSinInventarioAsociado() {
         String tokenAdmin = iniciarSesionComoAdmin();
         String tiendaId = given().header("Authorization", "Bearer " + tokenAdmin)
@@ -21,61 +24,11 @@ class EliminarBodegaTiendaIT extends AbstractCasoPruebaIT {
                 .when().post("/tiendas")
                 .then().statusCode(201)
                 .extract().path("id");
-        String bodegaId = given().header("Authorization", "Bearer " + tokenAdmin)
-                .contentType("application/json")
-                .body("""
-                        {"tiendaId": "%s"}
-                        """.formatted(tiendaId))
-                .when().post("/bodegas-tienda")
-                .then().statusCode(201)
-                .extract().path("id");
+        String bodegaId = bodegaDeTienda(tokenAdmin, tiendaId);
 
         given().header("Authorization", "Bearer " + tokenAdmin)
                 .when().delete("/bodegas-tienda/" + bodegaId)
-                .then().statusCode(204);
-
-        given().header("Authorization", "Bearer " + tokenAdmin)
-                .contentType("application/json")
-                .body("""
-                        {"tiendaId": "%s"}
-                        """.formatted(tiendaId))
-                .when().post("/bodegas-tienda")
-                .then().statusCode(201);
-    }
-
-    @Test
-    @Disabled("No ejecutable en Sprint 1: no existe ningún endpoint de inventario para generar la "
-            + "precondición 'Bodega_Tienda con inventario asociado'. El guard de código "
-            + "(BodegaTiendaConInventarioAsociadoException en BodegaTiendaService.eliminar) existe, "
-            + "pero no se puede activar todavía vía API.")
-    @DisplayName("CP-002 — Bloquear eliminación de Bodega_Tienda con inventario asociado")
-    void cpHu10002_bloquearEliminacionConInventarioAsociado() {
-    }
-
-    @Test
-    @DisplayName("CP-003 — Conservar información histórica tras eliminar una Bodega_Tienda [defecto D-03]")
-    void cpHu10003_conservarInformacionHistorica() {
-        String tokenAdmin = iniciarSesionComoAdmin();
-        String tiendaId = given().header("Authorization", "Bearer " + tokenAdmin)
-                .contentType("application/json")
-                .body("""
-                        {"nombre": "%s", "ubicacion": "El Retiro, Antioquia"}
-                        """.formatted(unico("Tienda HU10-003")))
-                .when().post("/tiendas")
-                .then().statusCode(201)
-                .extract().path("id");
-        String bodegaId = given().header("Authorization", "Bearer " + tokenAdmin)
-                .contentType("application/json")
-                .body("""
-                        {"tiendaId": "%s"}
-                        """.formatted(tiendaId))
-                .when().post("/bodegas-tienda")
-                .then().statusCode(201)
-                .extract().path("id");
-
-        given().header("Authorization", "Bearer " + tokenAdmin)
-                .when().delete("/bodegas-tienda/" + bodegaId)
-                .then().statusCode(204);
+                .then().statusCode(405);
 
         given().header("Authorization", "Bearer " + tokenAdmin)
                 .when().get("/bodegas-tienda/" + bodegaId)

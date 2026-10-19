@@ -1,20 +1,18 @@
 package com.codefactory.supplychain.reposicion.domain.exception;
 
+import com.codefactory.supplychain.shared.exception.ConflictoDeEstadoException;
+
 import java.util.UUID;
 
 /**
- * Se lanza cuando el stock de la Bodega_Tienda no alcanza para ejecutar el traspaso
- * manual solicitado.
+ * La Bodega_Tienda no tiene las unidades que pide un traspaso manual: nunca se deja en
+ * negativo (D-56). HTTP 409.
  *
  * Módulo: reposicion — Reposición interna.
  */
-public class BodegaInsuficienteException extends RuntimeException {
+public class BodegaInsuficienteException extends ConflictoDeEstadoException {
 
-    public BodegaInsuficienteException(UUID tiendaId, UUID varianteId,
-                                        int disponible, int solicitado) {
-        super(String.format(
-                "Stock insuficiente en la Bodega de la tienda %s para la variante %s: "
-                + "disponible=%d, solicitado=%d",
-                tiendaId, varianteId, disponible, solicitado));
+    public BodegaInsuficienteException(UUID varianteId, int solicitado) {
+        super("La Bodega no tiene " + solicitado + " unidades de la variante " + varianteId);
     }
 }

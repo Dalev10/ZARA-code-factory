@@ -10,7 +10,7 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- * Consultas de inventario con el alcance del usuario (HU-30, D-33).
+ * Consultas de inventario con el alcance del usuario (HU-39, D-33).
  */
 public interface ConsultarInventarioUseCase {
 

@@ -48,8 +48,8 @@ class EvaluacionMasivaServiceTest {
     @Test
     void evaluarTodasRecorreCadaTiendaActivaYSusVariantes() {
         when(tiendasActivas.listarTiendasActivas()).thenReturn(List.of(TIENDA_A, TIENDA_B));
-        when(variantesPorTienda.variantesConInventarioEnAlmacen(TIENDA_A)).thenReturn(List.of(VARIANTE_1));
-        when(variantesPorTienda.variantesConInventarioEnAlmacen(TIENDA_B)).thenReturn(List.of(VARIANTE_2));
+        when(variantesPorTienda.variantesConInventario(TIENDA_A)).thenReturn(List.of(VARIANTE_1));
+        when(variantesPorTienda.variantesConInventario(TIENDA_B)).thenReturn(List.of(VARIANTE_2));
         TraspasoInterno t1 = traspasoFake(TIENDA_A, VARIANTE_1);
         TraspasoInterno t2 = traspasoFake(TIENDA_B, VARIANTE_2);
         when(traspasoAutomatico.evaluar(TIENDA_A, VARIANTE_1)).thenReturn(Optional.of(t1));
@@ -65,13 +65,13 @@ class EvaluacionMasivaServiceTest {
         when(tiendasActivas.listarTiendasActivas()).thenReturn(List.of());
 
         assertThat(servicio.evaluarTodas()).isEmpty();
-        verify(variantesPorTienda, never()).variantesConInventarioEnAlmacen(any());
+        verify(variantesPorTienda, never()).variantesConInventario(any());
     }
 
     @Test
     void evaluarTiendasSinVariantesNoGeneraTraspasos() {
         when(tiendasActivas.listarTiendasActivas()).thenReturn(List.of(TIENDA_A));
-        when(variantesPorTienda.variantesConInventarioEnAlmacen(TIENDA_A)).thenReturn(List.of());
+        when(variantesPorTienda.variantesConInventario(TIENDA_A)).thenReturn(List.of());
 
         assertThat(servicio.evaluarTodas()).isEmpty();
         verify(traspasoAutomatico, never()).evaluar(any(), any());
@@ -80,7 +80,7 @@ class EvaluacionMasivaServiceTest {
     @Test
     void evaluarTiendasDondeNingunVarianteDisparaDevuelveVacio() {
         when(tiendasActivas.listarTiendasActivas()).thenReturn(List.of(TIENDA_A));
-        when(variantesPorTienda.variantesConInventarioEnAlmacen(TIENDA_A)).thenReturn(List.of(VARIANTE_1, VARIANTE_2));
+        when(variantesPorTienda.variantesConInventario(TIENDA_A)).thenReturn(List.of(VARIANTE_1, VARIANTE_2));
         when(traspasoAutomatico.evaluar(any(), any())).thenReturn(Optional.empty());
 
         assertThat(servicio.evaluarTodas()).isEmpty();
@@ -88,7 +88,7 @@ class EvaluacionMasivaServiceTest {
 
     @Test
     void evaluarTiendaEspecificaIgnoraLasOtras() {
-        when(variantesPorTienda.variantesConInventarioEnAlmacen(TIENDA_A)).thenReturn(List.of(VARIANTE_1));
+        when(variantesPorTienda.variantesConInventario(TIENDA_A)).thenReturn(List.of(VARIANTE_1));
         TraspasoInterno t1 = traspasoFake(TIENDA_A, VARIANTE_1);
         when(traspasoAutomatico.evaluar(TIENDA_A, VARIANTE_1)).thenReturn(Optional.of(t1));
 
@@ -101,11 +101,22 @@ class EvaluacionMasivaServiceTest {
     @Test
     void evaluarTodasSoloAcumulaLosTraspasosQueSeEjecutaron() {
         when(tiendasActivas.listarTiendasActivas()).thenReturn(List.of(TIENDA_A));
-        when(variantesPorTienda.variantesConInventarioEnAlmacen(TIENDA_A)).thenReturn(List.of(VARIANTE_1, VARIANTE_2));
+        when(variantesPorTienda.variantesConInventario(TIENDA_A)).thenReturn(List.of(VARIANTE_1, VARIANTE_2));
         TraspasoInterno t1 = traspasoFake(TIENDA_A, VARIANTE_1);
         when(traspasoAutomatico.evaluar(TIENDA_A, VARIANTE_1)).thenReturn(Optional.of(t1));
         when(traspasoAutomatico.evaluar(TIENDA_A, VARIANTE_2)).thenReturn(Optional.empty());
 
         assertThat(servicio.evaluarTodas()).containsExactly(t1);
+    }
+
+    @Test
+    void unaVarianteQueFallaNoDetieneLasDemas() {
+        when(tiendasActivas.listarTiendasActivas()).thenReturn(List.of(TIENDA_A));
+        when(variantesPorTienda.variantesConInventario(TIENDA_A)).thenReturn(List.of(VARIANTE_1, VARIANTE_2));
+        TraspasoInterno t2 = traspasoFake(TIENDA_A, VARIANTE_2);
+        when(traspasoAutomatico.evaluar(TIENDA_A, VARIANTE_1)).thenThrow(new IllegalStateException("falla"));
+        when(traspasoAutomatico.evaluar(TIENDA_A, VARIANTE_2)).thenReturn(Optional.of(t2));
+
+        assertThat(servicio.evaluarTodas()).containsExactly(t2);
     }
 }

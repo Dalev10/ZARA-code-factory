@@ -4,16 +4,12 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-/** Stock del Almacén (HU-34). Respaldado por inventario.api.ConsultaInventario. */
+/** Stock del Almacén (HU-43, HU-46). Respaldado por inventario.api.ConsultaInventario. */
 public interface StockAlmacenPort {
 
-    /**
-     * {@code a la mano} del Almacén. Vacío si la variante no tiene carga inicial (no equivale a cero).
-     *
-     * @throws com.codefactory.supplychain.ventas.domain.exception.IntegracionInventarioPendienteException si Inventario no implementa el contrato
-     */
+    /** {@code a la mano} del Almacén. Vacío si la variante nunca tuvo fila en él (su stock es 0, D-25). */
     Optional<Integer> aLaMano(UUID almacenId, UUID varianteId);
 
-    /** Variantes con existencias cargadas en el Almacén. Misma excepción de integración pendiente. */
+    /** Variantes con fila en el Almacén, incluidas las de saldo cero o negativo. */
     List<UUID> variantesConExistencias(UUID almacenId);
 }

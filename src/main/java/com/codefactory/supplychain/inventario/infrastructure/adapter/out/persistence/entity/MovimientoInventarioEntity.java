@@ -54,6 +54,9 @@ public class MovimientoInventarioEntity {
     @Column(name = "usuario_id")
     private UUID usuarioId;
 
+    @Column(name = "saldo_resultante", nullable = false)
+    private int saldoResultante;
+
     @Column(name = "forzado", nullable = false)
     private boolean forzado;
 

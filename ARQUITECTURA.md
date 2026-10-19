@@ -93,9 +93,8 @@ un hecho, evento*.
   reacciona tiene el listener en `infrastructure/adapter/in/eventos/`, con la forma
   `@TransactionalEventListener(phase = AFTER_COMMIT)` + `@Transactional(propagation =
   REQUIRES_NEW)` (ver README), y el listener solo invoca un caso de uso del propio módulo.
-  Si una transacción consumidora necesita una conexión adicional mientras conserva la
-  conexión de origen, el despacho puede ser asíncrono para evitar agotar el pool; los
-  efectos derivados son entonces eventuales y requieren una estrategia de reconciliación.
+  Es síncrono (D-16): corre en el mismo hilo, así que sus efectos ya se ven cuando el
+  cliente recibe la respuesta (D-18). No se usa `@Async`.
 
 ### 4.4 Lo que nunca se hace
 
@@ -163,13 +162,15 @@ com.codefactory.supplychain.inventario.application.port.in.TiendaUseCase within 
 | HU | Contrato | Vive en | Lo consume | Tipo |
 |---|---|---|---|---|
 | HU-32 | `ConsultaTiendas`, `TiendaResumen` | `inventario/api` | `identity` | Síncrono (creado) |
-| HU-31/32 | `ConsultaTiendas`, `ConsultaNodos`, `InventarioMovimientos` | `inventario/api` | `ventas` | Síncrono |
+| HU-36 | `ConsultaNodos`: Almacén y Bodega de una tienda | `inventario/api` | `ventas` (HU-40/41/43/46), `reposicion` (HU-48/49) | Síncrono |
 | HU-36 | Movimientos que otros disparan: descontar por venta, reponer por anulación, trasladar | `inventario/api` | `ventas` (HU-40/41), `reposicion` (HU-48) | Síncrono |
 | HU-36 | Consulta de stock de un nodo y una variante | `inventario/api` | `ventas` (HU-43, `stock_sistema`), `reposicion` (HU-48) | Síncrono |
 | HU-36 | Evento `ExistenciasActualizadas` | `inventario/api` | `ventas` (HU-45), `reposicion` (HU-48) | Evento |
 | HU-37 | Consulta de variantes: por SKU, existencia y categoría | `catalogo/api` | `inventario` (HU-37), `ventas` (HU-40/43), `reposicion` (HU-47) | Síncrono |
 | HU-40/43 | Reutilizan `ConsultaTiendas` (tienda activa) | `inventario/api` | `ventas` | Síncrono (no se crea nada nuevo) |
 | HU-45 | Evento `TiendaDesactivada` | `inventario/api` | `ventas` | Evento |
+| HU-46 | `ConsultaKardex`: movimientos con saldo resultante | `inventario/api` | `ventas` (reconciliación) | Síncrono |
+| HU-50 | `ConsultaTiendas.listarActivas` | `inventario/api` | `reposicion` (evaluación masiva) | Síncrono |
 
 Las operaciones que solo usa el propio módulo (por ejemplo, la carga inicial y los ajustes
 de inventario) **no** van en `api/`. Los nombres exactos se definen en cada HU; la tabla

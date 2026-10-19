@@ -7,7 +7,7 @@ import java.util.UUID;
 
 /**
  * Periodo en que una variante estuvo sin existencias (stock &lt;= 0) en el Almacén de una tienda
- * (HU-36/37). Abierta mientras {@code fechaFin} sea nula; {@code fechaFin} y {@code motivoCierre}
+ * (HU-45/37). Abierta mientras {@code fechaFin} sea nula; {@code fechaFin} y {@code motivoCierre}
  * van siempre juntos (CHECK de V20).
  */
 public class VentanaQuiebre {

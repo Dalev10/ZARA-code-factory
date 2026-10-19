@@ -31,7 +31,7 @@ import java.util.Set;
 import java.util.UUID;
 
 /**
- * Lógica transaccional de HU-31. Todo el lote ocurre en una transacción (D-36): si una línea
+ * Lógica transaccional de HU-40. Todo el lote ocurre en una transacción (D-36): si una línea
  * falla, no queda ninguna venta ni descuento. El reintento optimista vive en
  * {@link VentaRetryableService}, fuera de esta transacción.
  */

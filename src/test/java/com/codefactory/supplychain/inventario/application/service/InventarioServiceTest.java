@@ -6,7 +6,7 @@ import com.codefactory.supplychain.inventario.application.port.out.InventarioRep
 import com.codefactory.supplychain.inventario.application.port.out.MovimientoInventarioRepositoryPort;
 import com.codefactory.supplychain.inventario.application.port.out.NodoRepositoryPort;
 import com.codefactory.supplychain.inventario.domain.exception.NodoNoEncontradoException;
-import com.codefactory.supplychain.inventario.domain.exception.VarianteNoCargadaException;
+import com.codefactory.supplychain.inventario.domain.exception.StockInsuficienteException;
 import com.codefactory.supplychain.inventario.domain.exception.InventarioYaCargadoException;
 import com.codefactory.supplychain.inventario.domain.model.Inventario;
 import com.codefactory.supplychain.inventario.domain.model.MotivoAjuste;
@@ -53,31 +53,92 @@ class InventarioServiceTest {
         servicio = new InventarioService(repository, movimientoRepository, nodoRepository, eventos);
     }
 
-    @Test
-    void rechazaOperarUnaVarianteNoCargada() {
-        UUID nodoId = UUID.randomUUID();
-        UUID varianteId = UUID.randomUUID();
-        when(repository.buscarPorNodoYVariante(nodoId, varianteId)).thenReturn(Optional.empty());
-
-        assertThatThrownBy(() -> servicio.aplicarVenta(nodoId, varianteId, 1, false))
-                .isInstanceOf(VarianteNoCargadaException.class);
-    }
-
     /**
-     * Escenario: variante sin carga no se puede vender ni forzando
+     * Escenario: sin fila, el stock es 0 (D-25)
      *   Dado un nodo sin fila para la variante X
-     *   Cuando se intenta descontar X con forzado = true
-     *   Entonces se rechaza con error de carga requerida
+     *   Cuando se descuenta X sin forzar
+     *   Entonces se rechaza por stock insuficiente
      *   Y no se crea ninguna fila
      */
     @Test
-    void rechazaVentaForzadaDeUnaVarianteNoCargadaSinCrearFila() {
+    void ventaSinFilaYSinForzarSeRechazaPorStockInsuficiente() {
         UUID nodoId = UUID.randomUUID();
         UUID varianteId = UUID.randomUUID();
         when(repository.buscarPorNodoYVariante(nodoId, varianteId)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> servicio.aplicarVenta(nodoId, varianteId, 1, true))
-                .isInstanceOf(VarianteNoCargadaException.class);
+        assertThatThrownBy(() -> servicio.aplicarVenta(nodoId, varianteId, 1, false, UUID.randomUUID()))
+                .isInstanceOf(StockInsuficienteException.class);
+        verify(repository, never()).guardar(any());
+        verifyNoInteractions(movimientoRepository, eventos);
+    }
+
+    /**
+     * Escenario: venta forzada de una variante sin fila (D-25, D-35)
+     *   Dado un nodo sin fila para la variante X
+     *   Cuando se descuenta 1 unidad de X con forzado = true
+     *   Entonces se crea la fila con a la mano -1
+     *   Y el kardex registra la venta con su referencia
+     */
+    @Test
+    void ventaForzadaSinFilaCreaLaFilaEnNegativo() {
+        UUID nodoId = UUID.randomUUID();
+        UUID varianteId = UUID.randomUUID();
+        UUID ventaId = UUID.randomUUID();
+        when(repository.buscarPorNodoYVariante(nodoId, varianteId)).thenReturn(Optional.empty());
+
+        MovimientoInventario movimiento = servicio.aplicarVenta(nodoId, varianteId, 1, true, ventaId);
+
+        assertThat(movimiento.saldoResultante()).isEqualTo(-1);
+        assertThat(movimiento.referenciaId()).isEqualTo(ventaId);
+        verify(repository).guardar(org.mockito.ArgumentMatchers.argThat(inventario ->
+                inventario.getVarianteId().equals(varianteId) && inventario.getALaMano() == -1));
+        var evento = forClass(ExistenciasActualizadas.class);
+        verify(eventos).publishEvent(evento.capture());
+        assertThat(evento.getValue().referenciaId()).isEqualTo(ventaId);
+        assertThat(evento.getValue().aLaManoAnterior()).isZero();
+    }
+
+    /**
+     * Escenario: traspaso Bodega → Almacén
+     *   Dada una Bodega con 5 unidades y un Almacén sin fila
+     *   Cuando se trasladan 3 unidades
+     *   Entonces la Bodega queda en 2 y el Almacén en 3
+     *   Y cada nodo registra su movimiento con el traspaso como referencia
+     */
+    @Test
+    void trasladaEntreNodosYCreaLaFilaDestino() {
+        UUID bodegaId = UUID.randomUUID();
+        UUID almacenId = UUID.randomUUID();
+        UUID varianteId = UUID.randomUUID();
+        UUID traspasoId = UUID.randomUUID();
+        Inventario bodega = Inventario.crear(bodegaId, varianteId);
+        bodega.cargar(5, null);
+        when(repository.buscarPorNodoYVariante(bodegaId, varianteId)).thenReturn(Optional.of(bodega));
+        when(repository.buscarPorNodoYVariante(almacenId, varianteId)).thenReturn(Optional.empty());
+
+        servicio.trasladar(bodegaId, almacenId, varianteId, 3, traspasoId);
+
+        assertThat(bodega.getALaMano()).isEqualTo(2);
+        var movimientos = forClass(MovimientoInventario.class);
+        verify(movimientoRepository).guardar(eq(bodegaId), eq(varianteId), movimientos.capture());
+        verify(movimientoRepository).guardar(eq(almacenId), eq(varianteId), movimientos.capture());
+        assertThat(movimientos.getAllValues())
+                .extracting(MovimientoInventario::tipo, MovimientoInventario::cantidad,
+                        MovimientoInventario::saldoResultante, MovimientoInventario::referenciaId)
+                .containsExactly(
+                        org.assertj.core.groups.Tuple.tuple(TipoMovimientoInventario.TRASPASO_SALIDA, -3, 2, traspasoId),
+                        org.assertj.core.groups.Tuple.tuple(TipoMovimientoInventario.TRASPASO_ENTRADA, 3, 3, traspasoId));
+        verify(eventos, org.mockito.Mockito.times(2)).publishEvent(any(ExistenciasActualizadas.class));
+    }
+
+    @Test
+    void traspasoNoDejaElOrigenEnNegativo() {
+        UUID bodegaId = UUID.randomUUID();
+        UUID varianteId = UUID.randomUUID();
+        when(repository.buscarPorNodoYVariante(bodegaId, varianteId)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> servicio.trasladar(bodegaId, UUID.randomUUID(), varianteId, 1, UUID.randomUUID()))
+                .isInstanceOf(StockInsuficienteException.class);
         verify(repository, never()).guardar(any());
         verifyNoInteractions(movimientoRepository, eventos);
     }
@@ -90,7 +151,7 @@ class InventarioServiceTest {
         inventario.cargar(5, null);
         when(repository.buscarPorNodoYVariante(nodoId, varianteId)).thenReturn(Optional.of(inventario));
 
-        MovimientoInventario movimiento = servicio.aplicarVenta(nodoId, varianteId, 2, false);
+        MovimientoInventario movimiento = servicio.aplicarVenta(nodoId, varianteId, 2, false, UUID.randomUUID());
 
         assertThat(movimiento.tipo()).isEqualTo(TipoMovimientoInventario.VENTA);
         assertThat(inventario.getALaMano()).isEqualTo(3);
@@ -120,7 +181,7 @@ class InventarioServiceTest {
         inventario.cargar(1, null);
         when(repository.buscarPorNodoYVariante(nodoId, varianteId)).thenReturn(Optional.of(inventario));
 
-        MovimientoInventario movimiento = servicio.aplicarVenta(nodoId, varianteId, 3, true);
+        MovimientoInventario movimiento = servicio.aplicarVenta(nodoId, varianteId, 3, true, UUID.randomUUID());
 
         assertThat(movimiento.forzado()).isTrue();
         verify(movimientoRepository).guardar(eq(nodoId), eq(varianteId), same(movimiento));
@@ -175,20 +236,6 @@ class InventarioServiceTest {
                 inventario.getALaMano() == 0));
         verify(movimientoRepository).guardar(eq(nodoId), eq(varianteId), same(movimiento));
         verify(eventos).publishEvent(any(ExistenciasActualizadas.class));
-    }
-
-    @Test
-    void aplicaReposicionSoloSobreUnaFilaExistente() {
-        UUID nodoId = UUID.randomUUID();
-        UUID varianteId = UUID.randomUUID();
-        Inventario inventario = Inventario.crear(nodoId, varianteId);
-        when(repository.buscarPorNodoYVariante(nodoId, varianteId)).thenReturn(Optional.of(inventario));
-
-        MovimientoInventario movimiento = servicio.reponer(nodoId, varianteId, 4);
-
-        assertThat(movimiento.tipo()).isEqualTo(TipoMovimientoInventario.REPOSICION);
-        verify(repository).guardar(same(inventario));
-        verify(movimientoRepository).guardar(eq(nodoId), eq(varianteId), same(movimiento));
     }
 
     @Test
