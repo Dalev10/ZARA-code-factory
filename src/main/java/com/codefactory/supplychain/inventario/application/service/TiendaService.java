@@ -2,6 +2,7 @@ package com.codefactory.supplychain.inventario.application.service;
 
 import com.codefactory.supplychain.inventario.api.ConsultaNodos;
 import com.codefactory.supplychain.inventario.api.ConsultaTiendas;
+import com.codefactory.supplychain.inventario.api.TiendaDesactivada;
 import com.codefactory.supplychain.inventario.api.TiendaResumen;
 import com.codefactory.supplychain.inventario.application.port.in.TiendaUseCase;
 import com.codefactory.supplychain.inventario.application.port.out.NodoRepositoryPort;
@@ -12,6 +13,7 @@ import com.codefactory.supplychain.inventario.domain.model.Nodo;
 import com.codefactory.supplychain.inventario.domain.model.TipoNodo;
 import com.codefactory.supplychain.inventario.domain.model.Tienda;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -37,6 +39,7 @@ public class TiendaService implements TiendaUseCase, ConsultaTiendas, ConsultaNo
 
     private final TiendaRepositoryPort tiendaRepositoryPort;
     private final NodoRepositoryPort nodoRepositoryPort;
+    private final ApplicationEventPublisher eventos;
 
     @Override
     @Transactional
@@ -69,10 +72,17 @@ public class TiendaService implements TiendaUseCase, ConsultaTiendas, ConsultaNo
         return tiendaRepositoryPort.guardar(tienda.actualizar(nombre, ubicacion));
     }
 
+    /** Una tienda ya inactiva no vuelve a publicar el evento. */
     @Override
+    @Transactional
     public void desactivar(UUID id) {
         Tienda tienda = obtenerPorId(id);
-        tiendaRepositoryPort.guardar(tienda.desactivar());
+        if (!tienda.estaActiva()) {
+            return;
+        }
+        Tienda desactivada = tienda.desactivar();
+        tiendaRepositoryPort.guardar(desactivada);
+        eventos.publishEvent(new TiendaDesactivada(id, desactivada.getActualizadoEn()));
     }
 
     @Override
