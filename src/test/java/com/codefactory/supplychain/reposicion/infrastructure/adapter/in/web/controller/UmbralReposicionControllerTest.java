@@ -1,21 +1,13 @@
 package com.codefactory.supplychain.reposicion.infrastructure.adapter.in.web.controller;
 
-import com.codefactory.supplychain.identity.application.port.out.PasswordHasherPort;
-import com.codefactory.supplychain.identity.application.port.out.RolRepositoryPort;
-import com.codefactory.supplychain.identity.application.port.out.UsuarioRepositoryPort;
-import com.codefactory.supplychain.identity.domain.model.Email;
-import com.codefactory.supplychain.identity.domain.model.EstadoUsuario;
-import com.codefactory.supplychain.identity.domain.model.Password;
-import com.codefactory.supplychain.identity.domain.model.Usuario;
-import com.codefactory.supplychain.identity.infrastructure.adapter.out.persistence.entity.UsuarioRolEntity;
-import com.codefactory.supplychain.identity.infrastructure.adapter.out.persistence.entity.UsuarioRolId;
-import com.codefactory.supplychain.identity.infrastructure.adapter.out.persistence.repository.UsuarioRolJpaRepository;
+import com.codefactory.supplychain.soporte.UsuariosDePrueba;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
@@ -25,7 +17,7 @@ import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
-import java.time.Instant;
+import java.util.Set;
 import java.util.UUID;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
@@ -44,6 +36,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
 @Testcontainers
+@Import(UsuariosDePrueba.class)
 class UmbralReposicionControllerTest {
 
     private static final String RUTA = "/api/v1/umbrales-reposicion";
@@ -58,47 +51,20 @@ class UmbralReposicionControllerTest {
     private MockMvc mockMvc;
 
     @Autowired
-    private UsuarioRepositoryPort usuarioRepositoryPort;
+    private UsuariosDePrueba usuarios;
 
-    @Autowired
-    private PasswordHasherPort passwordHasherPort;
 
-    @Autowired
-    private RolRepositoryPort rolRepositoryPort;
 
-    @Autowired
-    private UsuarioRolJpaRepository usuarioRolJpaRepository;
+
 
     // ---- helpers -------------------------------------------------------------
 
-    private String obtenerAccessToken(String email, String password) throws Exception {
-        MvcResult login = mockMvc.perform(post("/api/v1/auth/login")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("""
-                                {"email": "%s", "password": "%s"}
-                                """.formatted(email, password)))
-                .andExpect(status().isOk())
-                .andReturn();
-        return json.readTree(login.getResponse().getContentAsString()).get("accessToken").asText();
+    private String loguearComoAdmin(String email) {
+        return usuarios.conRol("ADMIN").token();
     }
 
-    private Usuario crearUsuario(String email) {
-        Usuario usuario = Usuario.reconstruir(UUID.randomUUID(), Email.de(email), "Usuario de Prueba",
-                passwordHasherPort.hashear(Password.de("contraseñaSegura123")), EstadoUsuario.ACTIVO, 0, null,
-                false, null, null, Instant.now(), Instant.now());
-        return usuarioRepositoryPort.guardar(usuario);
-    }
-
-    private String loguearComoAdmin(String email) throws Exception {
-        Usuario usuario = crearUsuario(email);
-        UUID rolAdminId = rolRepositoryPort.buscarPorNombre("ADMIN").orElseThrow().getId();
-        usuarioRolJpaRepository.save(new UsuarioRolEntity(new UsuarioRolId(usuario.getId(), rolAdminId)));
-        return obtenerAccessToken(email, "contraseñaSegura123");
-    }
-
-    private String loguearComoUsuarioComun(String email) throws Exception {
-        crearUsuario(email);
-        return obtenerAccessToken(email, "contraseñaSegura123");
+    private String loguearComoUsuarioComun(String email) {
+        return usuarios.conScopes(Set.of()).token();
     }
 
     private String crearYObtenerId(String ruta, String token, String cuerpo) throws Exception {

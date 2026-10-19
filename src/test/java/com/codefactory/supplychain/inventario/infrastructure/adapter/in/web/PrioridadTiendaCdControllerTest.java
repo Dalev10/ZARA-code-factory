@@ -1,16 +1,7 @@
 package com.codefactory.supplychain.inventario.infrastructure.adapter.in.web;
 
 import com.codefactory.supplychain.identity.application.port.out.PasswordComprometidaPort;
-import com.codefactory.supplychain.identity.application.port.out.PasswordHasherPort;
-import com.codefactory.supplychain.identity.application.port.out.RolRepositoryPort;
-import com.codefactory.supplychain.identity.application.port.out.UsuarioRepositoryPort;
-import com.codefactory.supplychain.identity.domain.model.Email;
-import com.codefactory.supplychain.identity.domain.model.EstadoUsuario;
-import com.codefactory.supplychain.identity.domain.model.Password;
-import com.codefactory.supplychain.identity.domain.model.Usuario;
-import com.codefactory.supplychain.identity.infrastructure.adapter.out.persistence.entity.UsuarioRolEntity;
-import com.codefactory.supplychain.identity.infrastructure.adapter.out.persistence.entity.UsuarioRolId;
-import com.codefactory.supplychain.identity.infrastructure.adapter.out.persistence.repository.UsuarioRolJpaRepository;
+import com.codefactory.supplychain.soporte.UsuariosDePrueba;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,6 +10,7 @@ import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.Primary;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -29,13 +21,13 @@ import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
-import java.time.Instant;
+import java.util.Set;
 import java.util.UUID;
 
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -47,6 +39,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
 @Testcontainers
+@Import(UsuariosDePrueba.class)
 class PrioridadTiendaCdControllerTest {
 
     @Container
@@ -54,10 +47,7 @@ class PrioridadTiendaCdControllerTest {
     static final PostgreSQLContainer<?> POSTGRES = new PostgreSQLContainer<>("postgres:16-alpine");
 
     @Autowired private MockMvc mockMvc;
-    @Autowired private UsuarioRepositoryPort usuarioRepositoryPort;
-    @Autowired private PasswordHasherPort passwordHasherPort;
-    @Autowired private RolRepositoryPort rolRepositoryPort;
-    @Autowired private UsuarioRolJpaRepository usuarioRolJpaRepository;
+    @Autowired private UsuariosDePrueba usuarios;
 
     private final ObjectMapper json = new ObjectMapper();
 
@@ -69,34 +59,12 @@ class PrioridadTiendaCdControllerTest {
 
     // ---- helpers ------------------------------------------------------------
 
-    private String obtenerToken(String email, String password) throws Exception {
-        MvcResult r = mockMvc.perform(post("/api/v1/auth/login")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("""
-                                {"email":"%s","password":"%s"}
-                                """.formatted(email, password)))
-                .andExpect(status().isOk()).andReturn();
-        return json.readTree(r.getResponse().getContentAsString()).get("accessToken").asText();
+    private String loguearComoAdmin(String email) {
+        return usuarios.conRol("ADMIN").token();
     }
 
-    private Usuario crearUsuario(String email) {
-        return usuarioRepositoryPort.guardar(Usuario.reconstruir(
-                UUID.randomUUID(), Email.de(email), "Test",
-                passwordHasherPort.hashear(Password.de("contraseñaSegura123")),
-                EstadoUsuario.ACTIVO, 0, null, false, null, null,
-                Instant.now(), Instant.now()));
-    }
-
-    private String loguearComoAdmin(String email) throws Exception {
-        Usuario u = crearUsuario(email);
-        UUID rolAdmin = rolRepositoryPort.buscarPorNombre("ADMIN").orElseThrow().getId();
-        usuarioRolJpaRepository.save(new UsuarioRolEntity(new UsuarioRolId(u.getId(), rolAdmin)));
-        return obtenerToken(email, "contraseñaSegura123");
-    }
-
-    private String loguearComoUsuarioComun(String email) throws Exception {
-        crearUsuario(email);
-        return obtenerToken(email, "contraseñaSegura123");
+    private String loguearComoUsuarioComun(String email) {
+        return usuarios.conScopes(Set.of()).token();
     }
 
     private String crearTienda(String token, String nombre) throws Exception {
