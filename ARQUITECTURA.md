@@ -162,13 +162,15 @@ com.codefactory.supplychain.inventario.application.port.in.TiendaUseCase within 
 | HU | Contrato | Vive en | Lo consume | Tipo |
 |---|---|---|---|---|
 | HU-32 | `ConsultaTiendas`, `TiendaResumen` | `inventario/api` | `identity` | Síncrono (creado) |
-| HU-31/32 | `ConsultaTiendas`, `ConsultaNodos`, `InventarioMovimientos` | `inventario/api` | `ventas` | Síncrono |
+| HU-36 | `ConsultaNodos`: Almacén y Bodega de una tienda | `inventario/api` | `ventas` (HU-40/41/43/46), `reposicion` (HU-48/49) | Síncrono |
 | HU-36 | Movimientos que otros disparan: descontar por venta, reponer por anulación, trasladar | `inventario/api` | `ventas` (HU-40/41), `reposicion` (HU-48) | Síncrono |
 | HU-36 | Consulta de stock de un nodo y una variante | `inventario/api` | `ventas` (HU-43, `stock_sistema`), `reposicion` (HU-48) | Síncrono |
 | HU-36 | Evento `ExistenciasActualizadas` | `inventario/api` | `ventas` (HU-45), `reposicion` (HU-48) | Evento |
 | HU-37 | Consulta de variantes: por SKU, existencia y categoría | `catalogo/api` | `inventario` (HU-37), `ventas` (HU-40/43), `reposicion` (HU-47) | Síncrono |
 | HU-40/43 | Reutilizan `ConsultaTiendas` (tienda activa) | `inventario/api` | `ventas` | Síncrono (no se crea nada nuevo) |
 | HU-45 | Evento `TiendaDesactivada` | `inventario/api` | `ventas` | Evento |
+| HU-46 | `ConsultaKardex`: movimientos con saldo resultante | `inventario/api` | `ventas` (reconciliación) | Síncrono |
+| HU-50 | `ConsultaTiendas.listarActivas` | `inventario/api` | `reposicion` (evaluación masiva) | Síncrono |
 
 Las operaciones que solo usa el propio módulo (por ejemplo, la carga inicial y los ajustes
 de inventario) **no** van en `api/`. Los nombres exactos se definen en cada HU; la tabla

@@ -9,7 +9,7 @@ import org.springframework.data.domain.Pageable;
 import java.time.Instant;
 import java.util.UUID;
 
-/** HU-33: historial de ventas limitado al alcance de tiendas del usuario. */
+/** HU-42: historial de ventas limitado al alcance de tiendas del usuario. */
 public interface ConsultarVentasUseCase {
 
     record Filtros(UUID tiendaId, UUID varianteId, UUID transaccionId, EstadoVenta estado,

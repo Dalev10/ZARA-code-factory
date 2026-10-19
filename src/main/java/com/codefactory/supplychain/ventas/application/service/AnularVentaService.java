@@ -22,7 +22,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-/** HU-32: anulación transaccional, con restitución al Almacén y auditoría del anulador. */
+/** HU-41: anulación transaccional, con restitución al Almacén y auditoría del anulador. */
 @Service
 @RequiredArgsConstructor
 public class AnularVentaService {

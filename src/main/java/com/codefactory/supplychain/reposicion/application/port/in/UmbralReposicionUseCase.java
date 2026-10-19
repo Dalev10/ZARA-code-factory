@@ -7,7 +7,7 @@ import org.springframework.data.domain.Pageable;
 import java.util.UUID;
 
 /**
- * Casos de uso de administración de umbrales de reposición interna (HU-38, D-57).
+ * Casos de uso de administración de umbrales de reposición interna (HU-47, D-57).
  */
 public interface UmbralReposicionUseCase {
 

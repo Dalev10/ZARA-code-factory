@@ -15,7 +15,7 @@ import java.util.UUID;
  * <ul>
  *   <li>reposicion: {@link #buscar(UUID)}, para conocer la categoría de una variante.</li>
  *   <li>ventas: {@link #buscarPorSku(String)}, para resolver el SKU de una venta.</li>
- *   <li>inventario: {@link #buscarPorSkus(Set)}, para resolver los SKU de la carga inicial (HU-28).</li>
+ *   <li>inventario: {@link #buscarPorSkus(Set)}, para resolver los SKU de la carga inicial (HU-37).</li>
  * </ul>
  */
 public interface ConsultaVariantes {

@@ -56,7 +56,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 /**
- * Pruebas de integración de HU-27 contra PostgreSQL real: concurrencia con
+ * Pruebas de integración de HU-36 contra PostgreSQL real: concurrencia con
  * bloqueo optimista (D-24), atomicidad inventario + kardex, publicación de
  * ExistenciasActualizadas y reintento optimista real.
  *

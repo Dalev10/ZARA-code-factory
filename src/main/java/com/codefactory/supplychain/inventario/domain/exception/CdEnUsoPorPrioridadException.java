@@ -7,7 +7,7 @@ import java.util.UUID;
 /**
  * Se intenta eliminar un CD que tiene prioridades asignadas a una o más tiendas.
  *
- * Módulo: inventario (HU-42).
+ * Módulo: inventario (HU-51).
  */
 public class CdEnUsoPorPrioridadException extends RecursoEnUsoException {
 

@@ -12,7 +12,7 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- * Gestión de prioridades Tienda-CD (HU-42).
+ * Gestión de prioridades Tienda-CD (HU-51).
  * <p>
  * El reemplazo borra todas las entradas de la tienda e inserta la nueva lista en la
  * misma transacción. El DEFERRABLE de V23 garantiza que Postgres solo verifica el

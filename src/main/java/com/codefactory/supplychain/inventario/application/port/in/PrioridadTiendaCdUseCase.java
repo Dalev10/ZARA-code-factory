@@ -6,7 +6,7 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- * HU-42: gestión de la lista de prioridad de CDs por tienda.
+ * HU-51: gestión de la lista de prioridad de CDs por tienda.
  * <p>
  * La lista se reemplaza completa con PUT: no hay PATCH por entrada porque
  * reordenar viola el UNIQUE en el paso intermedio. Hibernate puede borrar e insertar

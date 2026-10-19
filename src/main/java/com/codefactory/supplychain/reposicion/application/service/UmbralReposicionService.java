@@ -14,7 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.UUID;
 
 /**
- * Administración de umbrales de reposición interna (HU-38).
+ * Administración de umbrales de reposición interna (HU-47).
  * <p>
  * La variante se valida contra catalogo mediante {@link VarianteConsultaPort}. La
  * categoría no tiene puerto de consulta: si no existe, la FK de la base rechaza el

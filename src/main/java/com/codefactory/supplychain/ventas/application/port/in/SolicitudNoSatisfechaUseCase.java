@@ -9,7 +9,7 @@ import org.springframework.data.domain.Pageable;
 import java.time.Instant;
 import java.util.UUID;
 
-/** Casos de uso HU-34 (registrar) y HU-35 (consultar y anular) de solicitudes no satisfechas. */
+/** Casos de uso HU-43 (registrar) y HU-44 (consultar y anular) de solicitudes no satisfechas. */
 public interface SolicitudNoSatisfechaUseCase {
 
     /** {@code cantidad} nula equivale a 1. El usuario sale del token, nunca del cuerpo. */

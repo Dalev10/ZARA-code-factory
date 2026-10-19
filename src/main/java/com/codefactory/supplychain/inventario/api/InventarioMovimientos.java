@@ -49,7 +49,7 @@ import java.util.UUID;
  *       el reintento optimista de inventario no puede actuar, porque el
  *       conflicto de versión aparece al confirmar la transacción del
  *       llamador; el reintento debe ir en el punto de entrada del llamador,
- *       fuera de su transacción (AGENTS.md §7).</li>
+ *       fuera de su transacción (como {@code VentaRetryableService}).</li>
  * </ul>
  */
 public interface InventarioMovimientos {

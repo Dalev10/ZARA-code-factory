@@ -30,7 +30,7 @@ import java.net.URI;
 import java.time.Instant;
 import java.util.UUID;
 
-/** HU-34 y HU-35. Scopes: ventas:registrar, ventas:consultar, ventas:anular. */
+/** HU-43 y HU-44. Scopes: ventas:registrar, ventas:consultar, ventas:anular. */
 @RestController
 @RequestMapping("/api/v1/solicitudes-no-satisfechas")
 public class SolicitudNoSatisfechaController {

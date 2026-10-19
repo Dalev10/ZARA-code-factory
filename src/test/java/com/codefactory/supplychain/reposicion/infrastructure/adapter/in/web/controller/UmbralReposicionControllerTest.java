@@ -28,7 +28,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
- * Prueba de extremo a extremo de los umbrales de reposición interna (HU-38), incluyendo
+ * Prueba de extremo a extremo de los umbrales de reposición interna (HU-47), incluyendo
  * el guard por scope {@code reposicion:administrar} (D-57) y la validación de la variante
  * contra catalogo a través del contrato publicado.
  */

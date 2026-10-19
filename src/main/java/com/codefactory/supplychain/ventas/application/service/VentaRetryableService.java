@@ -8,7 +8,7 @@ import org.springframework.resilience.annotation.Retryable;
 import org.springframework.stereotype.Service;
 
 /**
- * Punto de entrada de HU-31 con reintento por conflicto de versión del inventario (D-24).
+ * Punto de entrada de HU-40 con reintento por conflicto de versión del inventario (D-24).
  * El conflicto aparece al confirmar la transacción de {@link VentaService}, por eso el
  * reintento envuelve a esa transacción y no puede vivir dentro de ella.
  */

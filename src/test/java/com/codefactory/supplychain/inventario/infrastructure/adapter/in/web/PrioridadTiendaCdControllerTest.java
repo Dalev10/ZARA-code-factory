@@ -32,7 +32,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
- * HU-42 (mapa HU-51): prioridad de CDs por tienda. Prueba extremo a extremo:
+ * HU-51: prioridad de CDs por tienda. Prueba extremo a extremo:
  * seguridad, reemplazo completo de la lista, orden, CD en uso y tienda sin prioridades.
  */
 @SpringBootTest

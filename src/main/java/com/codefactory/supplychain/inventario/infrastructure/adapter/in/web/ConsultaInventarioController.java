@@ -26,7 +26,7 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- * Consultas de inventario (HU-30, D-33). Todas exigen {@code inventario:consultar};
+ * Consultas de inventario (HU-39, D-33). Todas exigen {@code inventario:consultar};
  * el alcance por tienda lo resuelve el caso de uso.
  */
 @RestController

@@ -24,7 +24,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.UUID;
 
 /**
- * Ajuste de inventario de un nodo (HU-29).
+ * Ajuste de inventario de un nodo (HU-38).
  *
  * Igual que la carga inicial, el scope exacto (D-31) y el alcance por tienda
  * los resuelve el caso de uso, porque dependen del nodo.

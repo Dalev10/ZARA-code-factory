@@ -30,7 +30,7 @@ import java.util.Set;
 import java.util.UUID;
 
 /**
- * HU-37. La reconciliación recorre el kardex real: un periodo empieza cuando el saldo pasa de &gt; 0 a &lt;= 0
+ * HU-46. La reconciliación recorre el kardex real: un periodo empieza cuando el saldo pasa de &gt; 0 a &lt;= 0
  * y termina cuando vuelve a &gt; 0. No inventa fechas: si el historial no permite conocer el saldo previo,
  * no se reconstruye nada para ese par. Es no destructiva: crea, cierra o corrige; lo que no tiene
  * respaldo en el kardex solo se reporta.

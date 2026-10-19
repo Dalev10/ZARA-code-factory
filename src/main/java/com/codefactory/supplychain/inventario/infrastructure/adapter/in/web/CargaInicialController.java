@@ -24,7 +24,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.UUID;
 
 /**
- * Carga inicial de inventario de un nodo (HU-28).
+ * Carga inicial de inventario de un nodo (HU-37).
  *
  * El {@code @PreAuthorize} solo deja pasar a quien tiene alguno de los dos
  * scopes; cuál exige cada nodo (D-31) y el alcance por tienda los resuelve el

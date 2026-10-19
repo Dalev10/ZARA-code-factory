@@ -22,7 +22,7 @@ import java.time.Clock;
 import java.time.Instant;
 import java.util.UUID;
 
-/** HU-34 y HU-35. Opera solo sobre la persistencia de ventas; únicamente el registro consulta Inventario. */
+/** HU-43 y HU-44. Opera solo sobre la persistencia de ventas; únicamente el registro consulta Inventario. */
 @Service
 @Transactional(readOnly = true)
 public class SolicitudNoSatisfechaService implements SolicitudNoSatisfechaUseCase {

@@ -31,7 +31,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
- * Criterios de aceptación de HU-30 (consultas de inventario y kardex) de
+ * Criterios de aceptación de HU-39 (consultas de inventario y kardex) de
  * extremo a extremo, contra PostgreSQL real.
  */
 @SpringBootTest

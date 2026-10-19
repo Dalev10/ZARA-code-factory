@@ -19,7 +19,7 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- * Consultas de inventario de solo lectura (HU-30).
+ * Consultas de inventario de solo lectura (HU-39).
  *
  * El alcance por tienda se aplica aquí a partir de {@link UsuarioActual}: en
  * la variante, el filtro viaja a la consulta SQL y no se trae todo para

@@ -13,7 +13,7 @@ import java.util.Set;
 import java.util.UUID;
 
 /**
- * Ajuste de inventario (HU-29, D-29, D-31, D-32).
+ * Ajuste de inventario (HU-38, D-29, D-31, D-32).
  *
  * No es transaccional a propósito: delega en {@link InventarioUseCase}, cuyo
  * reintento optimista abre una transacción por intento (D-24).

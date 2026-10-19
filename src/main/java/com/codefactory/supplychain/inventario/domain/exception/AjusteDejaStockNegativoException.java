@@ -4,10 +4,7 @@ import com.codefactory.supplychain.shared.exception.ReglaDeNegocioException;
 
 /**
  * Un ajuste no puede dejar {@code aLaMano} por debajo de cero, a diferencia
- * de la venta forzada (HU-29).
- *
- * TODO(shared): debe responder 422 (criterio de HU-29). Hoy
- * GlobalExceptionHandler traduce toda ReglaDeNegocioException a 400.
+ * de la venta forzada (HU-38). HTTP 400.
  */
 public class AjusteDejaStockNegativoException extends ReglaDeNegocioException {
 

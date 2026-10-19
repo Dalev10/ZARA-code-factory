@@ -14,7 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
 
-/** HU-33: consulta historial sin revelar si existe una venta de otra tienda. */
+/** HU-42: consulta historial sin revelar si existe una venta de otra tienda. */
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)

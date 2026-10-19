@@ -16,7 +16,7 @@ import java.util.UUID;
  * Entidad JPA de {@code tienda_cd_prioridad} (V1, ajustada en V23).
  * Las FK a tienda y cd son UUID simples: validadas por la BD, no como relaciones JPA.
  *
- * Módulo: inventario — HU-42.
+ * Módulo: inventario — HU-51.
  */
 @Entity
 @Table(name = "tienda_cd_prioridad")
