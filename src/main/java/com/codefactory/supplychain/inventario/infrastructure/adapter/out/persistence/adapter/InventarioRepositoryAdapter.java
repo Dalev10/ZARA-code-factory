@@ -64,4 +64,11 @@ public class InventarioRepositoryAdapter implements InventarioRepositoryPort {
                 .map(mapper::toDomain)
                 .toList();
     }
+
+    @Override
+    public List<Inventario> buscarPorVarianteEnCds(UUID varianteId) {
+        return repository.buscarPorVarianteEnCds(varianteId).stream()
+                .map(mapper::toDomain)
+                .toList();
+    }
 }

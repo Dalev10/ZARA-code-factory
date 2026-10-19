@@ -423,6 +423,21 @@ class InventarioIntegracionTest {
                 Integer.class, bodegaId, varianteId)).isEqualTo(2);
     }
 
+    @Test
+    @DisplayName("Las filas de una variante en CD se consultan aparte de las de tiendas")
+    void buscaLasFilasDeUnaVarianteEnCds() {
+        UUID cdId = UUID.randomUUID();
+        jdbc.update("INSERT INTO cd (id, nombre, ubicacion) VALUES (?, ?, 'Bogotá')", cdId, "CD " + cdId);
+        UUID nodoCd = UUID.randomUUID();
+        jdbc.update("INSERT INTO nodo (id, tipo, cd_id) VALUES (?, 'CD', ?)", nodoCd, cdId);
+        inventarioUseCase.cargar(nodoCd, varianteId, 7, null);
+        inventarioUseCase.cargar(nodoId, varianteId, 2, null);
+
+        assertThat(inventarioRepositoryPort.buscarPorVarianteEnCds(varianteId))
+                .extracting(i -> i.getNodoId(), i -> i.getALaMano())
+                .containsExactly(org.assertj.core.groups.Tuple.tuple(nodoCd, 7));
+    }
+
     private UUID crearAlmacen() {
         jdbc.update("INSERT INTO tienda (id, nombre, ubicacion) VALUES (?, ?, 'Medellín')",
                 tiendaId, "Tienda Inventario " + tiendaId);

@@ -83,4 +83,17 @@ class AccesoNodoInventarioTest {
                 almacen.getId(), usuario(Set.of("inventario:administrar", "tiendas:operar-todas"))))
                 .isEqualTo(almacen);
     }
+
+    /**
+     * Escenario: el operador de CD consulta el inventario de un CD (D-31)
+     *   Dado un usuario con inventario-cd:administrar y sin acceso global
+     *   Cuando consulta un nodo CD
+     *   Entonces lo ve; un usuario sin ese scope ni acceso global recibe 404
+     */
+    @Test
+    void unCdLoVeQuienAdministraInventarioCd() {
+        assertThat(acceso.exigirVisibilidad(cd.getId(), usuario(Set.of("inventario-cd:administrar")))).isEqualTo(cd);
+        assertThatThrownBy(() -> acceso.exigirVisibilidad(cd.getId(), usuario(Set.of("inventario:consultar"))))
+                .isInstanceOf(NodoNoEncontradoException.class);
+    }
 }

@@ -37,4 +37,9 @@ public interface InventarioRepositoryPort {
      * Filas de inventario de una variante solo en los nodos de las tiendas dadas.
      */
     List<Inventario> buscarPorVarianteEnTiendas(UUID varianteId, Set<UUID> tiendaIds);
+
+    /**
+     * Filas de inventario de una variante en los centros de distribución.
+     */
+    List<Inventario> buscarPorVarianteEnCds(UUID varianteId);
 }

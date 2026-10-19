@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -47,10 +48,14 @@ public class ConsultaInventarioService implements ConsultarInventarioUseCase {
         if (usuario.tieneScope(UsuarioActual.SCOPE_OPERAR_TODAS_LAS_TIENDAS)) {
             return inventarioRepositoryPort.buscarPorVariante(varianteId);
         }
-        if (usuario.tiendasPermitidas().isEmpty()) {
-            return List.of();
+        List<Inventario> visibles = new ArrayList<>();
+        if (!usuario.tiendasPermitidas().isEmpty()) {
+            visibles.addAll(inventarioRepositoryPort.buscarPorVarianteEnTiendas(varianteId, usuario.tiendasPermitidas()));
         }
-        return inventarioRepositoryPort.buscarPorVarianteEnTiendas(varianteId, usuario.tiendasPermitidas());
+        if (AccesoNodoInventario.puedeVerCds(usuario)) {
+            visibles.addAll(inventarioRepositoryPort.buscarPorVarianteEnCds(varianteId));
+        }
+        return visibles;
     }
 
     @Override
