@@ -12,8 +12,9 @@ import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
 
 /**
- * Reacciona a cambios de stock y dispara el traspaso automático si el nodo es un
- * Almacén de una tienda y el stock cayó bajo el umbral.
+ * Reacciona a cambios de stock y evalúa el traspaso automático de la tienda (D-53):
+ * ante cualquier movimiento del Almacén y ante aumentos en la Bodega, que pueden
+ * reponer un Almacén que antes quedó bajo el mínimo sin stock para traspasar.
  * <p>
  * El evento ya trae {@code tipoNodo} y {@code tiendaId}, así que no hace falta
  * consultar los nodos.
@@ -45,7 +46,10 @@ public class ExistenciasActualizadasListener {
                 || evento.tipoMovimiento() == TipoMovimientoKardex.TRASPASO_ENTRADA) {
             return;
         }
-        if (evento.tipoNodo() != TipoNodoInventario.ALMACEN || evento.tiendaId() == null) {
+        boolean almacen = evento.tipoNodo() == TipoNodoInventario.ALMACEN;
+        boolean aumentoEnBodega = evento.tipoNodo() == TipoNodoInventario.BODEGA_TIENDA
+                && evento.aLaMano() > evento.aLaManoAnterior();
+        if (evento.tiendaId() == null || !(almacen || aumentoEnBodega)) {
             return;
         }
         traspasoAutomatico.evaluar(evento.tiendaId(), evento.varianteId());

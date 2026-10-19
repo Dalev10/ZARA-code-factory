@@ -92,8 +92,18 @@ public class TiendaService implements TiendaUseCase, ConsultaTiendas, ConsultaNo
     }
 
     @Override
+    public List<TiendaResumen> listarActivas() {
+        return tiendaRepositoryPort.listarActivas().stream().map(TiendaService::resumir).toList();
+    }
+
+    @Override
     public Optional<UUID> buscarAlmacen(UUID tiendaId) {
         return nodoRepositoryPort.buscarPorTiendaYTipo(tiendaId, TipoNodo.ALMACEN).map(Nodo::getId);
+    }
+
+    @Override
+    public Optional<UUID> buscarBodega(UUID tiendaId) {
+        return nodoRepositoryPort.buscarPorTiendaYTipo(tiendaId, TipoNodo.BODEGA_TIENDA).map(Nodo::getId);
     }
 
     private static TiendaResumen resumir(Tienda tienda) {

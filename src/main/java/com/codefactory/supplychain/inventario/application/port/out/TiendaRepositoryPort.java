@@ -20,6 +20,8 @@ public interface TiendaRepositoryPort {
 
     List<Tienda> buscarPorIds(Collection<UUID> ids);
 
+    List<Tienda> listarActivas();
+
     Page<Tienda> listarTodas(Pageable pageable);
 
     boolean existePorNombre(String nombre);

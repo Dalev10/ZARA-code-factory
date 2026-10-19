@@ -7,7 +7,8 @@ import java.util.UUID;
 
 /**
  * Consulta de tiendas para otros módulos (solo lectura). Consumidores: identity (HU-32,
- * existencia al asignar tiendas a usuarios) y ventas (HU-40/43, tienda activa).
+ * existencia al asignar tiendas a usuarios), ventas (HU-40/43, tienda activa) y
+ * reposicion (HU-50, evaluación masiva de todas las tiendas activas).
  */
 public interface ConsultaTiendas {
 
@@ -17,4 +18,6 @@ public interface ConsultaTiendas {
      * Las que no existen se omiten; el orden del resultado no está garantizado.
      */
     List<TiendaResumen> buscarTodas(Collection<UUID> tiendaIds);
+
+    List<TiendaResumen> listarActivas();
 }

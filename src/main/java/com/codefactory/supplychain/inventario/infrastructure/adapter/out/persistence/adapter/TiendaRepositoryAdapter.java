@@ -1,6 +1,7 @@
 package com.codefactory.supplychain.inventario.infrastructure.adapter.out.persistence.adapter;
 
 import com.codefactory.supplychain.inventario.application.port.out.TiendaRepositoryPort;
+import com.codefactory.supplychain.inventario.domain.model.EstadoTienda;
 import com.codefactory.supplychain.inventario.domain.model.Tienda;
 import com.codefactory.supplychain.inventario.infrastructure.adapter.out.persistence.mapper.TiendaMapper;
 import com.codefactory.supplychain.inventario.infrastructure.adapter.out.persistence.repository.TiendaJpaRepository;
@@ -37,6 +38,11 @@ public class TiendaRepositoryAdapter implements TiendaRepositoryPort {
     @Override
     public List<Tienda> buscarPorIds(Collection<UUID> ids) {
         return jpaRepository.findAllById(ids).stream().map(mapper::toDomain).toList();
+    }
+
+    @Override
+    public List<Tienda> listarActivas() {
+        return jpaRepository.findByEstado(EstadoTienda.ACTIVA).stream().map(mapper::toDomain).toList();
     }
 
     @Override
