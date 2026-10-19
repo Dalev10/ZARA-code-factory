@@ -3,6 +3,8 @@ package com.codefactory.supplychain.reposicion.infrastructure.adapter.out.invent
 import com.codefactory.supplychain.inventario.api.InventarioMovimientos;
 import com.codefactory.supplychain.reposicion.application.port.out.ConsultarNodosPort;
 
+import com.codefactory.supplychain.reposicion.domain.exception.ReposicionRecursoNoEncontradoException;
+import com.codefactory.supplychain.inventario.api.StockInsuficienteException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -10,6 +12,7 @@ import org.junit.jupiter.api.Test;
 import java.util.Optional;
 import java.util.UUID;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.*;
 
@@ -43,9 +46,20 @@ class EjecutarTraspasoAdapterTest {
             when(consultarNodos.buscarNodoBodega(TIENDA_ID)).thenReturn(Optional.of(NODO_BODEGA));
             when(consultarNodos.buscarNodoAlmacen(TIENDA_ID)).thenReturn(Optional.of(NODO_ALMACEN));
 
-            adaptador.traspasar(TIENDA_ID, VARIANTE_ID, 7, TRASPASO_ID);
+            assertThat(adaptador.traspasar(TIENDA_ID, VARIANTE_ID, 7, TRASPASO_ID)).isTrue();
 
             verify(inventarioMovimientos).trasladar(NODO_BODEGA, NODO_ALMACEN, VARIANTE_ID, 7, TRASPASO_ID);
+        }
+
+        @Test
+        @DisplayName("devuelve false si inventario rechaza el traspaso por stock insuficiente")
+        void devuelveFalseSinStock() {
+            when(consultarNodos.buscarNodoBodega(TIENDA_ID)).thenReturn(Optional.of(NODO_BODEGA));
+            when(consultarNodos.buscarNodoAlmacen(TIENDA_ID)).thenReturn(Optional.of(NODO_ALMACEN));
+            org.mockito.Mockito.doThrow(new StockInsuficienteException())
+                    .when(inventarioMovimientos).trasladar(NODO_BODEGA, NODO_ALMACEN, VARIANTE_ID, 7, TRASPASO_ID);
+
+            assertThat(adaptador.traspasar(TIENDA_ID, VARIANTE_ID, 7, TRASPASO_ID)).isFalse();
         }
     }
 
@@ -54,25 +68,25 @@ class EjecutarTraspasoAdapterTest {
     class NodoNoEncontrado {
 
         @Test
-        @DisplayName("lanza IllegalStateException si la tienda no tiene nodo de BODEGA_TIENDA")
+        @DisplayName("responde 404 si la tienda no tiene nodo de BODEGA_TIENDA")
         void lanzaSiBodegaNoExiste() {
             when(consultarNodos.buscarNodoBodega(TIENDA_ID)).thenReturn(Optional.empty());
 
             assertThatThrownBy(() -> adaptador.traspasar(TIENDA_ID, VARIANTE_ID, 5, TRASPASO_ID))
-                    .isInstanceOf(IllegalStateException.class)
+                    .isInstanceOf(ReposicionRecursoNoEncontradoException.class)
                     .hasMessageContaining(TIENDA_ID.toString());
 
             verifyNoInteractions(inventarioMovimientos);
         }
 
         @Test
-        @DisplayName("lanza IllegalStateException si la tienda no tiene nodo de ALMACEN")
+        @DisplayName("responde 404 si la tienda no tiene nodo de ALMACEN")
         void lanzaSiAlmacenNoExiste() {
             when(consultarNodos.buscarNodoBodega(TIENDA_ID)).thenReturn(Optional.of(NODO_BODEGA));
             when(consultarNodos.buscarNodoAlmacen(TIENDA_ID)).thenReturn(Optional.empty());
 
             assertThatThrownBy(() -> adaptador.traspasar(TIENDA_ID, VARIANTE_ID, 5, TRASPASO_ID))
-                    .isInstanceOf(IllegalStateException.class)
+                    .isInstanceOf(ReposicionRecursoNoEncontradoException.class)
                     .hasMessageContaining(TIENDA_ID.toString());
 
             verifyNoInteractions(inventarioMovimientos);

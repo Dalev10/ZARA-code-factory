@@ -1,61 +1,53 @@
 package com.codefactory.supplychain.reposicion.application.service;
 
-import com.codefactory.supplychain.reposicion.domain.exception.BodegaInsuficienteException;
 import com.codefactory.supplychain.reposicion.application.port.in.TraspasoManualUseCase;
-import com.codefactory.supplychain.reposicion.application.port.out.ConsultarExistenciasPort;
 import com.codefactory.supplychain.reposicion.application.port.out.EjecutarTraspasoPort;
 import com.codefactory.supplychain.reposicion.application.port.out.TraspasoInternoRepository;
-import com.codefactory.supplychain.reposicion.domain.model.OrigenTraspaso;
+import com.codefactory.supplychain.reposicion.application.port.out.VarianteConsultaPort;
+import com.codefactory.supplychain.reposicion.domain.exception.BodegaInsuficienteException;
+import com.codefactory.supplychain.reposicion.domain.exception.ReposicionRecursoNoEncontradoException;
+import com.codefactory.supplychain.reposicion.domain.exception.TiendaNoPermitidaException;
 import com.codefactory.supplychain.reposicion.domain.model.TraspasoInterno;
+import com.codefactory.supplychain.shared.security.UsuarioActual;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.Instant;
 import java.util.UUID;
 
 /**
- * Registra un traspaso manual con validación de stock.
- * <p>
- * Flujo:
- * <ol>
- *   <li>Comprueba que la Bodega tiene suficiente stock (nunca deja negativo).</li>
- *   <li>Crea el objeto de dominio con origen MANUAL y el registrador del token.</li>
- *   <li>Aplica el movimiento contable en inventario.</li>
- *   <li>Persiste el traspaso.</li>
- * </ol>
+ * Registra un traspaso manual. Inventario valida el stock de la Bodega en el mismo
+ * movimiento, así que no hay una lectura previa que pueda quedar desactualizada.
  *
  * Módulo: reposicion — Reposición interna.
  */
 @Service
-@Transactional
 public class TraspasoManualService implements TraspasoManualUseCase {
 
-    private final ConsultarExistenciasPort consultarExistencias;
+    private final VarianteConsultaPort variantes;
     private final EjecutarTraspasoPort ejecutarTraspaso;
     private final TraspasoInternoRepository traspasoRepository;
 
-    public TraspasoManualService(ConsultarExistenciasPort consultarExistencias,
-                                  EjecutarTraspasoPort ejecutarTraspaso,
-                                  TraspasoInternoRepository traspasoRepository) {
-        this.consultarExistencias = consultarExistencias;
+    public TraspasoManualService(VarianteConsultaPort variantes,
+                                 EjecutarTraspasoPort ejecutarTraspaso,
+                                 TraspasoInternoRepository traspasoRepository) {
+        this.variantes = variantes;
         this.ejecutarTraspaso = ejecutarTraspaso;
         this.traspasoRepository = traspasoRepository;
     }
 
     @Override
-    public TraspasoInterno registrar(UUID tiendaId, UUID varianteId,
-                                      int cantidad, UUID registradoPor) {
-        int bodega = consultarExistencias.consultarStockBodega(tiendaId, varianteId).orElse(0);
-        if (bodega < cantidad) {
-            throw new BodegaInsuficienteException(tiendaId, varianteId, bodega, cantidad);
+    @Transactional
+    public TraspasoInterno registrar(UsuarioActual usuario, UUID tiendaId, UUID varianteId, int cantidad) {
+        if (!usuario.puedeOperarEn(tiendaId)) {
+            throw new TiendaNoPermitidaException(tiendaId);
         }
-
-        TraspasoInterno traspaso = TraspasoInterno.reconstruir(
-                UUID.randomUUID(), varianteId, tiendaId, cantidad,
-                OrigenTraspaso.MANUAL, registradoPor, Instant.now());
-
-        // Aplicar movimiento en inventario y persistir
-        ejecutarTraspaso.traspasar(tiendaId, varianteId, cantidad, traspaso.getId());
+        if (variantes.buscar(varianteId).isEmpty()) {
+            throw ReposicionRecursoNoEncontradoException.variante(varianteId);
+        }
+        TraspasoInterno traspaso = TraspasoInterno.registrarManual(varianteId, tiendaId, cantidad, usuario.id());
+        if (!ejecutarTraspaso.traspasar(tiendaId, varianteId, cantidad, traspaso.getId())) {
+            throw new BodegaInsuficienteException(varianteId, cantidad);
+        }
         return traspasoRepository.guardar(traspaso);
     }
 }

@@ -123,7 +123,7 @@ class RolControllerTest {
                                 {"nombre": "ROL_RECHAZADO", "descripcion": "desc"}
                                 """))
                 .andExpect(status().isForbidden())
-                .andExpect(jsonPath("$.mensaje").value("No tenés permisos para realizar esta acción"));
+                .andExpect(jsonPath("$.mensaje").value("No tiene permisos para realizar esta acción"));
     }
 
     @Test

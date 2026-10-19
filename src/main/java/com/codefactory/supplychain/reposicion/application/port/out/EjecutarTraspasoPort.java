@@ -4,7 +4,7 @@ import java.util.UUID;
 
 /**
  * Puerto de salida hacia el módulo inventario: aplica el movimiento contable del
- * traspaso (descuenta de Bodega, aumenta en Almacén) de forma atómica.
+ * traspaso (descuenta de la Bodega, aumenta en el Almacén) de forma atómica.
  * <p>
  * El módulo reposicion no manipula directamente las filas de inventario; delega el
  * efecto al módulo inventario a través de este contrato.
@@ -15,14 +15,10 @@ public interface EjecutarTraspasoPort {
 
     /**
      * Mueve {@code cantidad} unidades de la Bodega_Tienda al Almacén de la misma tienda.
-     * La operación es atómica: nunca deja la Bodega en negativo (lanza si no hay stock
-     * suficiente después de recalcular, aunque esto no debería ocurrir con el cálculo D-54).
      *
-     * @param nodoOrigenId  nodo origen del traspaso
-     * @param nodoDestinoId nodo destino del traspaso
-     * @param varianteId variante que se mueve
-     * @param cantidad  unidades a traspasar (> 0)
-     * @param traspasoId  ID del traspaso
+     * @return {@code false} si la Bodega no tiene esas unidades; nunca la deja en negativo
+     * @throws com.codefactory.supplychain.reposicion.domain.exception.ReposicionRecursoNoEncontradoException
+     *         si la tienda no tiene Bodega o Almacén
      */
-    void traspasar(UUID tiendaId, UUID varianteId, int cantidad, UUID traspasoId);
+    boolean traspasar(UUID tiendaId, UUID varianteId, int cantidad, UUID traspasoId);
 }

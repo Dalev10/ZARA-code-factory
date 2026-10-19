@@ -7,24 +7,26 @@ import com.codefactory.supplychain.reposicion.application.port.out.ConsultarExis
 
 
 import com.codefactory.supplychain.reposicion.domain.model.TraspasoInterno;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
 /**
- * HU-41: evaluación masiva de reposición interna.
+ * HU-50: evaluación masiva de reposición interna (D-57).
  * <p>
  * Reutiliza {@link TraspasoAutomaticoUseCase#evaluar} por cada combinación tienda-variante:
- * la lógica de si dispara y cuánto traspasar ya vive ahí. Cada evaluación
- * individual es su propia transacción (REQUIRES_NEW en el servicio de destino); si una
- * falla, las demás siguen.
+ * la lógica de si dispara y cuánto traspasar ya vive ahí. Este servicio no abre
+ * transacción: cada evaluación confirma la suya, y si una falla se registra y las
+ * demás siguen.
  */
 @Service
-@Transactional(readOnly = true)
 public class EvaluacionMasivaService implements EvaluacionMasivaUseCase {
+
+    private static final Logger log = LoggerFactory.getLogger(EvaluacionMasivaService.class);
 
     private final TraspasoAutomaticoUseCase traspasoAutomatico;
     private final ConsultarTiendasActivasPort tiendasActivas;
@@ -50,8 +52,12 @@ public class EvaluacionMasivaService implements EvaluacionMasivaUseCase {
     @Override
     public List<TraspasoInterno> evaluarTienda(UUID tiendaId) {
         List<TraspasoInterno> resultado = new ArrayList<>();
-        for (UUID varianteId : variantesPorTienda.variantesConInventarioEnAlmacen(tiendaId)) {
-            traspasoAutomatico.evaluar(tiendaId, varianteId).ifPresent(resultado::add);
+        for (UUID varianteId : variantesPorTienda.variantesConInventario(tiendaId)) {
+            try {
+                traspasoAutomatico.evaluar(tiendaId, varianteId).ifPresent(resultado::add);
+            } catch (RuntimeException e) {
+                log.warn("No se pudo evaluar la reposición de la variante {} en la tienda {}", varianteId, tiendaId, e);
+            }
         }
         return resultado;
     }

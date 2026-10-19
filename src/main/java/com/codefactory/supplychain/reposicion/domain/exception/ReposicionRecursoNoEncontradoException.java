@@ -20,4 +20,12 @@ public class ReposicionRecursoNoEncontradoException extends RecursoNoEncontradoE
     public static ReposicionRecursoNoEncontradoException variante(UUID id) {
         return new ReposicionRecursoNoEncontradoException("No existe una Variante con id " + id);
     }
+
+    public static ReposicionRecursoNoEncontradoException tienda(UUID id) {
+        return new ReposicionRecursoNoEncontradoException("No existe una tienda con id " + id);
+    }
+
+    public static ReposicionRecursoNoEncontradoException traspaso(UUID id) {
+        return new ReposicionRecursoNoEncontradoException("No existe un traspaso interno con id " + id);
+    }
 }

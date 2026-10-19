@@ -21,6 +21,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.*;
 
 @DisplayName("TraspasoAutomaticoService")
@@ -42,6 +43,7 @@ class TraspasoAutomaticoServiceTest {
     void stubRepository() {
         // Por defecto, guardar devuelve lo que recibe
         lenient().when(traspasoRepository.guardar(any())).thenAnswer(inv -> inv.getArgument(0));
+        lenient().when(ejecutarTraspaso.traspasar(any(), any(), anyInt(), any())).thenReturn(true);
     }
 
     @Nested

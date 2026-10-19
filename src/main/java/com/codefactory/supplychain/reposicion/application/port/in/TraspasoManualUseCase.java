@@ -1,19 +1,18 @@
 package com.codefactory.supplychain.reposicion.application.port.in;
 
 import com.codefactory.supplychain.reposicion.domain.model.TraspasoInterno;
+import com.codefactory.supplychain.shared.security.UsuarioActual;
 
 import java.util.UUID;
 
 /**
- * Registra un traspaso manual de Bodega_Tienda → Almacén ejecutado físicamente
- * por un operario.
+ * Registra un traspaso manual Bodega_Tienda → Almacén ejecutado físicamente por un
+ * operario (HU-49, D-56).
  * <p>
  * Diferencias respecto al automático:
  * <ul>
- *   <li>El origen siempre es MANUAL.</li>
- *   <li>{@code registradoPor} es obligatorio: viene del token JWT del operario.</li>
- *   <li>La cantidad la decide el operario, no el algoritmo; pero la BD y el
- *       dominio validan que no deje la Bodega en negativo.</li>
+ *   <li>El origen siempre es MANUAL y {@code registradoPor} es el usuario del token.</li>
+ *   <li>La cantidad la decide el operario, no el algoritmo; nunca deja la Bodega en negativo.</li>
  * </ul>
  *
  * Módulo: reposicion — Reposición interna.
@@ -21,14 +20,12 @@ import java.util.UUID;
 public interface TraspasoManualUseCase {
 
     /**
-     * @param tiendaId      tienda donde se ejecuta el traspaso
-     * @param varianteId    variante que se mueve
-     * @param cantidad      unidades a traspasar (> 0)
-     * @param registradoPor id del usuario que registra (del token, nunca del body)
-     * @throws com.codefactory.supplychain.reposicion.domain.exception.TraspasoInvalidoException
-     *         si cantidad ≤ 0 o registradoPor es null
-     * @throws com.codefactory.supplychain.reposicion.application.exception.BodegaInsuficienteException
-     *         si la Bodega no tiene suficiente stock para el traspaso solicitado
+     * @throws com.codefactory.supplychain.reposicion.domain.exception.TiendaNoPermitidaException
+     *         si el usuario no tiene asignada la tienda
+     * @throws com.codefactory.supplychain.reposicion.domain.exception.ReposicionRecursoNoEncontradoException
+     *         si la tienda o la variante no existen
+     * @throws com.codefactory.supplychain.reposicion.domain.exception.BodegaInsuficienteException
+     *         si la Bodega no tiene las unidades solicitadas
      */
-    TraspasoInterno registrar(UUID tiendaId, UUID varianteId, int cantidad, UUID registradoPor);
+    TraspasoInterno registrar(UsuarioActual usuario, UUID tiendaId, UUID varianteId, int cantidad);
 }

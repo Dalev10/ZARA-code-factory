@@ -1,8 +1,10 @@
 package com.codefactory.supplychain.reposicion.infrastructure.adapter.out.inventario;
 
 import com.codefactory.supplychain.inventario.api.InventarioMovimientos;
+import com.codefactory.supplychain.inventario.api.StockInsuficienteException;
 import com.codefactory.supplychain.reposicion.application.port.out.ConsultarNodosPort;
 import com.codefactory.supplychain.reposicion.application.port.out.EjecutarTraspasoPort;
+import com.codefactory.supplychain.reposicion.domain.exception.ReposicionRecursoNoEncontradoException;
 import org.springframework.stereotype.Component;
 
 import java.util.UUID;
@@ -26,13 +28,16 @@ public class EjecutarTraspasoAdapter implements EjecutarTraspasoPort {
     }
 
     @Override
-    public void traspasar(UUID tiendaId, UUID varianteId, int cantidad, UUID traspasoId) {
+    public boolean traspasar(UUID tiendaId, UUID varianteId, int cantidad, UUID traspasoId) {
         UUID nodoOrigen = consultarNodos.buscarNodoBodega(tiendaId)
-                .orElseThrow(() -> new IllegalStateException(
-                        "Bodega no encontrada para tienda " + tiendaId));
+                .orElseThrow(() -> ReposicionRecursoNoEncontradoException.tienda(tiendaId));
         UUID nodoDestino = consultarNodos.buscarNodoAlmacen(tiendaId)
-                .orElseThrow(() -> new IllegalStateException(
-                        "Almacén no encontrado para tienda " + tiendaId));
-        inventarioMovimientos.trasladar(nodoOrigen, nodoDestino, varianteId, cantidad, traspasoId);
+                .orElseThrow(() -> ReposicionRecursoNoEncontradoException.tienda(tiendaId));
+        try {
+            inventarioMovimientos.trasladar(nodoOrigen, nodoDestino, varianteId, cantidad, traspasoId);
+            return true;
+        } catch (StockInsuficienteException e) {
+            return false;
+        }
     }
 }

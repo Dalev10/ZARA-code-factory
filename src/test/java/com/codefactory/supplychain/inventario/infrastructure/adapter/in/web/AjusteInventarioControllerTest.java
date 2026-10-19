@@ -30,13 +30,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
- * Criterios de aceptación de HU-29 (ajuste de inventario) de extremo a
+ * Criterios de aceptación de HU-38 (ajuste de inventario) de extremo a
  * extremo, contra PostgreSQL real.
- *
- * TODO(shared): los criterios "no puede dejar el stock en negativo" (422) y
- * "no se ajusta una variante no cargada" (409) responden hoy 400, porque
- * GlobalExceptionHandler traduce toda ReglaDeNegocioException a 400. Al
- * cambiar shared/, actualizar los status esperados de esos dos escenarios.
  */
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -101,7 +96,7 @@ class AjusteInventarioControllerTest {
             Escenario: el ajuste no puede dejar el stock en negativo
               Dado un Almacén con la variante X con 1 unidad
               Cuando se registra un ajuste de -2 unidades
-              Entonces la respuesta es 422 (hoy 400, pendiente del cambio en shared)
+              Entonces la respuesta es 400
               Y el stock sigue en 1""")
     void elAjusteNoPuedeDejarElStockEnNegativo() throws Exception {
         String x = crearVarianteCargada(almacenId, 1);

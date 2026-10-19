@@ -9,10 +9,11 @@ import org.springframework.stereotype.Component;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Stream;
 
 /**
  * ACL hacia inventario.api: consulta existencias por nodo, resolviendo primero el nodo
- * de la tienda con {@link ConsultarNodosPort} (puerto propio, sin acoplarse a inventario.api).
+ * de la tienda con {@link ConsultarNodosPort}.
  *
  * Módulo: reposicion.
  */
@@ -43,12 +44,12 @@ public class ConsultarExistenciasAdapter implements ConsultarExistenciasPort {
     }
 
     @Override
-    public List<UUID> variantesConInventarioEnAlmacen(UUID tiendaId) {
-        return consultarNodos.buscarNodoAlmacen(tiendaId)
-                .map(nodoId -> consultaInventario.consultarExistenciasPorNodo(nodoId)
-                        .stream()
-                        .map(StockResumen::varianteId)
-                        .toList())
-                .orElse(List.of());
+    public List<UUID> variantesConInventario(UUID tiendaId) {
+        return Stream.of(consultarNodos.buscarNodoAlmacen(tiendaId), consultarNodos.buscarNodoBodega(tiendaId))
+                .flatMap(Optional::stream)
+                .flatMap(nodoId -> consultaInventario.consultarExistenciasPorNodo(nodoId).stream())
+                .map(StockResumen::varianteId)
+                .distinct()
+                .toList();
     }
 }

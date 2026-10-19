@@ -7,5 +7,6 @@ import java.util.UUID;
 public interface ConsultarExistenciasPort {
     Optional<Integer> consultarStockAlmacen(UUID tiendaId, UUID varianteId);
     Optional<Integer> consultarStockBodega(UUID tiendaId, UUID varianteId);
-    List<UUID> variantesConInventarioEnAlmacen(UUID tiendaId);
+    /** Variantes con fila en el Almacén o en la Bodega de la tienda: las que un umbral puede reponer. */
+    List<UUID> variantesConInventario(UUID tiendaId);
 }

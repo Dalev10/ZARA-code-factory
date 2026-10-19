@@ -3,6 +3,7 @@ package com.codefactory.supplychain.shared.exception;
 import com.codefactory.supplychain.shared.dto.ErrorResponse;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.InvalidDataAccessApiUsageException;
+import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
@@ -13,8 +14,8 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import java.util.stream.Collectors;
 
 /**
- * Traduce las excepciones transversales (ReglaDeNegocioException, RecursoDuplicadoException)
- * y los errores de validación de Bean Validation a respuestas HTTP consistentes, sin que
+ * Traduce las excepciones transversales (ReglaDeNegocioException, RecursoDuplicadoException,
+ * ConflictoDeEstadoException, etc.) y los errores de validación de Bean Validation a respuestas HTTP consistentes, sin que
  * este componente dependa de las excepciones concretas de ningún módulo específico.
  *
  * Componentes transversales de tipo 'exception', compartidos por todos los módulos.
@@ -30,6 +31,18 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(RecursoDuplicadoException.class)
     public ResponseEntity<ErrorResponse> handleRecursoDuplicado(RecursoDuplicadoException ex) {
         return ResponseEntity.status(HttpStatus.CONFLICT).body(new ErrorResponse(ex.getMessage()));
+    }
+
+    @ExceptionHandler(ConflictoDeEstadoException.class)
+    public ResponseEntity<ErrorResponse> handleConflictoDeEstado(ConflictoDeEstadoException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(new ErrorResponse(ex.getMessage()));
+    }
+
+    /** Se agotaron los reintentos optimistas (D-24): otra operación modificó el mismo registro. */
+    @ExceptionHandler(OptimisticLockingFailureException.class)
+    public ResponseEntity<ErrorResponse> handleConcurrencia(OptimisticLockingFailureException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(new ErrorResponse("Otra operación modificó el mismo registro; intente de nuevo"));
     }
 
     @ExceptionHandler(RecursoEnUsoException.class)
@@ -68,7 +81,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(AccessDeniedException.class)
     public ResponseEntity<ErrorResponse> handleAccesoDenegado(AccessDeniedException ex) {
         return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                .body(new ErrorResponse("No tenés permisos para realizar esta acción"));
+                .body(new ErrorResponse("No tiene permisos para realizar esta acción"));
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
