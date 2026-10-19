@@ -4,7 +4,6 @@ import com.codefactory.supplychain.catalogo.infrastructure.adapter.out.persisten
 import com.codefactory.supplychain.catalogo.infrastructure.adapter.out.persistence.entity.TemplateEntity;
 import com.codefactory.supplychain.catalogo.infrastructure.adapter.out.persistence.entity.VarianteEntity;
 import com.codefactory.supplychain.inventario.domain.model.Inventario;
-import com.codefactory.supplychain.inventario.domain.model.Nodo;
 import com.codefactory.supplychain.inventario.domain.model.TipoNodo;
 import com.codefactory.supplychain.inventario.infrastructure.adapter.out.persistence.entity.NodoEntity;
 import com.codefactory.supplychain.inventario.infrastructure.adapter.out.persistence.mapper.InventarioMapper;

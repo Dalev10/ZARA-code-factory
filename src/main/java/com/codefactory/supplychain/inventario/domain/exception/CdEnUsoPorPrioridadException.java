@@ -1,6 +1,6 @@
 package com.codefactory.supplychain.inventario.domain.exception;
 
-import com.codefactory.supplychain.shared.exception.ReglaDeNegocioException;
+import com.codefactory.supplychain.shared.exception.RecursoEnUsoException;
 
 import java.util.UUID;
 
@@ -9,7 +9,7 @@ import java.util.UUID;
  *
  * Módulo: inventario (HU-42).
  */
-public class CdEnUsoPorPrioridadException extends ReglaDeNegocioException {
+public class CdEnUsoPorPrioridadException extends RecursoEnUsoException {
 
     public CdEnUsoPorPrioridadException(UUID cdId) {
         super("El CD " + cdId + " tiene prioridades asignadas y no puede eliminarse. "

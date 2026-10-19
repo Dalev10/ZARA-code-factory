@@ -2,8 +2,8 @@ package com.codefactory.supplychain.inventario.infrastructure.adapter.out.persis
 
 import com.codefactory.supplychain.inventario.application.port.out.InventarioPorNodoPort.InventarioResumen;
 import com.codefactory.supplychain.inventario.domain.model.Inventario;
-import com.codefactory.supplychain.inventario.domain.model.Nodo;
 import com.codefactory.supplychain.inventario.domain.model.TipoNodo;
+import com.codefactory.supplychain.inventario.infrastructure.adapter.out.persistence.entity.NodoEntity;
 import com.codefactory.supplychain.inventario.infrastructure.adapter.out.persistence.mapper.InventarioMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;

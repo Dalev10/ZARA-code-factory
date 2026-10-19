@@ -24,7 +24,7 @@ public class ConsultarTiendasActivasAdapter implements ConsultarTiendasActivasPo
 
     @Override
     public List<UUID> listarTiendasActivas() {
-        // TODO pendiente #4: ConsultaTiendas no expone buscarTodasActivas().
+        // TODO: ConsultaTiendas no expone buscarTodasActivas().
         return List.of();
     }
 }

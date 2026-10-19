@@ -1,6 +1,5 @@
 package com.codefactory.supplychain.catalogo.application.service;
 
-import java.util.UUID;
 import com.codefactory.supplychain.catalogo.application.exception.CatalogoRecursoNoEncontradoException;
 import com.codefactory.supplychain.catalogo.application.exception.SkuDuplicadoException;
 import com.codefactory.supplychain.catalogo.application.port.in.VarianteUseCase;
@@ -8,7 +7,6 @@ import com.codefactory.supplychain.catalogo.application.port.out.TemplateReposit
 import com.codefactory.supplychain.catalogo.application.port.out.VarianteRepository;
 import com.codefactory.supplychain.catalogo.domain.model.Template;
 import com.codefactory.supplychain.catalogo.domain.model.Variante;
-import java.util.Optional;
 import java.util.UUID;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -30,12 +28,12 @@ import org.springframework.transaction.annotation.Transactional;
  * reconstitución que el propio dominio ya expone para este fin) y
  * guardándola a través del puerto de salida.
  * <p>
- * También implementa {@link ConsultaVariantes}, la consulta de solo lectura que
- * catalogo publica en su paquete api para otros módulos (ARQUITECTURA.md).
+ * La consulta pública para otros módulos ({@code catalogo.api.ConsultaVariantes})
+ * vive en {@link ConsultaVariantesService}, no aquí.
  */
 @Service
 @Transactional(readOnly = true)
-public class VarianteService implements VarianteUseCase, ConsultaVariantes {
+public class VarianteService implements VarianteUseCase {
 
     private final VarianteRepository varianteRepository;
     private final TemplateRepository templateRepository;
@@ -67,11 +65,6 @@ public class VarianteService implements VarianteUseCase, ConsultaVariantes {
                 .orElseThrow(() -> CatalogoRecursoNoEncontradoException.varianteConSku(sku));
     }
 
-    @Override
-    public Optional<VarianteResumen> buscarPorSku(String sku) {
-        return varianteRepository.findBySku(sku)
-                .map(variante -> new VarianteResumen(variante.getId(), variante.getSku()));
-    }
 
     @Override
     public Page<Variante> listar(Pageable pageable) {
@@ -102,15 +95,6 @@ public class VarianteService implements VarianteUseCase, ConsultaVariantes {
         varianteRepository.deleteById(id);
     }
 
-    @Override
-    public List<VarianteResumen> buscarPorSkus(Set<String> skus) {
-        if (skus.isEmpty()) {
-            return List.of();
-        }
-        return varianteRepository.findBySkuIn(skus).stream()
-                .map(variante -> new VarianteResumen(variante.getId(), variante.getSku()))
-                .toList();
-    }
 
     private Template obtenerTemplateExistente(UUID templateId) {
         return templateRepository.findById(templateId)

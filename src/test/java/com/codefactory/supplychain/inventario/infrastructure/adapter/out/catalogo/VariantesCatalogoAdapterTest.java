@@ -20,7 +20,7 @@ class VariantesCatalogoAdapterTest {
         ConsultaVariantes consulta = mock(ConsultaVariantes.class);
         UUID id = UUID.randomUUID();
         when(consulta.buscarPorSkus(Set.of("SKU-1", "SKU-2")))
-                .thenReturn(List.of(new VarianteResumen(id, "SKU-1")));
+                .thenReturn(List.of(new VarianteResumen(id, "SKU-1", UUID.randomUUID())));
 
         Map<String, UUID> resultado = new VariantesCatalogoAdapter(consulta)
                 .resolverIdsPorSku(Set.of("SKU-1", "SKU-2"));

@@ -39,6 +39,7 @@ class InventarioRetryableServiceTest {
                 && !metodo.isSynthetic()
                 && !metodo.getName().equals("ejecutar")
                 && !metodo.getName().equals("registrarMovimiento")
+                && !metodo.getName().equals("buscarNodo")
                 && !metodo.getName().equals("publicarExistenciasActualizadas");
     }
 }
