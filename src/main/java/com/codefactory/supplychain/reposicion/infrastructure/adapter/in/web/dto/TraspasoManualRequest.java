@@ -17,7 +17,8 @@ public record TraspasoManualRequest(
         @NotNull(message = "La variante es obligatoria")
         UUID varianteId,
 
+        @NotNull(message = "La cantidad es obligatoria")
         @Min(value = 1, message = "La cantidad debe ser mayor que cero")
-        int cantidad
+        Integer cantidad
 ) {
 }

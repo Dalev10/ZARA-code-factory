@@ -13,17 +13,24 @@ import java.math.BigDecimal;
 import java.util.List;
 import java.util.UUID;
 
-/** Vendedor, origen y hora no vienen en el body: los fija el servidor (D-10, D-38). */
+/**
+ * Vendedor, origen y hora no vienen en el body: los fija el servidor (D-10, D-38).
+ * {@code forzarSinStock} es opcional: ausente equivale a {@code false}.
+ */
 public record RegistrarVentaRequest(
         @NotNull UUID transaccionId,
         @NotNull UUID tiendaId,
         @Size(max = 30) String canal,
-        boolean forzarSinStock,
+        Boolean forzarSinStock,
         @NotEmpty @Size(max = 200) List<@Valid ItemRequest> items) {
+
+    public RegistrarVentaRequest {
+        forzarSinStock = Boolean.TRUE.equals(forzarSinStock);
+    }
 
     public record ItemRequest(
             @NotBlank String sku,
-            @Positive int cantidad,
+            @NotNull @Positive Integer cantidad,
             @NotNull @DecimalMin("0.00") @Digits(integer = 10, fraction = 2) BigDecimal precioUnitario) {
     }
 }
