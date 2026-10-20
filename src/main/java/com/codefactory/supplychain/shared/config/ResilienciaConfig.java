@@ -13,6 +13,9 @@ import org.springframework.resilience.annotation.EnableResilientMethods;
  * cada uso debe ajustar {@code delay} a lo que tolere su operación. Los reintentos
  * optimistas (D-24) usan {@code delay = 10, jitter = 10, multiplier = 2}: con espera
  * fija, ventas simultáneas sobre la misma fila volvían a chocar en cada intento.
+ * Riesgo aceptado del MVP: con muchas ventas simultáneas del mismo SKU en la misma
+ * tienda, una puede agotar los 3 reintentos y responder 409; no se pierden unidades y
+ * el cliente reintenta con el mismo transaccion_id sin duplicar.
  */
 @Configuration
 @EnableResilientMethods

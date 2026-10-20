@@ -10,6 +10,7 @@ import com.codefactory.supplychain.identity.domain.model.Usuario;
 import com.codefactory.supplychain.identity.infrastructure.adapter.out.persistence.entity.UsuarioRolEntity;
 import com.codefactory.supplychain.identity.infrastructure.adapter.out.persistence.entity.UsuarioRolId;
 import com.codefactory.supplychain.identity.infrastructure.adapter.out.persistence.repository.UsuarioRolJpaRepository;
+import com.codefactory.supplychain.inventario.application.port.in.InventarioUseCase;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
@@ -19,6 +20,7 @@ import org.springframework.boot.testcontainers.service.connection.ServiceConnect
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
@@ -29,6 +31,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import java.time.Instant;
 import java.util.UUID;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -53,6 +56,12 @@ class CentroDistribucionControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
+
+    @Autowired
+    private JdbcTemplate jdbc;
+
+    @Autowired
+    private InventarioUseCase inventario;
 
     @Autowired
     private UsuarioRepositoryPort usuarioRepositoryPort;
@@ -227,5 +236,44 @@ class CentroDistribucionControllerTest {
         mockMvc.perform(get("/api/v1/centros-distribucion/" + id)
                         .header(HttpHeaders.AUTHORIZATION, "Bearer " + token))
                 .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void unCdConInventarioNoSeEliminaYConservaSuInformacion() throws Exception {
+        String token = loguearComoAdmin("admin-elimina-cd-con-inventario@ejemplo.com");
+        MvcResult creado = mockMvc.perform(post("/api/v1/centros-distribucion")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"nombre": "CD Con Inventario", "ubicacion": "Bogotá"}
+                                """))
+                .andExpect(status().isCreated())
+                .andReturn();
+        UUID id = UUID.fromString(new ObjectMapper().readTree(creado.getResponse().getContentAsString()).get("id").asText());
+        UUID nodoId = jdbc.queryForObject("SELECT id FROM nodo WHERE cd_id = ?", UUID.class, id);
+        UUID varianteId = crearVariante();
+        inventario.cargar(nodoId, varianteId, 5, null);
+
+        mockMvc.perform(delete("/api/v1/centros-distribucion/" + id)
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + token))
+                .andExpect(status().isConflict());
+
+        mockMvc.perform(get("/api/v1/centros-distribucion/" + id)
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + token))
+                .andExpect(status().isOk());
+        assertThat(jdbc.queryForObject("SELECT a_la_mano FROM inventario WHERE nodo_id = ?", Integer.class, nodoId))
+                .isEqualTo(5);
+    }
+
+    private UUID crearVariante() {
+        UUID categoriaId = UUID.randomUUID();
+        jdbc.update("INSERT INTO categoria (id, nombre) VALUES (?, ?)", categoriaId, "Categoría " + categoriaId);
+        UUID templateId = UUID.randomUUID();
+        jdbc.update("INSERT INTO template (id, categoria_id, nombre) VALUES (?, ?, ?)",
+                templateId, categoriaId, "Template " + templateId);
+        UUID varianteId = UUID.randomUUID();
+        jdbc.update("INSERT INTO variante (id, template_id, sku) VALUES (?, ?, ?)",
+                varianteId, templateId, "SKU-" + varianteId);
+        return varianteId;
     }
 }
