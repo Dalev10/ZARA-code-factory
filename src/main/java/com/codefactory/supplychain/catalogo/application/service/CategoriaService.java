@@ -2,6 +2,7 @@ package com.codefactory.supplychain.catalogo.application.service;
 
 import java.util.UUID;
 import com.codefactory.supplychain.catalogo.application.exception.CatalogoRecursoNoEncontradoException;
+import com.codefactory.supplychain.catalogo.application.exception.CategoriaReservadaException;
 import com.codefactory.supplychain.catalogo.application.exception.CategoriaYaExisteException;
 import com.codefactory.supplychain.catalogo.application.port.in.CategoriaUseCase;
 import com.codefactory.supplychain.catalogo.application.port.out.CategoriaRepository;
@@ -18,7 +19,8 @@ import org.springframework.transaction.annotation.Transactional;
  * persistencia, de controllers ni de DTOs. La validación de invariantes
  * (nombre vacío/demasiado largo) vive en el dominio {@link Categoria}
  * desde HU-23; este servicio solo resuelve la unicidad del nombre, que
- * requiere consultar el repositorio.
+ * requiere consultar el repositorio, y protege el nombre reservado
+ * {@value Categoria#NOMBRE_RESERVADO} (D-52).
  */
 @Service
 @Transactional(readOnly = true)
@@ -33,6 +35,9 @@ public class CategoriaService implements CategoriaUseCase {
     @Override
     @Transactional
     public Categoria crear(String nombre) {
+        if (Categoria.esNombreReservado(nombre)) {
+            throw new CategoriaReservadaException();
+        }
         if (categoriaRepository.existsByNombre(nombre)) {
             throw new CategoriaYaExisteException(nombre);
         }
@@ -54,6 +59,9 @@ public class CategoriaService implements CategoriaUseCase {
     @Transactional
     public Categoria modificar(UUID id, String nuevoNombre) {
         Categoria categoria = obtenerPorId(id);
+        if (categoria.esReservada() || Categoria.esNombreReservado(nuevoNombre)) {
+            throw new CategoriaReservadaException();
+        }
         if (!categoria.getNombre().equals(nuevoNombre) && categoriaRepository.existsByNombre(nuevoNombre)) {
             throw new CategoriaYaExisteException(nuevoNombre);
         }
@@ -63,8 +71,8 @@ public class CategoriaService implements CategoriaUseCase {
     @Override
     @Transactional
     public void eliminar(UUID id) {
-        if (!categoriaRepository.existsById(id)) {
-            throw CatalogoRecursoNoEncontradoException.categoria(id);
+        if (obtenerPorId(id).esReservada()) {
+            throw new CategoriaReservadaException();
         }
         // Si la Categoria está referenciada por uno o más Template, el borrado
         // físico viola la FK definida en PostgreSQL (categoria_id en la tabla

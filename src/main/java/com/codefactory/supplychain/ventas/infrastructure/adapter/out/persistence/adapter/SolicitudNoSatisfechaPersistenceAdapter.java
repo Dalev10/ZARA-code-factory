@@ -75,7 +75,7 @@ public class SolicitudNoSatisfechaPersistenceAdapter implements SolicitudNoSatis
     private static SolicitudNoSatisfecha aDominio(SolicitudNoSatisfechaEntity e) {
         return SolicitudNoSatisfecha.reconstituir(e.getId(), e.getTiendaId(), e.getVarianteId(), e.getCantidad(),
                 e.getStockSistema(), e.getRegistradaEn(), e.getRegistradoPor(), e.getClaveIdempotencia(),
-                e.getEstado(), e.getAnuladaPor(), e.getAnuladaEn());
+                e.getEstado(), e.getAnuladaPor(), e.getAnuladaEn(), e.getMotivoAnulacion());
     }
 
     private static SolicitudNoSatisfechaEntity aEntidad(SolicitudNoSatisfecha s) {
@@ -83,6 +83,7 @@ public class SolicitudNoSatisfechaPersistenceAdapter implements SolicitudNoSatis
                 .varianteId(s.getVarianteId()).cantidad(s.getCantidad()).stockSistema(s.getStockSistema())
                 .registradaEn(s.getRegistradaEn()).registradoPor(s.getRegistradoPor())
                 .claveIdempotencia(s.getClaveIdempotencia()).estado(s.getEstado())
-                .anuladaPor(s.getAnuladaPor()).anuladaEn(s.getAnuladaEn()).build();
+                .anuladaPor(s.getAnuladaPor()).anuladaEn(s.getAnuladaEn())
+                .motivoAnulacion(s.getMotivoAnulacion()).build();
     }
 }

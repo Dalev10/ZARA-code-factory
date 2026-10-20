@@ -20,6 +20,9 @@ import java.util.UUID;
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public final class Categoria {
 
+    /** Agrupa los templates que no tenían categoría al hacerla obligatoria (D-52, V16). */
+    public static final String NOMBRE_RESERVADO = "SIN_CATEGORIA";
+
     @EqualsAndHashCode.Include
     private final UUID id;
     private final String nombre;
@@ -39,6 +42,14 @@ public final class Categoria {
 
     public Categoria cambiarNombre(String nuevoNombre) {
         return new Categoria(id, nuevoNombre);
+    }
+
+    public boolean esReservada() {
+        return esNombreReservado(nombre);
+    }
+
+    public static boolean esNombreReservado(String nombre) {
+        return nombre != null && NOMBRE_RESERVADO.equalsIgnoreCase(nombre.trim());
     }
 
     private static String validarNombre(String nombre) {

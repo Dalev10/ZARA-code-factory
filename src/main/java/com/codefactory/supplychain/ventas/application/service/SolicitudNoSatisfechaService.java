@@ -11,6 +11,7 @@ import com.codefactory.supplychain.ventas.domain.exception.SolicitudInvalidaExce
 import com.codefactory.supplychain.ventas.domain.exception.SolicitudNoEncontradaException;
 import com.codefactory.supplychain.ventas.domain.exception.TiendaSinAlmacenException;
 import com.codefactory.supplychain.ventas.domain.exception.VarianteNoEncontradaException;
+import com.codefactory.supplychain.ventas.domain.model.EstadoSolicitud;
 import com.codefactory.supplychain.ventas.domain.model.SolicitudNoSatisfecha;
 import com.codefactory.supplychain.shared.security.UsuarioActual;
 import org.springframework.data.domain.Page;
@@ -106,9 +107,14 @@ public class SolicitudNoSatisfechaService implements SolicitudNoSatisfechaUseCas
 
     @Override
     @Transactional
-    public SolicitudNoSatisfecha anular(UsuarioActual usuario, UUID id) {
+    /** Igual que la venta (D-44): una segunda anulación devuelve la solicitud ya anulada, sin cambios. */
+    public SolicitudNoSatisfecha anular(UsuarioActual usuario, UUID id, String motivo) {
         SolicitudNoSatisfecha solicitud = obtener(usuario, id);
-        solicitud.anular(usuario.id(), Instant.now(reloj));
+        SolicitudNoSatisfecha.validarMotivo(motivo);
+        if (solicitud.getEstado() == EstadoSolicitud.ANULADA) {
+            return solicitud;
+        }
+        solicitud.anular(usuario.id(), Instant.now(reloj), motivo);
         return repositorio.guardar(solicitud);
     }
 }

@@ -40,7 +40,9 @@ public interface SolicitudNoSatisfechaUseCase {
 
     /**
      * @throws com.codefactory.supplychain.ventas.domain.exception.SolicitudNoEncontradaException si no existe o es de otra tienda
-     * @throws com.codefactory.supplychain.ventas.domain.exception.SolicitudYaAnuladaException si ya estaba anulada
+     * Si ya estaba anulada, la devuelve sin cambios (como la venta, D-44).
+     *
+     * @throws com.codefactory.supplychain.ventas.domain.exception.SolicitudInvalidaException sin motivo
      */
-    SolicitudNoSatisfecha anular(UsuarioActual usuario, UUID id);
+    SolicitudNoSatisfecha anular(UsuarioActual usuario, UUID id, String motivo);
 }

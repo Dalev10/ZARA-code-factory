@@ -43,7 +43,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
- * Criterios de HU-40 (registrar venta) y del escenario "tiempo real" del plan, de extremo
+ * Criterios de HU-40 a HU-42 (registrar, anular y consultar ventas) y del escenario "tiempo real" del plan, de extremo
  * a extremo contra PostgreSQL real: la venta, el traspaso automático (HU-48) y la ventana
  * de quiebre (HU-45) ya se ven al recibir la respuesta (D-18).
  */
@@ -52,7 +52,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @ActiveProfiles("test")
 @Testcontainers
 @Import(UsuariosDePrueba.class)
-@DisplayName("VentaController (HU-40) y tiempo real")
+@DisplayName("VentaController (HU-40 a HU-42) y tiempo real")
 class VentaControllerTest {
 
     @Container
@@ -240,6 +240,192 @@ class VentaControllerTest {
         assertThat(aLaMano(almacenId) + aLaMano(bodegaId)).isEqualTo(30 - vendidas);
         assertThat(jdbc.queryForObject("SELECT count(*) FROM venta WHERE tienda_id = ?", Long.class, tiendaId))
                 .isEqualTo(vendidas);
+    }
+
+    @Test
+    @DisplayName("""
+            Escenario: anular una línea devuelve el stock y no se anula dos veces (HU-41)
+              Dado un Almacén con 5 unidades y una venta de 2
+              Cuando el supervisor anula la venta con un motivo
+              Entonces la venta queda ANULADA con su motivo y el Almacén vuelve a 5
+              Y una segunda anulación responde la venta ya anulada sin devolver stock otra vez""")
+    void anularUnaLineaDevuelveElStockUnaSolaVez() throws Exception {
+        inventario.cargar(almacenId, varianteId, 5, null);
+        String ventaId = idDeLinea(vender(vendedor, UUID.randomUUID(), 2, false));
+        UsuarioDePrueba supervisor = usuarios.conRol("SUPERVISOR_TIENDA", tiendaId);
+
+        anular("/api/v1/ventas/" + ventaId + "/anular", supervisor, "Error de digitación")
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.lineas[0].estado").value("ANULADA"))
+                .andExpect(jsonPath("$.lineas[0].motivoAnulacion").value("Error de digitación"))
+                .andExpect(jsonPath("$.lineas[0].anuladaPor").value(supervisor.id().toString()));
+        assertThat(aLaMano(almacenId)).isEqualTo(5);
+
+        anular("/api/v1/ventas/" + ventaId + "/anular", supervisor, "Otro intento")
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.lineas[0].motivoAnulacion").value("Error de digitación"));
+        assertThat(aLaMano(almacenId)).isEqualTo(5);
+    }
+
+    @Test
+    @DisplayName("""
+            Escenario: anular una transacción completa es todo o nada (HU-41, D-68)
+              Dada una venta de 2 SKU en la misma transacción (sin forzarSinStock, que es opcional)
+              Cuando el supervisor anula la transacción
+              Entonces ambas líneas quedan ANULADAS y el stock de las dos vuelve""")
+    void anularUnaTransaccionAnulaTodasSusLineas() throws Exception {
+        String otroSku = crearOtraVariante();
+        UUID otraVariante = jdbc.queryForObject("SELECT id FROM variante WHERE sku = ?", UUID.class, otroSku);
+        inventario.cargar(almacenId, varianteId, 5, null);
+        inventario.cargar(almacenId, otraVariante, 5, null);
+        UUID transaccion = UUID.randomUUID();
+        mockMvc.perform(post("/api/v1/ventas")
+                        .header(HttpHeaders.AUTHORIZATION, vendedor.bearer())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"transaccionId": "%s", "tiendaId": "%s", "items": [
+                                  {"sku": "%s", "cantidad": 1, "precioUnitario": 10.00},
+                                  {"sku": "%s", "cantidad": 3, "precioUnitario": 20.00}]}"""
+                                .formatted(transaccion, tiendaId, sku, otroSku)))
+                .andExpect(status().isCreated());
+
+        anular("/api/v1/ventas/transacciones/" + transaccion + "/anular",
+                usuarios.conRol("SUPERVISOR_TIENDA", tiendaId), "Cliente desistió")
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.lineas.length()").value(2))
+                .andExpect(jsonPath("$.lineas[0].estado").value("ANULADA"))
+                .andExpect(jsonPath("$.lineas[1].estado").value("ANULADA"));
+        assertThat(aLaMano(almacenId)).isEqualTo(5);
+        assertThat(jdbc.queryForObject("SELECT a_la_mano FROM inventario WHERE nodo_id = ? AND variante_id = ?",
+                Integer.class, almacenId, otraVariante)).isEqualTo(5);
+    }
+
+    @Test
+    @DisplayName("Anular exige motivo (400), el scope ventas:anular (403) y una tienda asignada (404)")
+    void reglasDeLaAnulacion() throws Exception {
+        inventario.cargar(almacenId, varianteId, 5, null);
+        String ventaId = idDeLinea(vender(vendedor, UUID.randomUUID(), 1, false));
+        String ruta = "/api/v1/ventas/" + ventaId + "/anular";
+
+        anular(ruta, usuarios.conRol("SUPERVISOR_TIENDA", tiendaId), " ").andExpect(status().isBadRequest());
+        anular(ruta, vendedor, "Sin permiso").andExpect(status().isForbidden());
+        anular(ruta, usuarios.conRol("SUPERVISOR_TIENDA", otraTienda()), "Tienda ajena")
+                .andExpect(status().isNotFound());
+        assertThat(aLaMano(almacenId)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("""
+            Escenario: la consulta de ventas respeta el alcance por tienda (HU-42, D-45)
+              Dada una venta registrada en la tienda T
+              Cuando el vendedor de T la consulta por id y en el listado, la ve
+              Y un vendedor de otra tienda recibe 404 en el detalle y un listado vacío al filtrar por T""")
+    void laConsultaDeVentasRespetaElAlcance() throws Exception {
+        inventario.cargar(almacenId, varianteId, 5, null);
+        String ventaId = idDeLinea(vender(vendedor, UUID.randomUUID(), 1, false));
+        UsuarioDePrueba ajeno = usuarios.conRol("VENDEDOR", otraTienda());
+
+        mockMvc.perform(get("/api/v1/ventas/{id}", ventaId).header(HttpHeaders.AUTHORIZATION, vendedor.bearer()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.lineas[0].id").value(ventaId));
+        mockMvc.perform(get("/api/v1/ventas").param("tiendaId", tiendaId.toString())
+                        .header(HttpHeaders.AUTHORIZATION, vendedor.bearer()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content.length()").value(1));
+        mockMvc.perform(get("/api/v1/ventas/{id}", ventaId).header(HttpHeaders.AUTHORIZATION, ajeno.bearer()))
+                .andExpect(status().isNotFound());
+        mockMvc.perform(get("/api/v1/ventas").param("tiendaId", tiendaId.toString())
+                        .header(HttpHeaders.AUTHORIZATION, ajeno.bearer()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content.length()").value(0));
+    }
+
+    @Test
+    @DisplayName("Un cuerpo ilegible o sin cantidad responde 400 con un mensaje, no vacío")
+    void cuerpoInvalidoRespondeConMensaje() throws Exception {
+        mockMvc.perform(post("/api/v1/ventas").header(HttpHeaders.AUTHORIZATION, vendedor.bearer())
+                        .contentType(MediaType.APPLICATION_JSON).content("{\"transaccionId\": "))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.mensaje").isNotEmpty());
+        mockMvc.perform(post("/api/v1/ventas").header(HttpHeaders.AUTHORIZATION, vendedor.bearer())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"transaccionId": "%s", "tiendaId": "%s",
+                                 "items": [{"sku": "%s", "precioUnitario": 10.00}]}"""
+                                .formatted(UUID.randomUUID(), tiendaId, sku)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.mensaje").value(org.hamcrest.Matchers.containsString("cantidad")));
+    }
+
+    @Test
+    @DisplayName("""
+            Escenario: la reconciliación reconstruye ventanas desde el kardex y es idempotente (HU-46, D-49)
+              Dada una variante que se agotó con una venta y se repuso con un ajuste
+              Y la ventana de quiebre se perdió (simula un listener que falló)
+              Cuando se reconcilia la tienda, se crea una ventana cerrada con las fechas del kardex
+              Y al reconciliar otra vez no cambia nada""")
+    void laReconciliacionEsIdempotente() throws Exception {
+        inventario.cargar(almacenId, varianteId, 2, null);
+        vender(vendedor, UUID.randomUUID(), 2, false).andExpect(status().isCreated());
+        inventario.aplicarAjuste(almacenId, varianteId, 3,
+                com.codefactory.supplychain.inventario.domain.model.MotivoAjuste.INGRESO_MANUAL, null, null);
+        jdbc.update("DELETE FROM ventana_quiebre WHERE tienda_id = ?", tiendaId);
+
+        reconciliar().andExpect(status().isOk())
+                .andExpect(jsonPath("$.creadas").value(1))
+                .andExpect(jsonPath("$.sinCambios").value(0));
+        reconciliar().andExpect(status().isOk())
+                .andExpect(jsonPath("$.creadas").value(0))
+                .andExpect(jsonPath("$.cerradas").value(0))
+                .andExpect(jsonPath("$.corregidas").value(0))
+                .andExpect(jsonPath("$.sinCambios").value(1));
+
+        assertThat(jdbc.queryForMap("""
+                SELECT v.fecha_inicio = (SELECT ocurrido_en FROM movimiento_inventario
+                                          WHERE nodo_id = ? AND tipo = 'VENTA') AS inicio_del_kardex,
+                       v.fecha_fin = (SELECT ocurrido_en FROM movimiento_inventario
+                                       WHERE nodo_id = ? AND tipo = 'AJUSTE') AS fin_del_kardex,
+                       v.motivo_cierre
+                  FROM ventana_quiebre v WHERE v.tienda_id = ?""", almacenId, almacenId, tiendaId))
+                .containsEntry("inicio_del_kardex", true)
+                .containsEntry("fin_del_kardex", true)
+                .containsEntry("motivo_cierre", "REPOSICION");
+    }
+
+    private ResultActions reconciliar() throws Exception {
+        return mockMvc.perform(post("/api/v1/ventanas-quiebre/reconciliar")
+                .header(HttpHeaders.AUTHORIZATION, admin.bearer())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"tiendaId\": \"%s\"}".formatted(tiendaId)));
+    }
+
+    private ResultActions anular(String ruta, UsuarioDePrueba usuario, String motivo) throws Exception {
+        return mockMvc.perform(post(ruta)
+                .header(HttpHeaders.AUTHORIZATION, usuario.bearer())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"motivo\": \"%s\"}".formatted(motivo)));
+    }
+
+    private static String idDeLinea(ResultActions venta) throws Exception {
+        String json = venta.andExpect(status().isCreated()).andReturn().getResponse().getContentAsString();
+        return JsonPath.read(json, "$.lineas[0].id");
+    }
+
+    private UUID otraTienda() {
+        UUID id = UUID.randomUUID();
+        jdbc.update("INSERT INTO tienda (id, nombre, ubicacion) VALUES (?, ?, 'Cali')", id, "Tienda " + id);
+        return id;
+    }
+
+    private String crearOtraVariante() {
+        UUID categoriaId = UUID.randomUUID();
+        jdbc.update("INSERT INTO categoria (id, nombre) VALUES (?, ?)", categoriaId, "Categoría " + categoriaId);
+        UUID templateId = UUID.randomUUID();
+        jdbc.update("INSERT INTO template (id, categoria_id, nombre) VALUES (?, ?, ?)",
+                templateId, categoriaId, "Template " + templateId);
+        String otroSku = "SKU-" + UUID.randomUUID();
+        jdbc.update("INSERT INTO variante (id, template_id, sku) VALUES (?, ?, ?)", UUID.randomUUID(), templateId, otroSku);
+        return otroSku;
     }
 
     private ResultActions vender(UsuarioDePrueba usuario, UUID transaccion, int cantidad, boolean forzar)

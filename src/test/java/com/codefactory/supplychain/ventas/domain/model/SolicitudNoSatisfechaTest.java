@@ -83,29 +83,36 @@ class SolicitudNoSatisfechaTest {
         SolicitudNoSatisfecha solicitud = SolicitudNoSatisfecha.registrar(
                 tiendaId, varianteId, 2, 0, ahora, usuarioId, "req-2");
         UUID anuladaPor = UUID.randomUUID();
-        solicitud.anular(anuladaPor, ahora.plusSeconds(30));
+        solicitud.anular(anuladaPor, ahora.plusSeconds(30), "  Cliente desistió  ");
 
         assertThat(solicitud.getEstado()).isEqualTo(EstadoSolicitud.ANULADA);
+        assertThat(solicitud.getMotivoAnulacion()).isEqualTo("Cliente desistió");
         assertThat(solicitud.getAnuladaPor()).isEqualTo(anuladaPor);
         assertThat(solicitud.getAnuladaEn()).isEqualTo(ahora.plusSeconds(30));
-        assertThatThrownBy(() -> solicitud.anular(anuladaPor, ahora.plusSeconds(60)))
+        assertThatThrownBy(() -> solicitud.anular(anuladaPor, ahora.plusSeconds(60), "Otro"))
                 .isInstanceOf(SolicitudYaAnuladaException.class);
 
         SolicitudNoSatisfecha reconstituida = SolicitudNoSatisfecha.reconstituir(
                 solicitud.getId(), tiendaId, varianteId, 2, 0, ahora, usuarioId, "req-2",
-                EstadoSolicitud.ANULADA, anuladaPor, ahora.plusSeconds(30));
+                EstadoSolicitud.ANULADA, anuladaPor, ahora.plusSeconds(30), "Cliente desistió");
         assertThat(reconstituida.getId()).isEqualTo(solicitud.getId());
         assertThat(reconstituida.getEstado()).isEqualTo(EstadoSolicitud.ANULADA);
         assertThat(reconstituida.getAnuladaPor()).isEqualTo(anuladaPor);
         assertThat(reconstituida.getAnuladaEn()).isEqualTo(ahora.plusSeconds(30));
+        assertThat(reconstituida.getMotivoAnulacion()).isEqualTo("Cliente desistió");
     }
 
     @Test
-    void requiereUsuarioParaAnular() {
+    void requiereUsuarioYMotivoParaAnular() {
         SolicitudNoSatisfecha solicitud = SolicitudNoSatisfecha.registrar(
                 tiendaId, varianteId, 1, null, ahora, usuarioId, "req-3");
 
-        assertThatThrownBy(() -> solicitud.anular(null, ahora))
+        assertThatThrownBy(() -> solicitud.anular(null, ahora, "Motivo"))
                 .isInstanceOf(SolicitudInvalidaException.class);
+        assertThatThrownBy(() -> solicitud.anular(usuarioId, ahora, " "))
+                .isInstanceOf(SolicitudInvalidaException.class);
+        assertThatThrownBy(() -> solicitud.anular(usuarioId, ahora, "x".repeat(501)))
+                .isInstanceOf(SolicitudInvalidaException.class);
+        assertThat(solicitud.getEstado()).isEqualTo(EstadoSolicitud.ACTIVA);
     }
 }
