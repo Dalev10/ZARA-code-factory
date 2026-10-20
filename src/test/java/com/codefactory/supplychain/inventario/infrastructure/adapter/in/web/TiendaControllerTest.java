@@ -29,6 +29,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import java.time.Instant;
 import java.util.UUID;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -54,6 +55,9 @@ class TiendaControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
+
+    @Autowired
+    private org.springframework.jdbc.core.JdbcTemplate jdbc;
 
     @Autowired
     private UsuarioRepositoryPort usuarioRepositoryPort;
@@ -137,6 +141,55 @@ class TiendaControllerTest {
                 .andExpect(jsonPath("$.nombre").value("Tienda Centro"))
                 .andExpect(jsonPath("$.estado").value("ACTIVA"))
                 .andExpect(jsonPath("$.id").exists());
+    }
+
+    /**
+     * Escenario: la tienda expone los nodos que pide su inventario
+     *   Cuando se crea una tienda, la respuesta trae almacenId y bodegaId
+     *   Y el GET por id devuelve los mismos
+     *   Y con almacenId se hace la carga inicial del Almacén por la API
+     */
+    @Test
+    void crearYConsultarDevuelvenLosNodosDeLaTienda() throws Exception {
+        String token = loguearComoAdmin("admin-nodos-tienda@ejemplo.com");
+        String creada = mockMvc.perform(post("/api/v1/tiendas")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"nombre": "Tienda Con Nodos", "ubicacion": "Bogotá"}
+                                """))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.almacenId").exists())
+                .andExpect(jsonPath("$.bodegaId").exists())
+                .andReturn().getResponse().getContentAsString();
+        String id = com.jayway.jsonpath.JsonPath.read(creada, "$.id");
+        String almacenId = com.jayway.jsonpath.JsonPath.read(creada, "$.almacenId");
+        String bodegaId = com.jayway.jsonpath.JsonPath.read(creada, "$.bodegaId");
+
+        mockMvc.perform(get("/api/v1/tiendas/" + id).header(HttpHeaders.AUTHORIZATION, "Bearer " + token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.almacenId").value(almacenId))
+                .andExpect(jsonPath("$.bodegaId").value(bodegaId));
+        assertThat(jdbc.queryForObject("SELECT tipo FROM nodo WHERE id = ?::uuid", String.class, almacenId))
+                .isEqualTo("ALMACEN");
+
+        String sku = crearVariante();
+        mockMvc.perform(post("/api/v1/nodos/" + almacenId + "/inventario/carga-inicial")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"items\": [{\"sku\": \"%s\", \"cantidad\": 4}]}".formatted(sku)))
+                .andExpect(status().isCreated());
+    }
+
+    private String crearVariante() {
+        UUID categoriaId = UUID.randomUUID();
+        jdbc.update("INSERT INTO categoria (id, nombre) VALUES (?, ?)", categoriaId, "Categoría " + categoriaId);
+        UUID templateId = UUID.randomUUID();
+        jdbc.update("INSERT INTO template (id, categoria_id, nombre) VALUES (?, ?, ?)",
+                templateId, categoriaId, "Template " + templateId);
+        String sku = "SKU-" + UUID.randomUUID();
+        jdbc.update("INSERT INTO variante (id, template_id, sku) VALUES (?, ?, ?)", UUID.randomUUID(), templateId, sku);
+        return sku;
     }
 
     @Test

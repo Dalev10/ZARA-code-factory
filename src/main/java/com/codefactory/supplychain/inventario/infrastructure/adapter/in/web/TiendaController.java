@@ -3,6 +3,7 @@ package com.codefactory.supplychain.inventario.infrastructure.adapter.in.web;
 import com.codefactory.supplychain.inventario.application.port.in.TiendaUseCase;
 import com.codefactory.supplychain.inventario.domain.model.Tienda;
 import com.codefactory.supplychain.inventario.infrastructure.adapter.in.web.dto.TiendaRequest;
+import com.codefactory.supplychain.inventario.infrastructure.adapter.in.web.dto.TiendaConNodosResponse;
 import com.codefactory.supplychain.inventario.infrastructure.adapter.in.web.dto.TiendaResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -24,7 +25,9 @@ import java.util.UUID;
 
 /**
  * "Eliminar" una tienda es desactivarla (estado), nunca un DELETE físico —
- * ventas/inventario/etc. la referencian sin ON DELETE CASCADE.
+ * ventas/inventario/etc. la referencian sin ON DELETE CASCADE. Crear y consultar
+ * por id devuelven los ids de sus nodos Almacén y Bodega, necesarios para operar
+ * su inventario.
  *
  * Módulo: inventario — Red de nodos (CD, Tienda/Almacén, Bodega_Tienda) e inventario polimórfico sobre ellos.
  */
@@ -38,9 +41,8 @@ public class TiendaController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public TiendaResponse crear(@Valid @RequestBody TiendaRequest request) {
-        Tienda tienda = tiendaUseCase.crear(request.nombre(), request.ubicacion());
-        return TiendaResponse.desde(tienda);
+    public TiendaConNodosResponse crear(@Valid @RequestBody TiendaRequest request) {
+        return conNodos(tiendaUseCase.crear(request.nombre(), request.ubicacion()));
     }
 
     @GetMapping
@@ -49,8 +51,8 @@ public class TiendaController {
     }
 
     @GetMapping("/{id}")
-    public TiendaResponse obtener(@PathVariable UUID id) {
-        return TiendaResponse.desde(tiendaUseCase.obtenerPorId(id));
+    public TiendaConNodosResponse obtener(@PathVariable UUID id) {
+        return conNodos(tiendaUseCase.obtenerPorId(id));
     }
 
     @PutMapping("/{id}")
@@ -68,5 +70,11 @@ public class TiendaController {
     @PutMapping("/{id}/activar")
     public TiendaResponse activar(@PathVariable UUID id) {
         return TiendaResponse.desde(tiendaUseCase.activar(id));
+    }
+
+    private TiendaConNodosResponse conNodos(Tienda tienda) {
+        return TiendaConNodosResponse.desde(tienda,
+                tiendaUseCase.buscarAlmacen(tienda.getId()).orElse(null),
+                tiendaUseCase.buscarBodega(tienda.getId()).orElse(null));
     }
 }
