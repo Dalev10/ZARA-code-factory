@@ -5,6 +5,7 @@ import com.codefactory.supplychain.ventas.application.port.in.SolicitudNoSatisfe
 import com.codefactory.supplychain.ventas.application.port.in.SolicitudNoSatisfechaUseCase.RegistrarComando;
 import com.codefactory.supplychain.ventas.application.port.in.SolicitudNoSatisfechaUseCase.ResultadoRegistro;
 import com.codefactory.supplychain.ventas.domain.model.EstadoSolicitud;
+import com.codefactory.supplychain.ventas.infrastructure.adapter.in.web.dto.AnularSolicitudRequest;
 import com.codefactory.supplychain.ventas.infrastructure.adapter.in.web.dto.RegistrarSolicitudRequest;
 import com.codefactory.supplychain.ventas.infrastructure.adapter.in.web.dto.SolicitudNoSatisfechaResponse;
 import com.codefactory.supplychain.shared.security.UsuarioActual;
@@ -14,7 +15,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.data.domain.Sort;
 import org.springframework.format.annotation.DateTimeFormat;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -80,8 +80,8 @@ public class SolicitudNoSatisfechaController {
     @PostMapping("/{id}/anular")
     @PreAuthorize("hasAuthority('ventas:anular')")
     public ResponseEntity<SolicitudNoSatisfechaResponse> anular(@AuthenticationPrincipal UsuarioActual usuario,
-                                                                @PathVariable UUID id) {
-        return ResponseEntity.status(HttpStatus.OK)
-                .body(SolicitudNoSatisfechaResponse.desde(useCase.anular(usuario, id)));
+                                                                @PathVariable UUID id,
+                                                                @Valid @RequestBody AnularSolicitudRequest request) {
+        return ResponseEntity.ok(SolicitudNoSatisfechaResponse.desde(useCase.anular(usuario, id, request.motivo())));
     }
 }

@@ -62,4 +62,7 @@ public class SolicitudNoSatisfechaEntity {
 
     @Column(name = "anulada_en")
     private Instant anuladaEn;
+
+    @Column(name = "motivo_anulacion", length = 500)
+    private String motivoAnulacion;
 }

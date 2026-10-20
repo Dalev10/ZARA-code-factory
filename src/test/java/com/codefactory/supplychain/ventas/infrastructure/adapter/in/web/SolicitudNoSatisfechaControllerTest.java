@@ -117,7 +117,8 @@ class SolicitudNoSatisfechaControllerTest {
             Escenario: consultar y anular siguen las reglas de ventas (HU-44, D-44, D-45)
               Dada una solicitud de la tienda T
               Entonces su vendedor la ve en el listado y por id; un vendedor de otra tienda recibe 404
-              Y el supervisor la anula dejando su auditoría; anularla otra vez responde 409""")
+              Y el supervisor la anula con un motivo obligatorio y su auditoría
+              Y anularla otra vez devuelve la anulación original, como la venta""")
     void consultarYAnular() throws Exception {
         String id = id(registrar(vendedor, "clave-" + UUID.randomUUID(), 1).andExpect(status().isCreated()));
         UsuarioDePrueba ajeno = usuarios.conRol("VENDEDOR", crearTienda());
@@ -130,12 +131,16 @@ class SolicitudNoSatisfechaControllerTest {
         mockMvc.perform(get(RUTA + "/{id}", id).header(HttpHeaders.AUTHORIZATION, ajeno.bearer()))
                 .andExpect(status().isNotFound());
 
-        anular(vendedor, id).andExpect(status().isForbidden());
-        anular(supervisor, id)
+        anular(vendedor, id, "Sin permiso").andExpect(status().isForbidden());
+        anular(supervisor, id, " ").andExpect(status().isBadRequest());
+        anular(supervisor, id, "Registro duplicado")
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.estado").value("ANULADA"))
+                .andExpect(jsonPath("$.motivoAnulacion").value("Registro duplicado"))
                 .andExpect(jsonPath("$.anuladaPor").value(supervisor.id().toString()));
-        anular(supervisor, id).andExpect(status().isConflict());
+        anular(supervisor, id, "Otro intento")
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.motivoAnulacion").value("Registro duplicado"));
     }
 
     private ResultActions registrar(UsuarioDePrueba usuario, String clave, int cantidad) throws Exception {
@@ -144,8 +149,10 @@ class SolicitudNoSatisfechaControllerTest {
                 .content(cuerpo(tiendaId, varianteId, clave, cantidad)));
     }
 
-    private ResultActions anular(UsuarioDePrueba usuario, String id) throws Exception {
-        return mockMvc.perform(post(RUTA + "/{id}/anular", id).header(HttpHeaders.AUTHORIZATION, usuario.bearer()));
+    private ResultActions anular(UsuarioDePrueba usuario, String id, String motivo) throws Exception {
+        return mockMvc.perform(post(RUTA + "/{id}/anular", id).header(HttpHeaders.AUTHORIZATION, usuario.bearer())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"motivo\": \"%s\"}".formatted(motivo)));
     }
 
     private static String cuerpo(UUID tienda, UUID variante, String clave, int cantidad) {

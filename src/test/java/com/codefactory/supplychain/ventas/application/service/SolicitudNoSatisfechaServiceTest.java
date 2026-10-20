@@ -34,6 +34,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -167,10 +168,18 @@ class SolicitudNoSatisfechaServiceTest {
         when(repositorio.guardar(solicitud)).thenReturn(solicitud);
 
         assertThat(servicio.obtener(usuario, solicitud.getId())).isSameAs(solicitud);
-        assertThat(servicio.anular(usuario, solicitud.getId())).isSameAs(solicitud);
+        assertThat(servicio.anular(usuario, solicitud.getId(), "Error de registro")).isSameAs(solicitud);
         assertThat(solicitud.getEstado()).isEqualTo(EstadoSolicitud.ANULADA);
         assertThat(solicitud.getAnuladaPor()).isEqualTo(usuarioId);
         assertThat(solicitud.getAnuladaEn()).isEqualTo(AHORA);
+        assertThat(solicitud.getMotivoAnulacion()).isEqualTo("Error de registro");
+
+        // Igual que la venta (D-44): repetir la anulación devuelve la original sin guardar otra vez.
+        assertThat(servicio.anular(usuario, solicitud.getId(), "Otro motivo").getMotivoAnulacion())
+                .isEqualTo("Error de registro");
+        verify(repositorio, times(1)).guardar(solicitud);
+        assertThatThrownBy(() -> servicio.anular(usuario, solicitud.getId(), " "))
+                .isInstanceOf(SolicitudInvalidaException.class);
 
         assertThatThrownBy(() -> servicio.obtener(
                 new UsuarioActual(UUID.randomUUID(), Set.of(), Set.of()), solicitud.getId()))

@@ -9,11 +9,11 @@ import java.util.UUID;
 public record SolicitudNoSatisfechaResponse(UUID id, UUID tiendaId, UUID varianteId, int cantidad,
                                             Integer stockSistema, Instant registradaEn, UUID registradoPor,
                                             String claveIdempotencia, EstadoSolicitud estado,
-                                            UUID anuladaPor, Instant anuladaEn) {
+                                            UUID anuladaPor, Instant anuladaEn, String motivoAnulacion) {
 
     public static SolicitudNoSatisfechaResponse desde(SolicitudNoSatisfecha s) {
         return new SolicitudNoSatisfechaResponse(s.getId(), s.getTiendaId(), s.getVarianteId(), s.getCantidad(),
                 s.getStockSistema(), s.getRegistradaEn(), s.getRegistradoPor(), s.getClaveIdempotencia(),
-                s.getEstado(), s.getAnuladaPor(), s.getAnuladaEn());
+                s.getEstado(), s.getAnuladaPor(), s.getAnuladaEn(), s.getMotivoAnulacion());
     }
 }
