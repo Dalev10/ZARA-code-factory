@@ -357,6 +357,48 @@ class VentaControllerTest {
                 .andExpect(jsonPath("$.mensaje").value(org.hamcrest.Matchers.containsString("cantidad")));
     }
 
+    @Test
+    @DisplayName("""
+            Escenario: la reconciliación reconstruye ventanas desde el kardex y es idempotente (HU-46, D-49)
+              Dada una variante que se agotó con una venta y se repuso con un ajuste
+              Y la ventana de quiebre se perdió (simula un listener que falló)
+              Cuando se reconcilia la tienda, se crea una ventana cerrada con las fechas del kardex
+              Y al reconciliar otra vez no cambia nada""")
+    void laReconciliacionEsIdempotente() throws Exception {
+        inventario.cargar(almacenId, varianteId, 2, null);
+        vender(vendedor, UUID.randomUUID(), 2, false).andExpect(status().isCreated());
+        inventario.aplicarAjuste(almacenId, varianteId, 3,
+                com.codefactory.supplychain.inventario.domain.model.MotivoAjuste.INGRESO_MANUAL, null, null);
+        jdbc.update("DELETE FROM ventana_quiebre WHERE tienda_id = ?", tiendaId);
+
+        reconciliar().andExpect(status().isOk())
+                .andExpect(jsonPath("$.creadas").value(1))
+                .andExpect(jsonPath("$.sinCambios").value(0));
+        reconciliar().andExpect(status().isOk())
+                .andExpect(jsonPath("$.creadas").value(0))
+                .andExpect(jsonPath("$.cerradas").value(0))
+                .andExpect(jsonPath("$.corregidas").value(0))
+                .andExpect(jsonPath("$.sinCambios").value(1));
+
+        assertThat(jdbc.queryForMap("""
+                SELECT v.fecha_inicio = (SELECT ocurrido_en FROM movimiento_inventario
+                                          WHERE nodo_id = ? AND tipo = 'VENTA') AS inicio_del_kardex,
+                       v.fecha_fin = (SELECT ocurrido_en FROM movimiento_inventario
+                                       WHERE nodo_id = ? AND tipo = 'AJUSTE') AS fin_del_kardex,
+                       v.motivo_cierre
+                  FROM ventana_quiebre v WHERE v.tienda_id = ?""", almacenId, almacenId, tiendaId))
+                .containsEntry("inicio_del_kardex", true)
+                .containsEntry("fin_del_kardex", true)
+                .containsEntry("motivo_cierre", "REPOSICION");
+    }
+
+    private ResultActions reconciliar() throws Exception {
+        return mockMvc.perform(post("/api/v1/ventanas-quiebre/reconciliar")
+                .header(HttpHeaders.AUTHORIZATION, admin.bearer())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"tiendaId\": \"%s\"}".formatted(tiendaId)));
+    }
+
     private ResultActions anular(String ruta, UsuarioDePrueba usuario, String motivo) throws Exception {
         return mockMvc.perform(post(ruta)
                 .header(HttpHeaders.AUTHORIZATION, usuario.bearer())

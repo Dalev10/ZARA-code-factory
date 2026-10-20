@@ -438,6 +438,34 @@ class InventarioIntegracionTest {
                 .containsExactly(org.assertj.core.groups.Tuple.tuple(nodoCd, 7));
     }
 
+    @Test
+    @DisplayName("""
+            Escenario: la base rechaza magnitudes incoherentes (HU-36, D-21, D-22)
+              Dada una fila de inventario con 5 unidades
+              Cuando se intenta guardar un disponible o un pronosticado que no corresponde a a_la_mano
+              Entonces la base rechaza el cambio y la fila queda igual""")
+    void laBaseRechazaMagnitudesIncoherentes() {
+        inventarioUseCase.cargar(nodoId, varianteId, 5, null);
+
+        assertThatThrownBy(() -> jdbc.update(
+                "UPDATE inventario SET disponible_para_uso = 6 WHERE nodo_id = ? AND variante_id = ?", nodoId, varianteId))
+                .isInstanceOf(DataIntegrityViolationException.class)
+                .hasMessageContaining("chk_inventario_disponible_coherente");
+        assertThatThrownBy(() -> jdbc.update(
+                "UPDATE inventario SET pronosticado = 9 WHERE nodo_id = ? AND variante_id = ?", nodoId, varianteId))
+                .isInstanceOf(DataIntegrityViolationException.class)
+                .hasMessageContaining("chk_inventario_pronosticado_coherente");
+        assertThatThrownBy(() -> jdbc.update(
+                "UPDATE inventario SET entrante = 1, pronosticado = 6 WHERE nodo_id = ? AND variante_id = ?",
+                nodoId, varianteId))
+                .isInstanceOf(DataIntegrityViolationException.class)
+                .hasMessageContaining("chk_inventario_sin_entrante");
+        assertThat(jdbc.queryForMap(
+                "SELECT a_la_mano, disponible_para_uso, pronosticado FROM inventario WHERE nodo_id = ? AND variante_id = ?",
+                nodoId, varianteId))
+                .containsEntry("a_la_mano", 5).containsEntry("disponible_para_uso", 5).containsEntry("pronosticado", 5);
+    }
+
     private UUID crearAlmacen() {
         jdbc.update("INSERT INTO tienda (id, nombre, ubicacion) VALUES (?, ?, 'Medellín')",
                 tiendaId, "Tienda Inventario " + tiendaId);
