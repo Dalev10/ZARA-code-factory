@@ -1,6 +1,7 @@
 package com.codefactory.supplychain.catalogo.application.service;
 
 import com.codefactory.supplychain.catalogo.application.exception.CatalogoRecursoNoEncontradoException;
+import com.codefactory.supplychain.catalogo.application.exception.CategoriaReservadaException;
 import com.codefactory.supplychain.catalogo.application.exception.CategoriaYaExisteException;
 import com.codefactory.supplychain.catalogo.application.port.out.CategoriaRepository;
 import com.codefactory.supplychain.catalogo.domain.exception.CategoriaInvalidaException;
@@ -113,9 +114,31 @@ class CategoriaServiceTest {
     @Test
     void eliminarRechazaUnaCategoriaInexistente() {
         UUID id = UUID.randomUUID();
-        when(categoriaRepository.existsById(id)).thenReturn(false);
+        when(categoriaRepository.findById(id)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> servicio.eliminar(id)).isInstanceOf(CatalogoRecursoNoEncontradoException.class);
+        verify(categoriaRepository, never()).deleteById(any());
+    }
+
+    /**
+     * Escenario: SIN_CATEGORIA es un nombre reservado (D-52)
+     *   No se puede crear otra categoría con ese nombre (sin distinguir mayúsculas)
+     *   Ni renombrar SIN_CATEGORIA, ni renombrar otra hacia ese nombre, ni eliminarla
+     */
+    @Test
+    void sinCategoriaEsUnNombreReservado() {
+        Categoria reservada = Categoria.reconstruir(UUID.randomUUID(), Categoria.NOMBRE_RESERVADO);
+        Categoria otra = Categoria.reconstruir(UUID.randomUUID(), "Camisas");
+        when(categoriaRepository.findById(reservada.getId())).thenReturn(Optional.of(reservada));
+        when(categoriaRepository.findById(otra.getId())).thenReturn(Optional.of(otra));
+
+        assertThatThrownBy(() -> servicio.crear(" sin_categoria ")).isInstanceOf(CategoriaReservadaException.class);
+        assertThatThrownBy(() -> servicio.modificar(reservada.getId(), "Camisas"))
+                .isInstanceOf(CategoriaReservadaException.class);
+        assertThatThrownBy(() -> servicio.modificar(otra.getId(), "SIN_CATEGORIA"))
+                .isInstanceOf(CategoriaReservadaException.class);
+        assertThatThrownBy(() -> servicio.eliminar(reservada.getId())).isInstanceOf(CategoriaReservadaException.class);
+        verify(categoriaRepository, never()).save(any());
         verify(categoriaRepository, never()).deleteById(any());
     }
 }
