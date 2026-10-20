@@ -1,8 +1,12 @@
 package com.codefactory.supplychain.shared.security;
 
+import jakarta.servlet.DispatcherType;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -10,8 +14,11 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+
+import java.nio.charset.StandardCharsets;
 
 /**
  * Configuración de Spring Security usada como infraestructura (PasswordEncoder,
@@ -34,6 +41,8 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @RequiredArgsConstructor
 public class SecurityConfig {
 
+    private static final String CUERPO_NO_AUTENTICADO = "{\"mensaje\":\"Se requiere autenticación\"}";
+
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
 
     @Bean
@@ -50,13 +59,34 @@ public class SecurityConfig {
                 .formLogin(form -> form.disable())
                 .httpBasic(basic -> basic.disable())
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+                .exceptionHandling(errores -> errores.authenticationEntryPoint(respuestaNoAutenticado()))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/v1/auth/login", "/api/v1/auth/login/mfa",
                                 "/api/v1/auth/refresh", "/api/v1/auth/logout")
                         .permitAll()
                         .requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**").permitAll()
                         .requestMatchers("/actuator/health").permitAll()
+                        // El despacho de error solo informa el estado del request original, que ya
+                        // pasó por estas reglas; sin esto, un 404 o 405 llega al cliente como 401.
+                        .dispatcherTypeMatchers(DispatcherType.ERROR).permitAll()
                         .anyRequest().authenticated())
                 .build();
+    }
+
+    /**
+     * 401 para todo request protegido sin un usuario autenticado: sin token, token inválido
+     * o vencido, o usuario que ya no está ACTIVO. Es la misma respuesta para los cuatro
+     * motivos a propósito, para no revelar si un usuario existe ni en qué estado está. Sin
+     * esto Spring responde 403, que el cliente no puede distinguir de "sin permiso" (403 con
+     * cuerpo, ver GlobalExceptionHandler) y no sabría cuándo refrescar el token.
+     */
+    private static AuthenticationEntryPoint respuestaNoAutenticado() {
+        return (request, response, excepcion) -> {
+            response.setStatus(HttpStatus.UNAUTHORIZED.value());
+            response.setHeader(HttpHeaders.WWW_AUTHENTICATE, "Bearer");
+            response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+            response.setCharacterEncoding(StandardCharsets.UTF_8.name());
+            response.getWriter().write(CUERPO_NO_AUTENTICADO);
+        };
     }
 }

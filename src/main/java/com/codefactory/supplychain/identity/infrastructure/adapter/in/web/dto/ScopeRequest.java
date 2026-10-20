@@ -15,5 +15,10 @@ public record ScopeRequest(
         @Size(max = 255, message = "la descripción no puede superar 255 caracteres")
         String descripcion,
 
-        boolean sensible) {
+        Boolean sensible) {
+
+    /** {@code sensible} es opcional: ausente equivale a {@code false}. */
+    public ScopeRequest {
+        sensible = Boolean.TRUE.equals(sensible);
+    }
 }

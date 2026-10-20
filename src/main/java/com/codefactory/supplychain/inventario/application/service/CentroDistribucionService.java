@@ -2,6 +2,7 @@ package com.codefactory.supplychain.inventario.application.service;
 
 import com.codefactory.supplychain.inventario.application.dto.CentroDistribucionConNodo;
 import com.codefactory.supplychain.inventario.application.port.in.CentroDistribucionUseCase;
+import com.codefactory.supplychain.inventario.application.port.in.PrioridadTiendaCdUseCase;
 import com.codefactory.supplychain.inventario.application.port.out.CentroDistribucionRepository;
 import com.codefactory.supplychain.inventario.application.port.out.NodoRepositoryPort;
 import com.codefactory.supplychain.inventario.domain.exception.CentroDistribucionDuplicadoException;
@@ -25,6 +26,7 @@ public class CentroDistribucionService implements CentroDistribucionUseCase {
 
     private final CentroDistribucionRepository centroDistribucionRepository;
     private final NodoRepositoryPort nodoRepositoryPort;
+    private final PrioridadTiendaCdUseCase prioridadTiendaCdUseCase;
 
     @Override
     @Transactional
@@ -57,6 +59,7 @@ public class CentroDistribucionService implements CentroDistribucionUseCase {
     @Transactional
     public void eliminarCentroDistribucion(UUID id) {
         obtenerCentroDistribucionPorId(id);
+        prioridadTiendaCdUseCase.verificarQueNoEstaEnUso(id);
         // El CD siempre tiene su Nodo asociado (aprovisionado en
         // crearCentroDistribucion); hay que eliminarlo primero para no violar
         // la FK nodo.cd_id (HU-22).

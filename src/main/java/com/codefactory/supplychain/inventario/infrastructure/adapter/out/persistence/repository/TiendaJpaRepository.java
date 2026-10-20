@@ -1,8 +1,10 @@
 package com.codefactory.supplychain.inventario.infrastructure.adapter.out.persistence.repository;
 
+import com.codefactory.supplychain.inventario.domain.model.EstadoTienda;
 import com.codefactory.supplychain.inventario.infrastructure.adapter.out.persistence.entity.TiendaEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -11,4 +13,6 @@ import java.util.UUID;
 public interface TiendaJpaRepository extends JpaRepository<TiendaEntity, UUID> {
 
     boolean existsByNombre(String nombre);
+
+    List<TiendaEntity> findByEstado(EstadoTienda estado);
 }

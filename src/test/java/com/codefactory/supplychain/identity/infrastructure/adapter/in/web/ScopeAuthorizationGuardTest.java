@@ -33,6 +33,8 @@ import java.util.UUID;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
@@ -42,6 +44,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * JwtAuthenticationFilter resuelve los scopes del usuario en cada request en
  * vez de embeberlos en el JWT al emitirlo.
  *
+ * HU-30: lo mismo vale para el estado del usuario (desactivarlo corta su token
+ * vigente), y todo request sin un usuario autenticado recibe 401, distinto del
+ * 403 de "autenticado pero sin el scope".
+ *
  * @ActiveProfiles("test") carga application-test.yml (secreto JWT fijo de test).
  */
 @SpringBootTest
@@ -49,6 +55,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @ActiveProfiles("test")
 @Testcontainers
 class ScopeAuthorizationGuardTest {
+
+    private static final String PASSWORD = "contraseñaSegura123";
 
     @Container
     @ServiceConnection
@@ -87,17 +95,21 @@ class ScopeAuthorizationGuardTest {
         return body.get("accessToken").asText();
     }
 
+    private Usuario guardarUsuario(UUID id, String email, EstadoUsuario estado) {
+        Usuario usuario = Usuario.reconstruir(id, Email.de(email), "Guard En Vivo",
+                passwordHasherPort.hashear(Password.de(PASSWORD)), estado, 0, null,
+                false, null, null, Instant.now(), Instant.now());
+        return usuarioRepositoryPort.guardar(usuario);
+    }
+
     @Test
     void otorgarYLuegoRevocarUnScopeAplicaDeInmediatoSinReloguear() throws Exception {
         String email = "guard-en-vivo@ejemplo.com";
-        Usuario usuario = Usuario.reconstruir(UUID.randomUUID(), Email.de(email), "Guard En Vivo",
-                passwordHasherPort.hashear(Password.de("contraseñaSegura123")), EstadoUsuario.ACTIVO, 0, null,
-                false, null, null, Instant.now(), Instant.now());
-        usuarioRepositoryPort.guardar(usuario);
+        Usuario usuario = guardarUsuario(UUID.randomUUID(), email, EstadoUsuario.ACTIVO);
         Rol rol = rolRepositoryPort.guardar(Rol.crear("ROL_GUARD_EN_VIVO", null));
         usuarioRolRepositoryPort.asignar(usuario.getId(), rol.getId());
 
-        String token = obtenerAccessToken(email, "contraseñaSegura123");
+        String token = obtenerAccessToken(email, PASSWORD);
 
         // Sin el scope todavía: el endpoint (que exige "usuarios:administrar") rechaza.
         mockMvc.perform(get("/api/v1/usuarios")
@@ -119,5 +131,40 @@ class ScopeAuthorizationGuardTest {
         mockMvc.perform(get("/api/v1/usuarios")
                         .header(HttpHeaders.AUTHORIZATION, "Bearer " + token))
                 .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void desactivarAlUsuarioCortaSuTokenVigenteDeInmediatoCon401() throws Exception {
+        String email = "guard-desactivado@ejemplo.com";
+        UUID usuarioId = UUID.randomUUID();
+        guardarUsuario(usuarioId, email, EstadoUsuario.ACTIVO);
+        String token = obtenerAccessToken(email, PASSWORD);
+
+        // Autenticado, pero sin el scope: 403.
+        mockMvc.perform(get("/api/v1/usuarios")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + token))
+                .andExpect(status().isForbidden());
+
+        // Se desactiva -> el MISMO token, todavía vigente, deja de autenticar: 401.
+        guardarUsuario(usuarioId, email, EstadoUsuario.INACTIVO);
+
+        mockMvc.perform(get("/api/v1/usuarios")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + token))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void unRequestSinTokenRecibe401ConCuerpoJsonYEncabezadoBearer() throws Exception {
+        mockMvc.perform(get("/api/v1/usuarios"))
+                .andExpect(status().isUnauthorized())
+                .andExpect(header().string(HttpHeaders.WWW_AUTHENTICATE, "Bearer"))
+                .andExpect(jsonPath("$.mensaje").value("Se requiere autenticación"));
+    }
+
+    @Test
+    void unTokenInvalidoRecibe401() throws Exception {
+        mockMvc.perform(get("/api/v1/usuarios")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer token-invalido"))
+                .andExpect(status().isUnauthorized());
     }
 }

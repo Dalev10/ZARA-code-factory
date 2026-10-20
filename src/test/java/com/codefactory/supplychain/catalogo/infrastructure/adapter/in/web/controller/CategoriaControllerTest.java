@@ -154,7 +154,7 @@ class CategoriaControllerTest {
                         .content("""
                                 {"nombre": "Sin Auth"}
                                 """))
-                .andExpect(status().is4xxClientError());
+                .andExpect(status().isUnauthorized());
     }
 
     @Test

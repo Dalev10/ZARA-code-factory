@@ -24,6 +24,20 @@
         <java.version>21</java.version>
     </properties>
 
+    <!-- Spring Boot no gestiona la versión de Spring Modulith: el BOM la fija
+         para todos sus artefactos (2.1.x es la línea compilada contra Boot 4.1). -->
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.springframework.modulith</groupId>
+                <artifactId>spring-modulith-bom</artifactId>
+                <version>2.1.1</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
     <dependencies>
 
         <!-- ============================================================
@@ -149,6 +163,22 @@
         </dependency>
 
         <!-- ============================================================
+             HU-28: Spring Modulith verifica en el build la regla del README
+             (ningún módulo usa tipos internos de otro). "api" trae solo las
+             anotaciones (@ApplicationModule, @NamedInterface); "core" hace la
+             verificación y solo se necesita en los tests.
+             ============================================================ -->
+        <dependency>
+            <groupId>org.springframework.modulith</groupId>
+            <artifactId>spring-modulith-api</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.modulith</groupId>
+            <artifactId>spring-modulith-core</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <!-- ============================================================
              Pruebas — cada starter principal trae su companion "-test"
              en Spring Boot 4.x
              ============================================================ -->
@@ -182,6 +212,34 @@
         <dependency>
             <groupId>org.testcontainers</groupId>
             <artifactId>testcontainers-junit-jupiter</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>io.rest-assured</groupId>
+            <artifactId>rest-assured</artifactId>
+            <version>5.5.1</version>
+            <scope>test</scope>
+        </dependency>
+
+        <!-- Fijado a propósito: Spring Boot gestiona Groovy 5.x, pero rest-assured 5.5.1
+             está compilado contra Groovy 4.0.22 (no actualizar sin actualizar rest-assured). -->
+        <dependency>
+            <groupId>org.apache.groovy</groupId>
+            <artifactId>groovy</artifactId>
+            <version>4.0.22</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.groovy</groupId>
+            <artifactId>groovy-xml</artifactId>
+            <version>4.0.22</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.groovy</groupId>
+            <artifactId>groovy-json</artifactId>
+            <version>4.0.22</version>
             <scope>test</scope>
         </dependency>
 
@@ -283,5 +341,100 @@
             </plugin>
         </plugins>
     </build>
+
+    <profiles>
+        <!-- Se activa solo si existe python3: así "mvn test" no falla en máquinas sin
+             ese ejecutable (p. ej. Windows), y en Linux/macOS/CI el resumen sigue apareciendo. -->
+        <profile>
+            <id>resumen-pruebas-unitarias</id>
+            <activation>
+                <file>
+                    <exists>/usr/bin/python3</exists>
+                </file>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.codehaus.mojo</groupId>
+                        <artifactId>exec-maven-plugin</artifactId>
+                        <version>3.5.0</version>
+                        <executions>
+                            <execution>
+                                <id>resumen-pruebas-unitarias</id>
+                                <phase>test</phase>
+                                <goals>
+                                    <goal>exec</goal>
+                                </goals>
+                                <configuration>
+                                    <executable>python3</executable>
+                                    <arguments>
+                                        <argument>${project.basedir}/tools/resumen_pruebas_unitarias.py</argument>
+                                        <argument>${project.build.directory}/surefire-reports</argument>
+                                    </arguments>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+        <profile>
+            <id>casos-qa-sprint1</id>
+            <properties>
+                <jacoco.skip>true</jacoco.skip>
+                <checkstyle.skip>true</checkstyle.skip>
+            </properties>
+            <build>
+                <plugins>
+                    <!-- skipTests va en la configuración de Surefire y no como propiedad:
+                         la propiedad global también apagaría los *IT de Failsafe. -->
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-surefire-plugin</artifactId>
+                        <configuration>
+                            <skipTests>true</skipTests>
+                        </configuration>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-failsafe-plugin</artifactId>
+                        <version>3.5.6</version>
+                        <configuration>
+                            <testFailureIgnore>true</testFailureIgnore>
+                        </configuration>
+                        <executions>
+                            <execution>
+                                <goals>
+                                    <goal>integration-test</goal>
+                                    <goal>verify</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.codehaus.mojo</groupId>
+                        <artifactId>exec-maven-plugin</artifactId>
+                        <version>3.5.0</version>
+                        <executions>
+                            <execution>
+                                <id>reporte-casos-qa-sprint1</id>
+                                <phase>verify</phase>
+                                <goals>
+                                    <goal>exec</goal>
+                                </goals>
+                                <configuration>
+                                    <executable>python3</executable>
+                                    <arguments>
+                                        <argument>${project.basedir}/tools/qa/generar_reporte_casos_prueba.py</argument>
+                                        <argument>${project.build.directory}</argument>
+                                    </arguments>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
 
 </project>

@@ -123,7 +123,7 @@ class RolControllerTest {
                                 {"nombre": "ROL_RECHAZADO", "descripcion": "desc"}
                                 """))
                 .andExpect(status().isForbidden())
-                .andExpect(jsonPath("$.mensaje").value("No tenés permisos para realizar esta acción"));
+                .andExpect(jsonPath("$.mensaje").value("No tiene permisos para realizar esta acción"));
     }
 
     @Test
@@ -133,7 +133,7 @@ class RolControllerTest {
                         .content("""
                                 {"nombre": "ROL_SIN_AUTH", "descripcion": "desc"}
                                 """))
-                .andExpect(status().is4xxClientError());
+                .andExpect(status().isUnauthorized());
     }
 
     @Test

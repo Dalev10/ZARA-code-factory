@@ -3,6 +3,8 @@ package com.codefactory.supplychain.identity.infrastructure.adapter.in.web;
 import com.codefactory.supplychain.identity.application.port.out.PasswordComprometidaPort;
 import com.codefactory.supplychain.identity.application.port.out.PasswordHasherPort;
 import com.codefactory.supplychain.identity.application.port.out.RolRepositoryPort;
+import com.codefactory.supplychain.identity.application.port.out.RolScopeRepositoryPort;
+import com.codefactory.supplychain.identity.application.port.out.ScopeRepositoryPort;
 import com.codefactory.supplychain.identity.application.port.out.UsuarioRepositoryPort;
 import com.codefactory.supplychain.identity.domain.model.Email;
 import com.codefactory.supplychain.identity.domain.model.EstadoUsuario;
@@ -14,6 +16,7 @@ import com.codefactory.supplychain.identity.infrastructure.adapter.out.persisten
 import com.codefactory.supplychain.identity.infrastructure.adapter.out.persistence.repository.UsuarioRolJpaRepository;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.servlet.http.Cookie;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -38,6 +41,7 @@ import java.util.UUID;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -79,6 +83,12 @@ class UsuarioControllerTest {
 
     @Autowired
     private UsuarioRolJpaRepository usuarioRolJpaRepository;
+
+    @Autowired
+    private ScopeRepositoryPort scopeRepositoryPort;
+
+    @Autowired
+    private RolScopeRepositoryPort rolScopeRepositoryPort;
 
     @TestConfiguration
     static class FakeHibpConfig {
@@ -126,7 +136,7 @@ class UsuarioControllerTest {
         mockMvc.perform(post("/api/v1/usuarios")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(registrarUsuarioJson("sin-auth@ejemplo.com", "Sin Auth", "contraseñaSegura123")))
-                .andExpect(status().is4xxClientError());
+                .andExpect(status().isUnauthorized());
     }
 
     @Test
@@ -286,7 +296,140 @@ class UsuarioControllerTest {
                         .header(HttpHeaders.AUTHORIZATION, "Bearer " + token))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.mensaje")
-                        .value("No podés quitar el rol ADMIN al único usuario que lo tiene"));
+                        .value("La operación dejaría al sistema sin ningún usuario ADMIN activo"));
+    }
+
+    @Test
+    void desactivarCortaLaSesionYReactivarNoResucitaLosRefreshTokensViejos() throws Exception {
+        String tokenAdmin = loguearComoAdmin("admin-desactiva@ejemplo.com");
+        Usuario objetivo = crearUsuario("objetivo-desactivar@ejemplo.com");
+        MvcResult login = mockMvc.perform(post("/api/v1/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"email": "objetivo-desactivar@ejemplo.com", "password": "contraseñaSegura123"}
+                                """))
+                .andExpect(status().isOk())
+                .andReturn();
+        String accessDelObjetivo = new ObjectMapper().readTree(login.getResponse().getContentAsString())
+                .get("accessToken").asText();
+        Cookie refreshViejo = login.getResponse().getCookie("refresh_token");
+
+        mockMvc.perform(put("/api/v1/usuarios/" + objetivo.getId() + "/desactivar")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + tokenAdmin))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.estado").value("INACTIVO"));
+
+        // Su access token vigente deja de autenticar (HU-30) y su refresh token ya no sirve.
+        mockMvc.perform(get("/api/v1/usuarios")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + accessDelObjetivo))
+                .andExpect(status().isUnauthorized());
+        mockMvc.perform(post("/api/v1/auth/refresh").cookie(refreshViejo))
+                .andExpect(status().isUnauthorized());
+
+        mockMvc.perform(put("/api/v1/usuarios/" + objetivo.getId() + "/activar")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + tokenAdmin))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.estado").value("ACTIVO"));
+
+        // Reactivado, el refresh token de antes sigue revocado; tiene que volver a loguearse.
+        mockMvc.perform(post("/api/v1/auth/refresh").cookie(refreshViejo))
+                .andExpect(status().isUnauthorized());
+        obtenerAccessToken("objetivo-desactivar@ejemplo.com", "contraseñaSegura123");
+    }
+
+    @Test
+    void unUsuarioNoPuedeDesactivarseASiMismo() throws Exception {
+        String email = "admin-autodesactivacion@ejemplo.com";
+        String token = loguearComoAdmin(email);
+        Usuario admin = usuarioRepositoryPort.buscarPorEmail(Email.de(email)).orElseThrow();
+
+        mockMvc.perform(put("/api/v1/usuarios/" + admin.getId() + "/desactivar")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + token))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.mensaje").value("Un usuario no puede desactivar su propia cuenta"));
+    }
+
+    @Test
+    void desactivarAlUnicoAdministradorActivoSeRechazaCon400() throws Exception {
+        UUID rolAdminId = rolRepositoryPort.buscarPorNombre("ADMIN").orElseThrow().getId();
+        Usuario unicoAdmin = crearUsuario("unico-admin-desactivar@ejemplo.com");
+        usuarioRolJpaRepository.save(new UsuarioRolEntity(new UsuarioRolId(unicoAdmin.getId(), rolAdminId)));
+        // Lo deja como el ÚNICO admin, igual que el test de quitar el rol ADMIN.
+        usuarioRolJpaRepository.deleteAll(usuarioRolJpaRepository.findAll().stream()
+                .filter(e -> e.getId().getRolId().equals(rolAdminId)
+                        && !e.getId().getUsuarioId().equals(unicoAdmin.getId()))
+                .toList());
+        // Quien lo intenta administra usuarios sin ser ADMIN.
+        Usuario gestor = crearUsuario("gestor-usuarios@ejemplo.com");
+        Rol rolGestor = rolRepositoryPort.guardar(Rol.crear("GESTOR_USUARIOS_HU31", null));
+        rolScopeRepositoryPort.asignar(rolGestor.getId(),
+                scopeRepositoryPort.buscarPorCodigo("usuarios:administrar").orElseThrow().getId());
+        usuarioRolJpaRepository.save(new UsuarioRolEntity(new UsuarioRolId(gestor.getId(), rolGestor.getId())));
+        String tokenGestor = obtenerAccessToken("gestor-usuarios@ejemplo.com", "contraseñaSegura123");
+
+        mockMvc.perform(put("/api/v1/usuarios/" + unicoAdmin.getId() + "/desactivar")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + tokenGestor))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.mensaje").value("La operación dejaría al sistema sin ningún usuario ADMIN activo"));
+    }
+
+    @Test
+    void asignaListaYQuitaTiendasDeUnUsuarioConDatosQueProveeInventario() throws Exception {
+        String tokenAdmin = loguearComoAdmin("admin-tiendas@ejemplo.com");
+        Usuario vendedor = crearUsuario("vendedor-tiendas@ejemplo.com");
+        String tiendaActiva = crearTienda(tokenAdmin, "Tienda Norte HU32");
+        String tiendaInactiva = crearTienda(tokenAdmin, "Tienda Cerrada HU32");
+        mockMvc.perform(delete("/api/v1/tiendas/" + tiendaInactiva)
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + tokenAdmin))
+                .andExpect(status().isNoContent());
+        String rutaTiendas = "/api/v1/usuarios/" + vendedor.getId() + "/tiendas";
+
+        for (String tienda : List.of(tiendaActiva, tiendaInactiva, tiendaActiva)) {
+            mockMvc.perform(post(rutaTiendas)
+                            .header(HttpHeaders.AUTHORIZATION, "Bearer " + tokenAdmin)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content("{\"tiendaId\": \"" + tienda + "\"}"))
+                    .andExpect(status().isNoContent());
+        }
+
+        // La segunda asignación de la misma tienda no la duplica; la inactiva se puede asignar (D-70).
+        mockMvc.perform(get(rutaTiendas).header(HttpHeaders.AUTHORIZATION, "Bearer " + tokenAdmin))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(2))
+                .andExpect(jsonPath("$[?(@.id == '" + tiendaActiva + "')].nombre").value("Tienda Norte HU32"))
+                .andExpect(jsonPath("$[?(@.id == '" + tiendaActiva + "')].activa").value(true))
+                .andExpect(jsonPath("$[?(@.id == '" + tiendaInactiva + "')].activa").value(false));
+
+        mockMvc.perform(delete(rutaTiendas + "/" + tiendaActiva)
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + tokenAdmin))
+                .andExpect(status().isNoContent());
+
+        mockMvc.perform(get(rutaTiendas).header(HttpHeaders.AUTHORIZATION, "Bearer " + tokenAdmin))
+                .andExpect(jsonPath("$.length()").value(1))
+                .andExpect(jsonPath("$[0].id").value(tiendaInactiva));
+    }
+
+    @Test
+    void asignarUnaTiendaQueNoExisteSeRechazaCon404() throws Exception {
+        String tokenAdmin = loguearComoAdmin("admin-tienda-inexistente@ejemplo.com");
+        Usuario vendedor = crearUsuario("vendedor-sin-tienda@ejemplo.com");
+
+        mockMvc.perform(post("/api/v1/usuarios/" + vendedor.getId() + "/tiendas")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + tokenAdmin)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"tiendaId\": \"" + UUID.randomUUID() + "\"}"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.mensaje").value("La tienda solicitada no existe"));
+    }
+
+    private String crearTienda(String tokenAdmin, String nombre) throws Exception {
+        MvcResult creada = mockMvc.perform(post("/api/v1/tiendas")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + tokenAdmin)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"nombre\": \"" + nombre + "\", \"ubicacion\": \"Medellín\"}"))
+                .andExpect(status().isCreated())
+                .andReturn();
+        return new ObjectMapper().readTree(creada.getResponse().getContentAsString()).get("id").asText();
     }
 
     private static String registrarUsuarioJson(String email, String nombreCompleto, String password) {

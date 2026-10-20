@@ -1,0 +1,1424 @@
+[
+  {
+    "id": "CP-HU01-001",
+    "nombre": "Registrar usuario con información válida, habilitado y con su rol",
+    "modulo": "HU-01 — Registrar Usuario",
+    "tipo": "Positivo",
+    "descripcion": "Validar el registro de un usuario nuevo cuando toda la información requerida es válida y completa.",
+    "criteriosAceptacion": [
+      "AC-1: Se debe poder registrar un usuario con la información requerida.",
+      "AC-4: El usuario registrado debe quedar habilitado para iniciar sesión.",
+      "AC-5: El usuario debe quedar asociado al rol o responsabilidad que le corresponda."
+    ],
+    "criteriosRechazo": [
+      "Se rechaza si el usuario no se crea, queda incompleto, no queda habilitado para autenticarse o no queda asociado a un rol."
+    ],
+    "prerrequisitos": [
+      "Usuario administrador con permisos para registrar usuarios.",
+      "No existe un usuario con la misma clave de negocio.",
+      "Roles y reglas de validación disponibles."
+    ],
+    "pasos": [
+      "Preparar los datos válidos del usuario y su rol.",
+      "Ejecutar el registro del usuario.",
+      "Verificar la respuesta de creación.",
+      "Consultar el usuario recién registrado.",
+      "Confirmar que está habilitado y asociado al rol o responsabilidad indicado."
+    ],
+    "resultadoEsperado": "El usuario queda registrado correctamente, habilitado para iniciar sesión y asociado al rol o responsabilidad correspondiente."
+  },
+  {
+    "id": "CP-HU01-002",
+    "nombre": "Rechazar registro de usuario con información obligatoria incompleta",
+    "modulo": "HU-01 — Registrar Usuario",
+    "tipo": "Negativo",
+    "descripcion": "Validar que el sistema impida registrar un usuario cuando falta información obligatoria.",
+    "criteriosAceptacion": [
+      "AC-1: Se debe poder registrar un usuario con la información requerida.",
+      "AC-2: El sistema debe validar que la información obligatoria esté completa."
+    ],
+    "criteriosRechazo": [
+      "Se rechaza si el usuario se crea, se persiste parcialmente o el sistema acepta datos incompletos."
+    ],
+    "prerrequisitos": [
+      "Usuario administrador con permisos para registrar usuarios.",
+      "Reglas de obligatoriedad definidas."
+    ],
+    "pasos": [
+      "Preparar la solicitud con un único dato obligatorio omitido.",
+      "Ejecutar el registro.",
+      "Verificar el rechazo y el mensaje que informa la información faltante.",
+      "Consultar el usuario para confirmar que no fue creado."
+    ],
+    "resultadoEsperado": "El sistema rechaza el registro, informa que falta información obligatoria y no crea el usuario."
+  },
+  {
+    "id": "CP-HU01-003",
+    "nombre": "Rechazar registro de usuario duplicado",
+    "modulo": "HU-01 — Registrar Usuario",
+    "tipo": "Negativo",
+    "descripcion": "Validar la regla de unicidad definida para impedir el registro de un usuario que ya existe.",
+    "criteriosAceptacion": [
+      "AC-3: No se debe permitir registrar un usuario que ya exista."
+    ],
+    "criteriosRechazo": [
+      "Se rechaza si se crea un segundo registro que viola la regla de duplicidad."
+    ],
+    "prerrequisitos": [
+      "Existe un usuario registrado.",
+      "La regla que determina duplicidad está definida."
+    ],
+    "pasos": [
+      "Identificar un usuario existente.",
+      "Preparar un nuevo registro que cumpla la regla de duplicidad.",
+      "Ejecutar el registro.",
+      "Verificar el rechazo.",
+      "Consultar y comprobar que solo existe el usuario original."
+    ],
+    "resultadoEsperado": "El sistema rechaza el registro duplicado y conserva un único usuario válido."
+  },
+  {
+    "id": "CP-HU01-004",
+    "nombre": "Rechazar registro de usuario con información inválida",
+    "modulo": "HU-01 — Registrar Usuario",
+    "tipo": "Negativo",
+    "descripcion": "Validar que el sistema impida registrar un usuario cuando algún dato incumple una regla de formato, longitud o valor.",
+    "criteriosAceptacion": [
+      "AC-6: No se debe permitir registrar un usuario con información inválida."
+    ],
+    "criteriosRechazo": [
+      "Se rechaza si el usuario se crea con datos inválidos o si el sistema no informa qué dato es inválido."
+    ],
+    "prerrequisitos": [
+      "Usuario administrador con permisos para registrar usuarios.",
+      "Reglas de validación definidas."
+    ],
+    "pasos": [
+      "Preparar la solicitud con un único dato inválido.",
+      "Ejecutar el registro.",
+      "Verificar el rechazo y la indicación del dato inválido.",
+      "Consultar el usuario para confirmar que no fue creado."
+    ],
+    "resultadoEsperado": "El sistema rechaza el registro, informa qué dato es inválido y no crea el usuario."
+  },
+  {
+    "id": "CP-HU02-001",
+    "nombre": "Iniciar sesión con credenciales válidas y acceder a funciones permitidas",
+    "modulo": "HU-02 — Iniciar Sesión",
+    "tipo": "Positivo",
+    "descripcion": "Validar el inicio de sesión de un usuario registrado y habilitado con credenciales correctas.",
+    "criteriosAceptacion": [
+      "AC-1: El usuario debe poder ingresar sus credenciales.",
+      "AC-2: El sistema debe validar que las credenciales sean correctas.",
+      "AC-4: Un usuario autenticado debe poder acceder a las funcionalidades que tenga autorizadas."
+    ],
+    "criteriosRechazo": [
+      "Se rechaza si el usuario válido no puede autenticarse o no accede a las funciones permitidas para su rol."
+    ],
+    "prerrequisitos": [
+      "Usuario registrado y habilitado para iniciar sesión.",
+      "Rol con al menos una función permitida definida."
+    ],
+    "pasos": [
+      "Ingresar las credenciales válidas.",
+      "Ejecutar el inicio de sesión.",
+      "Verificar que el acceso sea correcto.",
+      "Abrir una función permitida para su rol."
+    ],
+    "resultadoEsperado": "El usuario se autentica y puede acceder a las funciones permitidas para su rol."
+  },
+  {
+    "id": "CP-HU02-002",
+    "nombre": "Rechazar inicio de sesión con contraseña incorrecta",
+    "modulo": "HU-02 — Iniciar Sesión",
+    "tipo": "Negativo",
+    "descripcion": "Validar que el sistema no autentique a un usuario registrado cuando la contraseña es incorrecta.",
+    "criteriosAceptacion": [
+      "AC-2: El sistema debe validar que las credenciales sean correctas.",
+      "AC-3: Un usuario con credenciales incorrectas no debe poder acceder.",
+      "AC-5: El sistema debe informar cuando las credenciales no sean válidas."
+    ],
+    "criteriosRechazo": [
+      "Se rechaza si se concede acceso, se crea una sesión o el sistema no informa que las credenciales no son válidas."
+    ],
+    "prerrequisitos": [
+      "Usuario existente y habilitado."
+    ],
+    "pasos": [
+      "Ingresar un usuario válido y una contraseña incorrecta.",
+      "Ejecutar el inicio de sesión.",
+      "Verificar que no se conceda acceso.",
+      "Verificar el mensaje que informa que las credenciales no son válidas."
+    ],
+    "resultadoEsperado": "El sistema rechaza la autenticación, no concede acceso e informa que las credenciales no son válidas."
+  },
+  {
+    "id": "CP-HU02-003",
+    "nombre": "Rechazar inicio de sesión de un usuario no registrado",
+    "modulo": "HU-02 — Iniciar Sesión",
+    "tipo": "Negativo",
+    "descripcion": "Validar que el sistema no permita el ingreso con credenciales de un usuario inexistente.",
+    "criteriosAceptacion": [
+      "AC-3: Un usuario con credenciales incorrectas no debe poder acceder.",
+      "AC-5: El sistema debe informar cuando las credenciales no sean válidas."
+    ],
+    "criteriosRechazo": [
+      "Se rechaza si se inicia sesión, se concede acceso o el sistema no informa que las credenciales no son válidas."
+    ],
+    "prerrequisitos": [
+      "El usuario usado en la prueba no está registrado."
+    ],
+    "pasos": [
+      "Ingresar las credenciales de un usuario inexistente.",
+      "Ejecutar el inicio de sesión.",
+      "Verificar la respuesta y la ausencia de acceso."
+    ],
+    "resultadoEsperado": "El sistema no inicia sesión ni concede acceso e informa que las credenciales no son válidas."
+  },
+  {
+    "id": "CP-HU02-004",
+    "nombre": "Impedir el acceso a una función no permitida para el rol del usuario",
+    "modulo": "HU-02 — Iniciar Sesión",
+    "tipo": "Seguridad",
+    "descripcion": "Validar que un usuario autenticado no pueda usar funciones que su rol no autoriza.",
+    "criteriosAceptacion": [
+      "AC-4: Un usuario autenticado debe poder acceder a las funcionalidades que tenga autorizadas."
+    ],
+    "criteriosRechazo": [
+      "Se rechaza si el usuario accede a una función no autorizada para su rol o si el sistema no bloquea la operación."
+    ],
+    "prerrequisitos": [
+      "Usuario autenticado cuyo rol no permite la función que se va a probar.",
+      "Permisos por rol definidos."
+    ],
+    "pasos": [
+      "Iniciar sesión con el usuario.",
+      "Intentar abrir o ejecutar una función no permitida para su rol.",
+      "Verificar la respuesta de rechazo.",
+      "Confirmar que la operación no produjo cambios."
+    ],
+    "resultadoEsperado": "El sistema impide el acceso a la función no permitida y no se ejecuta ninguna operación."
+  },
+  {
+    "id": "CP-HU03-001",
+    "nombre": "Registrar Tienda con información válida y ubicación",
+    "modulo": "HU-03 — Registrar Tienda/Almacén",
+    "tipo": "Positivo",
+    "descripcion": "Validar el registro de una Tienda nueva cuando todos los datos requeridos son válidos y se informa su ubicación.",
+    "criteriosAceptacion": [
+      "AC-1: Se debe poder registrar una Tienda con la información requerida.",
+      "AC-2: Se debe registrar la ubicación de la Tienda.",
+      "AC-3: La información obligatoria debe ser validada.",
+      "AC-5: La Tienda registrada debe quedar disponible para posteriores operaciones."
+    ],
+    "criteriosRechazo": [
+      "Se rechaza si la Tienda no se crea, queda incompleta, pierde la ubicación o no puede ser utilizada en una consulta posterior."
+    ],
+    "prerrequisitos": [
+      "Usuario con permisos para gestionar Tiendas.",
+      "No existe una Tienda con la misma clave de negocio.",
+      "Contrato/reglas de datos disponibles."
+    ],
+    "pasos": [
+      "Preparar los datos válidos de la Tienda.",
+      "Enviar/ejecutar la operación de registro.",
+      "Verificar la respuesta de creación.",
+      "Consultar la Tienda recién creada.",
+      "Comparar datos básicos y ubicación con los datos enviados."
+    ],
+    "resultadoEsperado": "La Tienda queda registrada con todos los datos requeridos, ubicación correcta y disponible para operaciones posteriores."
+  },
+  {
+    "id": "CP-HU03-002",
+    "nombre": "Rechazar registro de Tienda con información obligatoria incompleta",
+    "modulo": "HU-03 — Registrar Tienda/Almacén",
+    "tipo": "Negativo",
+    "descripcion": "Validar que el sistema impida crear una Tienda cuando falta información obligatoria.",
+    "criteriosAceptacion": [
+      "AC-1: Se debe poder registrar una Tienda con la información requerida.",
+      "AC-3: La información obligatoria debe ser validada."
+    ],
+    "criteriosRechazo": [
+      "Se rechaza si la Tienda se crea, se persiste parcialmente o el sistema acepta datos incompletos."
+    ],
+    "prerrequisitos": [
+      "Usuario con permisos para gestionar Tiendas.",
+      "Reglas de obligatoriedad definidas."
+    ],
+    "pasos": [
+      "Preparar la solicitud con un único dato obligatorio omitido.",
+      "Ejecutar el registro.",
+      "Verificar el código/resultado de rechazo.",
+      "Consultar la Tienda para confirmar que no fue creada."
+    ],
+    "resultadoEsperado": "El sistema rechaza el registro y no persiste la Tienda."
+  },
+  {
+    "id": "CP-HU03-003",
+    "nombre": "Rechazar registro de Tienda duplicada",
+    "modulo": "HU-03 — Registrar Tienda/Almacén",
+    "tipo": "Negativo",
+    "descripcion": "Validar la regla de unicidad definida para impedir el registro de una Tienda duplicada.",
+    "criteriosAceptacion": [
+      "AC-4: No se debe permitir registrar una Tienda duplicada según las reglas definidas."
+    ],
+    "criteriosRechazo": [
+      "Se rechaza si se crea un segundo registro que viola la regla de duplicidad."
+    ],
+    "prerrequisitos": [
+      "Existe una Tienda registrada.",
+      "La regla que determina duplicidad está definida."
+    ],
+    "pasos": [
+      "Identificar una Tienda existente.",
+      "Preparar un nuevo registro con la misma clave de negocio.",
+      "Ejecutar el registro.",
+      "Verificar el rechazo.",
+      "Consultar y comprobar que solo existe el registro original."
+    ],
+    "resultadoEsperado": "El sistema rechaza el duplicado y conserva un único registro válido."
+  },
+  {
+    "id": "CP-HU04-001",
+    "nombre": "Consultar Tienda existente, información básica y ubicación",
+    "modulo": "HU-04 — Consultar Tienda/Almacén",
+    "tipo": "Positivo",
+    "descripcion": "Consultar una Tienda existente y verificar que la respuesta corresponde al registro seleccionado.",
+    "criteriosAceptacion": [
+      "AC-1: Se debe poder consultar una Tienda existente.",
+      "AC-2: La consulta debe mostrar su información básica.",
+      "AC-3: Se debe poder identificar su ubicación.",
+      "AC-5: Se debe poder consultar la información de inventario correspondiente a la Tienda."
+    ],
+    "criteriosRechazo": [
+      "Se rechaza si no devuelve la Tienda, muestra datos de otra entidad o presenta una ubicación incorrecta/ausente."
+    ],
+    "prerrequisitos": [
+      "Existe una Tienda previamente registrada.",
+      "La Tienda tiene ubicación registrada."
+    ],
+    "pasos": [
+      "Seleccionar/identificar la Tienda.",
+      "Ejecutar la consulta.",
+      "Verificar la identidad del registro devuelto.",
+      "Comparar información básica.",
+      "Verificar la ubicación."
+    ],
+    "resultadoEsperado": "La respuesta corresponde exactamente a la Tienda consultada y contiene la información básica y ubicación esperadas."
+  },
+  {
+    "id": "CP-HU04-002",
+    "nombre": "Consultar Bodega_Tienda asociada a una Tienda",
+    "modulo": "HU-04 — Consultar Tienda/Almacén",
+    "tipo": "Integración",
+    "descripcion": "Verificar que una Tienda consultada permita identificar correctamente la Bodega_Tienda asociada.",
+    "criteriosAceptacion": [
+      "AC-4: Se debe poder identificar la Bodega_Tienda asociada."
+    ],
+    "criteriosRechazo": [
+      "Se rechaza si la relación no aparece, apunta a otra Tienda o muestra una Bodega_Tienda inexistente."
+    ],
+    "prerrequisitos": [
+      "Existe una Tienda con una Bodega_Tienda asociada.",
+      "La relación está persistida y disponible para consulta."
+    ],
+    "pasos": [
+      "Consultar la Tienda.",
+      "Obtener la referencia a la Bodega_Tienda.",
+      "Consultar/verificar la Bodega_Tienda relacionada.",
+      "Comparar la relación con los datos de preparación."
+    ],
+    "resultadoEsperado": "La Bodega_Tienda identificada pertenece a la Tienda consultada."
+  },
+  {
+    "id": "CP-HU04-003",
+    "nombre": "Consultar inventario correspondiente a una Tienda",
+    "modulo": "HU-04 — Consultar Tienda/Almacén",
+    "tipo": "Integración",
+    "descripcion": "Verificar el criterio de inventario de la consulta de Tienda.",
+    "criteriosAceptacion": [
+      "AC-5: Se debe poder consultar la información de inventario correspondiente a la Tienda."
+    ],
+    "criteriosRechazo": [
+      "Se rechaza si el inventario es incorrecto, corresponde a otra ubicación o no existe una fuente de inventario habilitada."
+    ],
+    "prerrequisitos": [
+      "La funcionalidad de inventario y sus datos deben estar implementados.",
+      "Existe una Tienda con inventario conocido."
+    ],
+    "pasos": [
+      "Consultar la Tienda.",
+      "Obtener la información de inventario.",
+      "Comparar cantidades/elementos con el dato de referencia.",
+      "Verificar que la ubicación del inventario corresponda a la Tienda."
+    ],
+    "resultadoEsperado": "El inventario mostrado corresponde a la Tienda seleccionada."
+  },
+  {
+    "id": "CP-HU05-001",
+    "nombre": "Modificar campos permitidos de una Tienda",
+    "modulo": "HU-05 — Modificar Tienda/Almacén",
+    "tipo": "Positivo",
+    "descripcion": "Actualizar una Tienda existente modificando únicamente campos autorizados.",
+    "criteriosAceptacion": [
+      "AC-1: Se debe poder seleccionar una Tienda existente.",
+      "AC-2: Se deben poder modificar los campos permitidos.",
+      "AC-4: Los cambios deben quedar almacenados correctamente."
+    ],
+    "criteriosRechazo": [
+      "Se rechaza si un campo permitido no cambia, se pierde información válida o la actualización no persiste."
+    ],
+    "prerrequisitos": [
+      "Existe una Tienda.",
+      "Los campos modificables están definidos."
+    ],
+    "pasos": [
+      "Seleccionar la Tienda.",
+      "Modificar los campos permitidos.",
+      "Guardar la modificación.",
+      "Consultar nuevamente la Tienda.",
+      "Comparar valores antes/después."
+    ],
+    "resultadoEsperado": "Los campos permitidos contienen los nuevos valores y los demás datos permanecen consistentes."
+  },
+  {
+    "id": "CP-HU05-002",
+    "nombre": "Rechazar modificación inválida de una Tienda",
+    "modulo": "HU-05 — Modificar Tienda/Almacén",
+    "tipo": "Negativo",
+    "descripcion": "Intentar actualizar una Tienda con un dato que incumple una regla de validación.",
+    "criteriosAceptacion": [
+      "AC-3: El sistema debe validar la información antes de guardar."
+    ],
+    "criteriosRechazo": [
+      "Se rechaza si el dato inválido se persiste o deja la Tienda en un estado inconsistente."
+    ],
+    "prerrequisitos": [
+      "Existe una Tienda.",
+      "Las reglas de validación del campo están definidas."
+    ],
+    "pasos": [
+      "Seleccionar la Tienda.",
+      "Introducir el valor inválido.",
+      "Intentar guardar.",
+      "Verificar el rechazo.",
+      "Consultar la Tienda y comparar con el valor anterior."
+    ],
+    "resultadoEsperado": "El sistema rechaza la modificación y conserva el valor válido anterior."
+  },
+  {
+    "id": "CP-HU05-003",
+    "nombre": "Conservar información histórica al modificar una Tienda",
+    "modulo": "HU-05 — Modificar Tienda/Almacén",
+    "tipo": "Integridad de datos",
+    "descripcion": "Modificar una Tienda y comprobar que la información histórica que deba conservarse no sea eliminada.",
+    "criteriosAceptacion": [
+      "AC-5: La modificación de la Tienda no debe eliminar la información histórica relacionada."
+    ],
+    "criteriosRechazo": [
+      "Se rechaza si la modificación elimina, sobrescribe indebidamente o vuelve inconsistente el historial."
+    ],
+    "prerrequisitos": [
+      "Existe una Tienda con información histórica que el negocio exige conservar.",
+      "Está definida la información histórica que aplica."
+    ],
+    "pasos": [
+      "Registrar/consultar la información histórica antes del cambio.",
+      "Modificar un dato permitido.",
+      "Guardar.",
+      "Consultar nuevamente el historial.",
+      "Comparar con la información esperada."
+    ],
+    "resultadoEsperado": "La modificación se aplica sin eliminar ni alterar indebidamente la información histórica."
+  },
+  {
+    "id": "CP-HU06-001",
+    "nombre": "Eliminar Tienda sin dependencias bloqueantes",
+    "modulo": "HU-06 — Eliminar Tienda/Almacén",
+    "tipo": "Positivo",
+    "descripcion": "Eliminar una Tienda que cumple las condiciones para dejar de operar.",
+    "criteriosAceptacion": [
+      "AC-1: Se debe poder seleccionar una Tienda existente.",
+      "AC-5: Una Tienda eliminada no debe estar disponible para nuevas operaciones."
+    ],
+    "criteriosRechazo": [
+      "Se rechaza si la Tienda sigue disponible para nuevas operaciones o si la eliminación deja referencias inválidas."
+    ],
+    "prerrequisitos": [
+      "Existe una Tienda.",
+      "No existen dependencias que impidan su eliminación.",
+      "La regla de eliminación está definida."
+    ],
+    "pasos": [
+      "Seleccionar la Tienda.",
+      "Ejecutar la eliminación.",
+      "Consultar/validar su estado final.",
+      "Intentar utilizarla en una nueva operación permitida por el sistema."
+    ],
+    "resultadoEsperado": "La Tienda ya no está disponible para nuevas operaciones."
+  },
+  {
+    "id": "CP-HU06-002",
+    "nombre": "Bloquear eliminación de Tienda con Bodega_Tienda asociada",
+    "modulo": "HU-06 — Eliminar Tienda/Almacén",
+    "tipo": "Negativo",
+    "descripcion": "Intentar eliminar una Tienda que tiene una Bodega_Tienda asociada.",
+    "criteriosAceptacion": [
+      "AC-2: El sistema debe validar si tiene una Bodega_Tienda asociada.",
+      "AC-4: No se debe permitir la eliminación cuando existan dependencias que lo impidan."
+    ],
+    "criteriosRechazo": [
+      "Se rechaza si la Tienda se elimina dejando una Bodega_Tienda huérfana o si se ignora la dependencia."
+    ],
+    "prerrequisitos": [
+      "Existe una Tienda con Bodega_Tienda asociada.",
+      "La regla establece que esa relación bloquea la eliminación."
+    ],
+    "pasos": [
+      "Seleccionar la Tienda.",
+      "Intentar eliminarla.",
+      "Verificar el rechazo.",
+      "Consultar la Tienda y la Bodega_Tienda para comprobar que la relación permanece."
+    ],
+    "resultadoEsperado": "La eliminación no se ejecuta y la relación válida permanece intacta."
+  },
+  {
+    "id": "CP-HU06-003",
+    "nombre": "Bloquear eliminación de Tienda con operaciones o información asociada",
+    "modulo": "HU-06 — Eliminar Tienda/Almacén",
+    "tipo": "Negativo",
+    "descripcion": "Intentar eliminar una Tienda que tiene operaciones o información asociada que, según las reglas, impide su eliminación.",
+    "criteriosAceptacion": [
+      "AC-3: El sistema debe validar si existen operaciones o información asociada.",
+      "AC-4: No se debe permitir la eliminación cuando existan dependencias que lo impidan."
+    ],
+    "criteriosRechazo": [
+      "Se rechaza si la Tienda se elimina pese a una dependencia bloqueante."
+    ],
+    "prerrequisitos": [
+      "Existe una Tienda con una dependencia bloqueante definida.",
+      "La regla de eliminación de operaciones/información está documentada."
+    ],
+    "pasos": [
+      "Seleccionar la Tienda.",
+      "Intentar eliminarla.",
+      "Verificar el rechazo.",
+      "Consultar la Tienda para comprobar que permanece disponible según corresponda."
+    ],
+    "resultadoEsperado": "La eliminación es rechazada mientras exista la dependencia bloqueante."
+  },
+  {
+    "id": "CP-HU06-004",
+    "nombre": "Conservar información histórica después de eliminar una Tienda",
+    "modulo": "HU-06 — Eliminar Tienda/Almacén",
+    "tipo": "Integridad de datos",
+    "descripcion": "Eliminar una Tienda elegible y verificar que la información histórica que deba conservarse continúe disponible.",
+    "criteriosAceptacion": [
+      "AC-6: La información histórica que deba conservarse debe permanecer disponible."
+    ],
+    "criteriosRechazo": [
+      "Se rechaza si la eliminación borra información histórica que debía conservarse."
+    ],
+    "prerrequisitos": [
+      "Existe una Tienda elegible para eliminación.",
+      "Existe información histórica que el negocio exige conservar.",
+      "La política de conservación está definida."
+    ],
+    "pasos": [
+      "Consultar y registrar la información histórica antes de eliminar.",
+      "Eliminar/desactivar la Tienda.",
+      "Consultar el historial.",
+      "Comparar con la información de referencia."
+    ],
+    "resultadoEsperado": "La información histórica permanece disponible y sin alteraciones indebidas."
+  },
+  {
+    "id": "CP-HU07-001",
+    "nombre": "Registrar Bodega_Tienda asociada a Tienda existente",
+    "modulo": "HU-07 — Registrar Bodega_Tienda",
+    "tipo": "Positivo",
+    "descripcion": "Registrar una Bodega_Tienda con datos válidos y asociarla a una Tienda existente.",
+    "criteriosAceptacion": [
+      "AC-1: Se debe poder registrar una Bodega_Tienda con la información requerida.",
+      "AC-2: La Bodega_Tienda debe estar asociada a una Tienda existente.",
+      "AC-5: La información registrada debe quedar disponible para posteriores consultas."
+    ],
+    "criteriosRechazo": [
+      "Se rechaza si se crea sin asociación, queda asociada a otra Tienda o no puede consultarse."
+    ],
+    "prerrequisitos": [
+      "Existe una Tienda válida.",
+      "Usuario con permisos de gestión de Bodega_Tienda.",
+      "No existe una Bodega_Tienda duplicada según la regla vigente."
+    ],
+    "pasos": [
+      "Preparar datos.",
+      "Registrar la Bodega_Tienda con la Tienda.",
+      "Verificar la respuesta.",
+      "Consultar la Bodega_Tienda.",
+      "Verificar la relación con la Tienda."
+    ],
+    "resultadoEsperado": "La Bodega_Tienda queda registrada, asociada a la Tienda correcta y disponible para consulta."
+  },
+  {
+    "id": "CP-HU07-002",
+    "nombre": "Rechazar Bodega_Tienda sin Tienda asociada",
+    "modulo": "HU-07 — Registrar Bodega_Tienda",
+    "tipo": "Negativo",
+    "descripcion": "Intentar registrar una Bodega_Tienda sin indicar una Tienda existente.",
+    "criteriosAceptacion": [
+      "AC-2: La Bodega_Tienda debe estar asociada a una Tienda existente.",
+      "AC-3: No se debe permitir registrar una Bodega_Tienda sin una Tienda asociada."
+    ],
+    "criteriosRechazo": [
+      "Se rechaza si se crea el registro sin Tienda asociada."
+    ],
+    "prerrequisitos": [
+      "Usuario con permisos.",
+      "Regla de asociación obligatoria definida."
+    ],
+    "pasos": [
+      "Preparar la solicitud sin asociación.",
+      "Ejecutar el registro.",
+      "Verificar el rechazo.",
+      "Comprobar que no existe una Bodega_Tienda huérfana."
+    ],
+    "resultadoEsperado": "El sistema impide el registro sin Tienda asociada."
+  },
+  {
+    "id": "CP-HU07-003",
+    "nombre": "Rechazar Bodega_Tienda duplicada",
+    "modulo": "HU-07 — Registrar Bodega_Tienda",
+    "tipo": "Negativo",
+    "descripcion": "Intentar registrar una Bodega_Tienda que viola la regla de duplicidad definida.",
+    "criteriosAceptacion": [
+      "AC-4: No se debe permitir registrar una Bodega_Tienda duplicada según las reglas definidas."
+    ],
+    "criteriosRechazo": [
+      "Se rechaza si se crea una Bodega_Tienda duplicada."
+    ],
+    "prerrequisitos": [
+      "Existe una Bodega_Tienda.",
+      "La regla de duplicidad está definida."
+    ],
+    "pasos": [
+      "Identificar la Bodega_Tienda existente.",
+      "Preparar el registro duplicado.",
+      "Ejecutar.",
+      "Verificar rechazo.",
+      "Comprobar que solo exista el registro original."
+    ],
+    "resultadoEsperado": "El sistema rechaza el duplicado."
+  },
+  {
+    "id": "CP-HU08-001",
+    "nombre": "Consultar Bodega_Tienda, Tienda y ubicación",
+    "modulo": "HU-08 — Consultar Bodega_Tienda",
+    "tipo": "Positivo",
+    "descripcion": "Consultar una Bodega_Tienda existente y verificar sus datos, Tienda asociada, ubicación y correspondencia del registro.",
+    "criteriosAceptacion": [
+      "AC-1: Se debe poder consultar una Bodega_Tienda existente.",
+      "AC-2: La consulta debe mostrar la Tienda a la que pertenece.",
+      "AC-3: Se debe poder consultar la información de ubicación de la Bodega_Tienda.",
+      "AC-5: La información consultada debe corresponder a la Bodega_Tienda seleccionada."
+    ],
+    "criteriosRechazo": [
+      "Se rechaza si los datos corresponden a otra Bodega_Tienda, la Tienda asociada es incorrecta o la ubicación no coincide."
+    ],
+    "prerrequisitos": [
+      "Existe una Bodega_Tienda asociada a una Tienda.",
+      "La ubicación está registrada."
+    ],
+    "pasos": [
+      "Consultar la Bodega_Tienda.",
+      "Verificar datos básicos.",
+      "Verificar Tienda asociada.",
+      "Verificar ubicación.",
+      "Comparar con datos de referencia."
+    ],
+    "resultadoEsperado": "La información consultada corresponde exactamente a la Bodega_Tienda seleccionada."
+  },
+  {
+    "id": "CP-HU08-002",
+    "nombre": "Consultar inventario de Bodega_Tienda",
+    "modulo": "HU-08 — Consultar Bodega_Tienda",
+    "tipo": "Integración",
+    "descripcion": "Verificar el criterio de inventario asociado a una Bodega_Tienda.",
+    "criteriosAceptacion": [
+      "AC-4: Se debe poder identificar el inventario asociado a la Bodega_Tienda."
+    ],
+    "criteriosRechazo": [
+      "Se rechaza si el inventario es incorrecto o pertenece a otra ubicación."
+    ],
+    "prerrequisitos": [
+      "Módulo de inventario implementado.",
+      "Bodega_Tienda con inventario conocido."
+    ],
+    "pasos": [
+      "Consultar la Bodega_Tienda.",
+      "Consultar el inventario asociado.",
+      "Comparar con el dato de referencia.",
+      "Verificar correspondencia de ubicación."
+    ],
+    "resultadoEsperado": "El inventario mostrado corresponde a la Bodega_Tienda seleccionada."
+  },
+  {
+    "id": "CP-HU09-001",
+    "nombre": "Modificar datos permitidos de Bodega_Tienda",
+    "modulo": "HU-09 — Modificar Bodega_Tienda",
+    "tipo": "Positivo",
+    "descripcion": "Modificar una Bodega_Tienda existente usando únicamente datos permitidos.",
+    "criteriosAceptacion": [
+      "AC-1: Se debe poder seleccionar una Bodega_Tienda existente.",
+      "AC-2: Se deben poder modificar únicamente los datos permitidos.",
+      "AC-5: Los cambios deben quedar disponibles para posteriores consultas."
+    ],
+    "criteriosRechazo": [
+      "Se rechaza si el cambio válido no persiste o altera datos no autorizados."
+    ],
+    "prerrequisitos": [
+      "Existe una Bodega_Tienda.",
+      "Campos permitidos definidos."
+    ],
+    "pasos": [
+      "Seleccionar Bodega_Tienda.",
+      "Modificar campos permitidos.",
+      "Guardar.",
+      "Consultar nuevamente.",
+      "Comparar valores."
+    ],
+    "resultadoEsperado": "Los cambios válidos quedan almacenados y visibles en posteriores consultas."
+  },
+  {
+    "id": "CP-HU09-002",
+    "nombre": "Rechazar cambio de Bodega_Tienda hacia Tienda inexistente",
+    "modulo": "HU-09 — Modificar Bodega_Tienda",
+    "tipo": "Negativo",
+    "descripcion": "Intentar reasociar una Bodega_Tienda a una Tienda que no existe.",
+    "criteriosAceptacion": [
+      "AC-3: No se debe permitir modificar la Bodega_Tienda a una Tienda inexistente."
+    ],
+    "criteriosRechazo": [
+      "Se rechaza si se persiste una referencia a una Tienda inexistente."
+    ],
+    "prerrequisitos": [
+      "Existe una Bodega_Tienda asociada a una Tienda válida.",
+      "La Tienda destino no existe."
+    ],
+    "pasos": [
+      "Seleccionar la Bodega_Tienda.",
+      "Informar la Tienda inexistente como destino.",
+      "Intentar guardar.",
+      "Verificar rechazo.",
+      "Consultar la Bodega_Tienda y comprobar que conserva la relación anterior."
+    ],
+    "resultadoEsperado": "El sistema rechaza el cambio y conserva la asociación válida anterior."
+  },
+  {
+    "id": "CP-HU09-003",
+    "nombre": "Rechazar modificación inválida de Bodega_Tienda",
+    "modulo": "HU-09 — Modificar Bodega_Tienda",
+    "tipo": "Negativo",
+    "descripcion": "Intentar guardar un dato que incumple una regla de validación.",
+    "criteriosAceptacion": [
+      "AC-4: El sistema debe validar la información antes de guardar los cambios."
+    ],
+    "criteriosRechazo": [
+      "Se rechaza si el valor inválido se almacena."
+    ],
+    "prerrequisitos": [
+      "Existe una Bodega_Tienda.",
+      "Reglas de validación definidas."
+    ],
+    "pasos": [
+      "Seleccionar la Bodega_Tienda.",
+      "Introducir el valor inválido.",
+      "Guardar.",
+      "Verificar rechazo.",
+      "Consultar la entidad y comparar con el valor anterior."
+    ],
+    "resultadoEsperado": "La modificación inválida no se persiste."
+  },
+  {
+    "id": "CP-HU10-001",
+    "nombre": "Eliminar Bodega_Tienda elegible",
+    "modulo": "HU-10 — Eliminar Bodega_Tienda",
+    "tipo": "Positivo",
+    "descripcion": "Eliminar una Bodega_Tienda que no tiene restricciones bloqueantes.",
+    "criteriosAceptacion": [
+      "AC-1: Se debe poder seleccionar una Bodega_Tienda existente.",
+      "AC-4: Una Bodega_Tienda eliminada no debe estar disponible para nuevas asignaciones."
+    ],
+    "criteriosRechazo": [
+      "Se rechaza si sigue disponible para nuevas asignaciones o deja referencias inválidas."
+    ],
+    "prerrequisitos": [
+      "Existe una Bodega_Tienda elegible.",
+      "No existen restricciones bloqueantes."
+    ],
+    "pasos": [
+      "Seleccionar la Bodega_Tienda.",
+      "Ejecutar la eliminación.",
+      "Validar el estado final.",
+      "Intentar utilizarla en una nueva asignación."
+    ],
+    "resultadoEsperado": "La Bodega_Tienda ya no está disponible para nuevas asignaciones."
+  },
+  {
+    "id": "CP-HU10-002",
+    "nombre": "Bloquear eliminación de Bodega_Tienda con información asociada",
+    "modulo": "HU-10 — Eliminar Bodega_Tienda",
+    "tipo": "Negativo",
+    "descripcion": "Intentar eliminar una Bodega_Tienda que tiene información asociada que constituye una restricción.",
+    "criteriosAceptacion": [
+      "AC-2: El sistema debe validar si la Bodega_Tienda tiene información asociada antes de eliminarla.",
+      "AC-3: No se debe permitir eliminarla si existen restricciones que lo impidan."
+    ],
+    "criteriosRechazo": [
+      "Se rechaza si se elimina pese a la restricción."
+    ],
+    "prerrequisitos": [
+      "Existe una Bodega_Tienda con dependencia bloqueante.",
+      "La regla de eliminación está definida."
+    ],
+    "pasos": [
+      "Seleccionar la Bodega_Tienda.",
+      "Intentar eliminar.",
+      "Verificar rechazo.",
+      "Consultar la entidad y sus relaciones."
+    ],
+    "resultadoEsperado": "La eliminación no se ejecuta mientras exista la restricción."
+  },
+  {
+    "id": "CP-HU10-003",
+    "nombre": "Conservar información histórica al eliminar Bodega_Tienda",
+    "modulo": "HU-10 — Eliminar Bodega_Tienda",
+    "tipo": "Integridad de datos",
+    "descripcion": "Eliminar una Bodega_Tienda elegible y verificar conservación del historial requerido.",
+    "criteriosAceptacion": [
+      "AC-5: La información histórica que deba conservarse no debe verse afectada."
+    ],
+    "criteriosRechazo": [
+      "Se rechaza si el historial obligatorio desaparece o queda inconsistente."
+    ],
+    "prerrequisitos": [
+      "Bodega_Tienda elegible para eliminación.",
+      "Historial definido como obligatorio de conservar."
+    ],
+    "pasos": [
+      "Consultar historial antes de eliminar.",
+      "Eliminar/desactivar.",
+      "Consultar historial.",
+      "Comparar con referencia."
+    ],
+    "resultadoEsperado": "La información histórica requerida permanece disponible y consistente."
+  },
+  {
+    "id": "CP-HU11-001",
+    "nombre": "Registrar Centro de Distribución válido",
+    "modulo": "HU-11 — Registrar Centro de Distribución",
+    "tipo": "Positivo",
+    "descripcion": "Registrar un Centro de Distribución con información completa y, cuando corresponda, ubicación.",
+    "criteriosAceptacion": [
+      "AC-1: Se debe poder registrar un Centro de Distribución con la información requerida.",
+      "AC-2: El sistema debe validar los campos obligatorios.",
+      "AC-4: El Centro de Distribución registrado debe quedar disponible para operaciones posteriores.",
+      "AC-5: Debe poder asociarse información de ubicación cuando corresponda."
+    ],
+    "criteriosRechazo": [
+      "Se rechaza si no se crea, queda incompleto o no puede ser consultado posteriormente."
+    ],
+    "prerrequisitos": [
+      "Usuario con permisos.",
+      "CD no registrado previamente.",
+      "Reglas de obligatoriedad disponibles."
+    ],
+    "pasos": [
+      "Preparar datos.",
+      "Registrar el CD.",
+      "Verificar respuesta.",
+      "Consultar el CD.",
+      "Verificar datos y ubicación."
+    ],
+    "resultadoEsperado": "El CD queda registrado y disponible para operaciones posteriores."
+  },
+  {
+    "id": "CP-HU11-002",
+    "nombre": "Rechazar registro de CD con campo obligatorio faltante",
+    "modulo": "HU-11 — Registrar Centro de Distribución",
+    "tipo": "Negativo",
+    "descripcion": "Intentar registrar un CD omitiendo un campo obligatorio.",
+    "criteriosAceptacion": [
+      "AC-2: El sistema debe validar los campos obligatorios."
+    ],
+    "criteriosRechazo": [
+      "Se rechaza si el CD se crea con información obligatoria faltante."
+    ],
+    "prerrequisitos": [
+      "Reglas de obligatoriedad definidas.",
+      "Usuario con permisos."
+    ],
+    "pasos": [
+      "Preparar datos incompletos.",
+      "Ejecutar registro.",
+      "Verificar rechazo.",
+      "Consultar para confirmar ausencia de creación."
+    ],
+    "resultadoEsperado": "El sistema rechaza el registro incompleto."
+  },
+  {
+    "id": "CP-HU11-003",
+    "nombre": "Rechazar registro de CD duplicado",
+    "modulo": "HU-11 — Registrar Centro de Distribución",
+    "tipo": "Negativo",
+    "descripcion": "Intentar registrar un CD que viola la regla de duplicidad.",
+    "criteriosAceptacion": [
+      "AC-3: No se debe permitir registrar un Centro de Distribución duplicado según las reglas definidas."
+    ],
+    "criteriosRechazo": [
+      "Se rechaza si se crea un duplicado."
+    ],
+    "prerrequisitos": [
+      "Existe un CD.",
+      "Regla de duplicidad definida."
+    ],
+    "pasos": [
+      "Identificar el CD existente.",
+      "Preparar registro duplicado.",
+      "Ejecutar.",
+      "Verificar rechazo.",
+      "Comprobar unicidad."
+    ],
+    "resultadoEsperado": "El sistema rechaza el duplicado."
+  },
+  {
+    "id": "CP-HU12-001",
+    "nombre": "Consultar Centro de Distribución y ubicación",
+    "modulo": "HU-12 — Consultar Centro de Distribución",
+    "tipo": "Positivo",
+    "descripcion": "Consultar un CD existente y verificar que la respuesta corresponde a la entidad seleccionada.",
+    "criteriosAceptacion": [
+      "AC-1: Se debe poder consultar un Centro de Distribución existente.",
+      "AC-2: La consulta debe mostrar su información básica.",
+      "AC-3: Se debe poder identificar su ubicación.",
+      "AC-5: La información debe corresponder al Centro de Distribución seleccionado."
+    ],
+    "criteriosRechazo": [
+      "Se rechaza si la información corresponde a otro CD o la ubicación no coincide."
+    ],
+    "prerrequisitos": [
+      "Existe un CD.",
+      "Ubicación registrada cuando corresponda."
+    ],
+    "pasos": [
+      "Consultar el CD.",
+      "Verificar información básica.",
+      "Verificar ubicación.",
+      "Comparar con referencia."
+    ],
+    "resultadoEsperado": "La información corresponde al CD seleccionado y su ubicación."
+  },
+  {
+    "id": "CP-HU12-002",
+    "nombre": "Consultar inventario asociado al CD",
+    "modulo": "HU-12 — Consultar Centro de Distribución",
+    "tipo": "Integración",
+    "descripcion": "Verificar el criterio de inventario asociado a un Centro de Distribución.",
+    "criteriosAceptacion": [
+      "AC-4: Se debe poder consultar la información de inventario asociada al CD."
+    ],
+    "criteriosRechazo": [
+      "Se rechaza si el inventario es incorrecto o pertenece a otra ubicación."
+    ],
+    "prerrequisitos": [
+      "Módulo de inventario implementado.",
+      "CD con inventario conocido."
+    ],
+    "pasos": [
+      "Consultar el CD.",
+      "Consultar el inventario asociado.",
+      "Comparar con referencia.",
+      "Verificar correspondencia."
+    ],
+    "resultadoEsperado": "El inventario mostrado corresponde al CD seleccionado."
+  },
+  {
+    "id": "CP-HU13-001",
+    "nombre": "Modificar campos permitidos de Centro de Distribución",
+    "modulo": "HU-13 — Modificar Centro de Distribución",
+    "tipo": "Positivo",
+    "descripcion": "Modificar un CD existente usando datos permitidos.",
+    "criteriosAceptacion": [
+      "AC-1: Se debe poder seleccionar un Centro de Distribución existente.",
+      "AC-2: Se deben poder modificar los campos permitidos.",
+      "AC-4: Los cambios deben quedar almacenados correctamente.",
+      "AC-5: La información actualizada debe reflejarse en posteriores consultas."
+    ],
+    "criteriosRechazo": [
+      "Se rechaza si el cambio no persiste o se modifica un dato no permitido."
+    ],
+    "prerrequisitos": [
+      "Existe un CD.",
+      "Campos modificables definidos."
+    ],
+    "pasos": [
+      "Seleccionar CD.",
+      "Modificar campos permitidos.",
+      "Guardar.",
+      "Consultar nuevamente.",
+      "Comparar valores."
+    ],
+    "resultadoEsperado": "La información actualizada queda almacenada y visible en posteriores consultas."
+  },
+  {
+    "id": "CP-HU13-002",
+    "nombre": "Rechazar modificación inválida de Centro de Distribución",
+    "modulo": "HU-13 — Modificar Centro de Distribución",
+    "tipo": "Negativo",
+    "descripcion": "Intentar guardar un valor que incumple una regla de validación.",
+    "criteriosAceptacion": [
+      "AC-3: El sistema debe validar la información antes de guardar."
+    ],
+    "criteriosRechazo": [
+      "Se rechaza si el valor inválido queda almacenado."
+    ],
+    "prerrequisitos": [
+      "Existe un CD.",
+      "Reglas de validación definidas."
+    ],
+    "pasos": [
+      "Seleccionar CD.",
+      "Ingresar dato inválido.",
+      "Guardar.",
+      "Verificar rechazo.",
+      "Consultar y comparar con valor anterior."
+    ],
+    "resultadoEsperado": "El cambio inválido no se persiste."
+  },
+  {
+    "id": "CP-HU14-001",
+    "nombre": "Eliminar CD sin dependencias bloqueantes",
+    "modulo": "HU-14 — Eliminar Centro de Distribución",
+    "tipo": "Positivo",
+    "descripcion": "Eliminar un Centro de Distribución que puede dejar de utilizarse.",
+    "criteriosAceptacion": [
+      "AC-1: Se debe poder seleccionar un Centro de Distribución existente.",
+      "AC-4: Un CD eliminado no debe estar disponible para nuevas operaciones."
+    ],
+    "criteriosRechazo": [
+      "Se rechaza si continúa disponible o si quedan referencias inválidas."
+    ],
+    "prerrequisitos": [
+      "Existe un CD elegible.",
+      "No hay dependencias bloqueantes."
+    ],
+    "pasos": [
+      "Seleccionar CD.",
+      "Ejecutar eliminación/desactivación.",
+      "Validar estado final.",
+      "Intentar utilizarlo en una nueva operación."
+    ],
+    "resultadoEsperado": "El CD no queda disponible para nuevas operaciones."
+  },
+  {
+    "id": "CP-HU14-002",
+    "nombre": "Bloquear eliminación de CD con operaciones o información asociada",
+    "modulo": "HU-14 — Eliminar Centro de Distribución",
+    "tipo": "Negativo",
+    "descripcion": "Intentar eliminar un CD que tiene una dependencia que las reglas definen como bloqueante.",
+    "criteriosAceptacion": [
+      "AC-2: El sistema debe validar si tiene operaciones o información asociada.",
+      "AC-3: No se debe permitir la eliminación cuando existan dependencias que lo impidan."
+    ],
+    "criteriosRechazo": [
+      "Se rechaza si el CD se elimina a pesar de la dependencia."
+    ],
+    "prerrequisitos": [
+      "Existe un CD con dependencia bloqueante.",
+      "Regla de dependencia definida."
+    ],
+    "pasos": [
+      "Seleccionar CD.",
+      "Intentar eliminar.",
+      "Verificar rechazo.",
+      "Consultar el CD y su información asociada."
+    ],
+    "resultadoEsperado": "La eliminación no se ejecuta mientras exista la dependencia bloqueante."
+  },
+  {
+    "id": "CP-HU14-003",
+    "nombre": "Conservar historial después de eliminar CD",
+    "modulo": "HU-14 — Eliminar Centro de Distribución",
+    "tipo": "Integridad de datos",
+    "descripcion": "Eliminar un CD elegible y verificar la conservación de la información histórica requerida.",
+    "criteriosAceptacion": [
+      "AC-5: La información histórica que deba conservarse debe permanecer disponible."
+    ],
+    "criteriosRechazo": [
+      "Se rechaza si se pierde información histórica obligatoria."
+    ],
+    "prerrequisitos": [
+      "Existe un CD elegible.",
+      "Existe información histórica que debe conservarse.",
+      "Política de conservación definida."
+    ],
+    "pasos": [
+      "Consultar historial antes de eliminar.",
+      "Eliminar/desactivar.",
+      "Consultar historial.",
+      "Comparar con la referencia."
+    ],
+    "resultadoEsperado": "La información histórica requerida permanece disponible y consistente."
+  },
+  {
+    "id": "CP-HU15-001",
+    "nombre": "Registrar Producto con información válida y situación definida",
+    "modulo": "HU-15 — Registrar Producto",
+    "tipo": "Positivo",
+    "descripcion": "Validar el registro de un Producto nuevo cuando toda la información obligatoria es válida y se define su situación.",
+    "criteriosAceptacion": [
+      "AC-1: Registrar la información necesaria para identificar el producto.",
+      "AC-2: Completar la información obligatoria definida para su gestión.",
+      "AC-4: Definir la situación del producto para determinar su participación en las operaciones."
+    ],
+    "criteriosRechazo": [
+      "Se rechaza si el Producto no se crea, queda incompleto o no conserva su situación."
+    ],
+    "prerrequisitos": [
+      "Usuario con permisos para gestionar Productos.",
+      "No existe un Producto con el mismo código.",
+      "Contrato/reglas de datos disponibles."
+    ],
+    "pasos": [
+      "Preparar los datos válidos del Producto.",
+      "Ejecutar el registro.",
+      "Verificar la respuesta de creación.",
+      "Consultar el Producto recién creado.",
+      "Comparar datos y situación con los datos enviados."
+    ],
+    "resultadoEsperado": "El Producto queda registrado con su información obligatoria y su situación definida, disponible para posteriores operaciones."
+  },
+  {
+    "id": "CP-HU15-002",
+    "nombre": "Rechazar registro de Producto con información obligatoria incompleta",
+    "modulo": "HU-15 — Registrar Producto",
+    "tipo": "Negativo",
+    "descripcion": "Validar que el sistema impida crear un Producto cuando falta información obligatoria.",
+    "criteriosAceptacion": [
+      "AC-1: Registrar la información necesaria para identificar el producto.",
+      "AC-2: Completar la información obligatoria definida para su gestión."
+    ],
+    "criteriosRechazo": [
+      "Se rechaza si el Producto se crea, se persiste parcialmente o el sistema acepta datos incompletos."
+    ],
+    "prerrequisitos": [
+      "Usuario con permisos para gestionar Productos.",
+      "Reglas de obligatoriedad definidas."
+    ],
+    "pasos": [
+      "Preparar la solicitud con un único dato obligatorio omitido.",
+      "Ejecutar el registro.",
+      "Verificar el código/resultado de rechazo.",
+      "Consultar el Producto para confirmar que no fue creado."
+    ],
+    "resultadoEsperado": "El sistema rechaza el registro y no persiste el Producto."
+  },
+  {
+    "id": "CP-HU15-003",
+    "nombre": "Rechazar registro de Producto duplicado",
+    "modulo": "HU-15 — Registrar Producto",
+    "tipo": "Negativo",
+    "descripcion": "Validar la regla de unicidad definida para impedir el registro de un Producto duplicado.",
+    "criteriosAceptacion": [
+      "AC-3: Evitar productos duplicados según las reglas del negocio."
+    ],
+    "criteriosRechazo": [
+      "Se rechaza si se crea un segundo registro que viola la regla de duplicidad."
+    ],
+    "prerrequisitos": [
+      "Existe un Producto registrado.",
+      "La regla que determina duplicidad está definida (código único del Producto)."
+    ],
+    "pasos": [
+      "Identificar un Producto existente.",
+      "Preparar un nuevo registro con el mismo código.",
+      "Ejecutar el registro.",
+      "Verificar el rechazo.",
+      "Consultar y comprobar que solo existe el registro original."
+    ],
+    "resultadoEsperado": "El sistema rechaza el duplicado y conserva un único registro válido."
+  },
+  {
+    "id": "CP-HU15-004",
+    "nombre": "Relacionar un Producto con las ubicaciones donde se gestiona",
+    "modulo": "HU-15 — Registrar Producto",
+    "tipo": "Integración",
+    "descripcion": "Verificar que un Producto registrado pueda relacionarse con las ubicaciones donde será gestionado.",
+    "criteriosAceptacion": [
+      "AC-5: Permitir relacionarlo con las ubicaciones donde sea gestionado."
+    ],
+    "criteriosRechazo": [
+      "Se rechaza si la relación no se establece, apunta a una ubicación inexistente o no queda disponible para consulta."
+    ],
+    "prerrequisitos": [
+      "Existe un Producto registrado.",
+      "Existen ubicaciones válidas donde gestionar el Producto."
+    ],
+    "pasos": [
+      "Seleccionar el Producto.",
+      "Relacionarlo con una ubicación existente.",
+      "Verificar la respuesta.",
+      "Consultar el Producto y comprobar la ubicación relacionada."
+    ],
+    "resultadoEsperado": "El Producto queda relacionado con la ubicación indicada y la relación puede consultarse."
+  },
+  {
+    "id": "CP-HU16-001",
+    "nombre": "Consultar Producto existente, información de identificación y situación",
+    "modulo": "HU-16 — Consultar Producto",
+    "tipo": "Positivo",
+    "descripcion": "Consultar un Producto existente y verificar que la respuesta corresponde al registro seleccionado.",
+    "criteriosAceptacion": [
+      "AC-2: Consultar información correcta y suficiente para identificar el producto.",
+      "AC-3: Conocer la situación del producto dentro de la operación."
+    ],
+    "criteriosRechazo": [
+      "Se rechaza si no devuelve el Producto, muestra datos de otro Producto o presenta una situación incorrecta o ausente."
+    ],
+    "prerrequisitos": [
+      "Existe un Producto previamente registrado.",
+      "El Producto tiene su situación definida."
+    ],
+    "pasos": [
+      "Seleccionar/identificar el Producto.",
+      "Ejecutar la consulta.",
+      "Verificar la identidad del registro devuelto.",
+      "Comparar la información de identificación.",
+      "Verificar la situación del Producto."
+    ],
+    "resultadoEsperado": "La respuesta corresponde exactamente al Producto consultado y contiene su información de identificación y su situación."
+  },
+  {
+    "id": "CP-HU16-002",
+    "nombre": "Buscar Productos con los criterios definidos para la operación",
+    "modulo": "HU-16 — Consultar Producto",
+    "tipo": "Positivo",
+    "descripcion": "Buscar Productos aplicando los criterios de búsqueda definidos para la operación.",
+    "criteriosAceptacion": [
+      "AC-1: Buscar productos mediante los criterios definidos para la operación."
+    ],
+    "criteriosRechazo": [
+      "Se rechaza si la búsqueda omite Productos que cumplen el criterio, incluye Productos que no lo cumplen o no responde."
+    ],
+    "prerrequisitos": [
+      "Existen varios Productos registrados con valores distintos.",
+      "Los criterios de búsqueda están definidos."
+    ],
+    "pasos": [
+      "Ejecutar la búsqueda con el criterio que tiene resultados.",
+      "Comparar el resultado con los Productos esperados.",
+      "Ejecutar la búsqueda con el criterio sin resultados.",
+      "Verificar que el resultado sea vacío y controlado."
+    ],
+    "resultadoEsperado": "La búsqueda devuelve exactamente los Productos que cumplen el criterio y un resultado vacío controlado cuando no hay coincidencias."
+  },
+  {
+    "id": "CP-HU16-003",
+    "nombre": "Restringir la consulta de Productos según las responsabilidades del usuario",
+    "modulo": "HU-16 — Consultar Producto",
+    "tipo": "Seguridad",
+    "descripcion": "Validar que la información de Productos solo sea accesible para usuarios con responsabilidad autorizada.",
+    "criteriosAceptacion": [
+      "AC-4: Acceder a la información de acuerdo con las responsabilidades del usuario."
+    ],
+    "criteriosRechazo": [
+      "Se rechaza si un usuario sin autorización accede a información de Productos o si un usuario autorizado no puede consultarla."
+    ],
+    "prerrequisitos": [
+      "Existe un usuario autorizado y un usuario sin autorización para consultar Productos.",
+      "Permisos por rol definidos."
+    ],
+    "pasos": [
+      "Iniciar sesión con el usuario autorizado y consultar un Producto.",
+      "Verificar que accede a la información.",
+      "Iniciar sesión con el usuario sin autorización.",
+      "Intentar consultar el mismo Producto y verificar el rechazo."
+    ],
+    "resultadoEsperado": "El usuario autorizado consulta el Producto y el usuario sin autorización es rechazado."
+  },
+  {
+    "id": "CP-HU16-004",
+    "nombre": "Consultar información logística asociada a un Producto",
+    "modulo": "HU-16 — Consultar Producto",
+    "tipo": "Integración",
+    "descripcion": "Verificar el criterio de información logística asociada a un Producto.",
+    "criteriosAceptacion": [
+      "AC-5: Consultar la información logística disponible asociada al producto."
+    ],
+    "criteriosRechazo": [
+      "Se rechaza si la información logística es incorrecta, corresponde a otro Producto o no existe una fuente habilitada."
+    ],
+    "prerrequisitos": [
+      "La funcionalidad de inventario y sus datos deben estar implementados.",
+      "Existe un Producto con información logística conocida."
+    ],
+    "pasos": [
+      "Consultar el Producto.",
+      "Obtener la información logística asociada.",
+      "Comparar con el dato de referencia.",
+      "Verificar que corresponda al Producto seleccionado."
+    ],
+    "resultadoEsperado": "La información logística mostrada corresponde al Producto seleccionado."
+  },
+  {
+    "id": "CP-HU17-001",
+    "nombre": "Modificar campos permitidos de un Producto",
+    "modulo": "HU-17 — Modificar Producto",
+    "tipo": "Positivo",
+    "descripcion": "Actualizar un Producto existente modificando únicamente campos autorizados.",
+    "criteriosAceptacion": [
+      "AC-1: Se debe poder seleccionar un Producto existente.",
+      "AC-2: Se deben poder modificar los campos permitidos."
+    ],
+    "criteriosRechazo": [
+      "Se rechaza si el cambio válido no persiste o altera datos no autorizados."
+    ],
+    "prerrequisitos": [
+      "Usuario con permisos para gestionar Productos.",
+      "Existe un Producto registrado.",
+      "Los campos permitidos están definidos."
+    ],
+    "pasos": [
+      "Seleccionar el Producto.",
+      "Modificar un campo permitido con un valor válido.",
+      "Guardar el cambio.",
+      "Consultar el Producto y comparar el valor actualizado.",
+      "Verificar que los demás datos no cambiaron."
+    ],
+    "resultadoEsperado": "El Producto conserva su identidad, refleja el nuevo valor y el resto de sus datos permanece sin cambios."
+  },
+  {
+    "id": "CP-HU17-002",
+    "nombre": "Rechazar modificación inválida de un Producto",
+    "modulo": "HU-17 — Modificar Producto",
+    "tipo": "Negativo",
+    "descripcion": "Validar que el sistema impida guardar una modificación que incumple las reglas de validación.",
+    "criteriosAceptacion": [
+      "AC-3: El sistema debe validar la información antes de guardar."
+    ],
+    "criteriosRechazo": [
+      "Se rechaza si el sistema guarda la modificación inválida o altera el Producto original."
+    ],
+    "prerrequisitos": [
+      "Existe un Producto registrado.",
+      "Reglas de validación definidas."
+    ],
+    "pasos": [
+      "Seleccionar el Producto.",
+      "Introducir un valor inválido en un campo permitido.",
+      "Intentar guardar.",
+      "Verificar el rechazo.",
+      "Consultar el Producto y confirmar que conserva sus valores originales."
+    ],
+    "resultadoEsperado": "El sistema rechaza la modificación y el Producto conserva sus valores originales."
+  },
+  {
+    "id": "CP-HU17-003",
+    "nombre": "Reflejar los cambios del Producto en inventario y operaciones asociadas",
+    "modulo": "HU-17 — Modificar Producto",
+    "tipo": "Integración",
+    "descripcion": "Verificar el criterio de que los cambios de un Producto se reflejen en el inventario y en las operaciones asociadas.",
+    "criteriosAceptacion": [
+      "AC-4: Los cambios deben reflejarse en el inventario y en las operaciones asociadas."
+    ],
+    "criteriosRechazo": [
+      "Se rechaza si el inventario o las operaciones asociadas muestran datos desactualizados del Producto."
+    ],
+    "prerrequisitos": [
+      "La funcionalidad de inventario y operaciones debe estar implementada.",
+      "Existe un Producto con inventario u operaciones asociadas."
+    ],
+    "pasos": [
+      "Modificar un campo permitido del Producto.",
+      "Consultar el inventario asociado.",
+      "Consultar las operaciones asociadas.",
+      "Verificar que reflejan el dato actualizado."
+    ],
+    "resultadoEsperado": "El inventario y las operaciones asociadas reflejan la información actualizada del Producto."
+  },
+  {
+    "id": "CP-HU18-001",
+    "nombre": "Eliminar Producto sin dependencias bloqueantes",
+    "modulo": "HU-18 — Eliminar Producto",
+    "tipo": "Positivo",
+    "descripcion": "Eliminar un Producto que puede dejar de utilizarse.",
+    "criteriosAceptacion": [
+      "AC-1: Se debe poder seleccionar un Producto existente.",
+      "AC-4: Un Producto eliminado no debe estar disponible para nuevas operaciones."
+    ],
+    "criteriosRechazo": [
+      "Se rechaza si el Producto sigue disponible para nuevas operaciones o si la eliminación afecta a otros Productos."
+    ],
+    "prerrequisitos": [
+      "Existe un Producto sin inventario ni operaciones asociadas.",
+      "La regla de eliminación está definida."
+    ],
+    "pasos": [
+      "Seleccionar el Producto.",
+      "Ejecutar la eliminación.",
+      "Verificar la respuesta.",
+      "Intentar usar el Producto en una nueva operación o consulta operativa.",
+      "Verificar que no está disponible."
+    ],
+    "resultadoEsperado": "El Producto deja de estar disponible para nuevas operaciones."
+  },
+  {
+    "id": "CP-HU18-002",
+    "nombre": "Bloquear eliminación de Producto con inventario u operaciones asociadas",
+    "modulo": "HU-18 — Eliminar Producto",
+    "tipo": "Negativo",
+    "descripcion": "Intentar eliminar un Producto que tiene inventario u operaciones asociadas.",
+    "criteriosAceptacion": [
+      "AC-2: El sistema debe validar si el Producto tiene inventario u operaciones asociadas.",
+      "AC-3: No se debe permitir la eliminación cuando existan dependencias que lo impidan."
+    ],
+    "criteriosRechazo": [
+      "Se rechaza si el Producto se elimina ignorando la dependencia o deja inventario u operaciones huérfanas."
+    ],
+    "prerrequisitos": [
+      "Existe un Producto con inventario u operaciones asociadas.",
+      "La regla establece que esa dependencia bloquea la eliminación."
+    ],
+    "pasos": [
+      "Seleccionar el Producto.",
+      "Intentar eliminarlo.",
+      "Verificar el rechazo.",
+      "Consultar el Producto y sus dependencias para comprobar que permanecen."
+    ],
+    "resultadoEsperado": "La eliminación no se ejecuta y el Producto y sus dependencias permanecen intactos."
+  },
+  {
+    "id": "CP-HU18-003",
+    "nombre": "Conservar información histórica después de eliminar un Producto",
+    "modulo": "HU-18 — Eliminar Producto",
+    "tipo": "Integridad de datos",
+    "descripcion": "Verificar que la información histórica del Producto permanezca disponible tras eliminarlo.",
+    "criteriosAceptacion": [
+      "AC-5: La información histórica debe conservarse."
+    ],
+    "criteriosRechazo": [
+      "Se rechaza si el historial se pierde, se altera o deja de ser consultable."
+    ],
+    "prerrequisitos": [
+      "Existe un Producto con historial conocido.",
+      "Está definida la información histórica que debe conservarse."
+    ],
+    "pasos": [
+      "Registrar la referencia del historial del Producto.",
+      "Eliminar el Producto permitido.",
+      "Consultar el historial.",
+      "Comparar con la referencia."
+    ],
+    "resultadoEsperado": "La información histórica requerida permanece disponible y consistente."
+  }
+]

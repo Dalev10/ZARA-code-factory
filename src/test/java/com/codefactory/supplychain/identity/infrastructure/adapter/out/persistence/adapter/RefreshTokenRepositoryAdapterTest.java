@@ -107,6 +107,33 @@ class RefreshTokenRepositoryAdapterTest {
     }
 
     @Test
+    void revocarTodosDeUsuarioRevocaSusTokensDeCualquierFamiliaYNoTocaLosDeOtroUsuario() {
+        Usuario usuario = usuarioRepository.guardar(Usuario.crear(Email.de("desactivado@ejemplo.com"),
+                "A Desactivar", PasswordHash.de("$2a$10$abcdefghijklmnopqrstuv")));
+        Usuario otro = usuarioRepository.guardar(Usuario.crear(Email.de("otro-usuario@ejemplo.com"),
+                "Otro Usuario", PasswordHash.de("$2a$10$abcdefghijklmnopqrstuv")));
+        entityManager.flush();
+
+        Instant ahora = Instant.now();
+        refreshTokenRepository.guardar(
+                RefreshToken.crearNuevaFamilia(usuario.getId(), "hash-usuario-a", ahora, ahora.plusSeconds(3600)));
+        refreshTokenRepository.guardar(
+                RefreshToken.crearNuevaFamilia(usuario.getId(), "hash-usuario-b", ahora, ahora.plusSeconds(3600)));
+        refreshTokenRepository.guardar(
+                RefreshToken.crearNuevaFamilia(otro.getId(), "hash-otro-usuario", ahora, ahora.plusSeconds(3600)));
+        entityManager.flush();
+        entityManager.clear();
+
+        refreshTokenRepository.revocarTodosDeUsuario(usuario.getId(), ahora);
+        entityManager.clear();
+
+        assertThat(refreshTokenRepository.buscarPorTokenHash("hash-usuario-a").orElseThrow().estaRevocado()).isTrue();
+        assertThat(refreshTokenRepository.buscarPorTokenHash("hash-usuario-b").orElseThrow().estaRevocado()).isTrue();
+        assertThat(refreshTokenRepository.buscarPorTokenHash("hash-otro-usuario").orElseThrow().estaRevocado())
+                .isFalse();
+    }
+
+    @Test
     void laBaseDeDatosRechazaTokenHashDuplicado() {
         Usuario usuario = usuarioRepository.guardar(Usuario.crear(Email.de("carlos@ejemplo.com"), "Carlos Ruiz",
                 PasswordHash.de("$2a$10$abcdefghijklmnopqrstuv")));

@@ -1,5 +1,9 @@
 package com.codefactory.supplychain.inventario.application.service;
 
+import com.codefactory.supplychain.inventario.api.ConsultaNodos;
+import com.codefactory.supplychain.inventario.api.ConsultaTiendas;
+import com.codefactory.supplychain.inventario.api.TiendaDesactivada;
+import com.codefactory.supplychain.inventario.api.TiendaResumen;
 import com.codefactory.supplychain.inventario.application.port.in.TiendaUseCase;
 import com.codefactory.supplychain.inventario.application.port.out.NodoRepositoryPort;
 import com.codefactory.supplychain.inventario.application.port.out.TiendaRepositoryPort;
@@ -9,27 +13,33 @@ import com.codefactory.supplychain.inventario.domain.model.Nodo;
 import com.codefactory.supplychain.inventario.domain.model.TipoNodo;
 import com.codefactory.supplychain.inventario.domain.model.Tienda;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Collection;
+import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 /**
- * Crea una Tienda y su Nodo Almacén satélite en la misma operación — toda
- * Tienda tiene su Almacén desde que existe. El Nodo Bodega_Tienda se
- * aprovisiona por separado (ver BodegaTiendaService, FEAT-03) sobre una
- * Tienda ya existente.
+ * Crea una Tienda y sus nodos satélite {@code ALMACEN} y
+ * {@code BODEGA_TIENDA} en la misma transacción.
+ *
+ * También implementa ConsultaTiendas, la consulta de solo lectura que inventario publica
+ * para otros módulos en su paquete api (ver ARQUITECTURA.md).
  *
  * Módulo: inventario — Red de nodos (CD, Tienda/Almacén, Bodega_Tienda) e inventario polimórfico sobre ellos.
  */
 @Service
 @RequiredArgsConstructor
-public class TiendaService implements TiendaUseCase {
+public class TiendaService implements TiendaUseCase, ConsultaTiendas, ConsultaNodos {
 
     private final TiendaRepositoryPort tiendaRepositoryPort;
     private final NodoRepositoryPort nodoRepositoryPort;
+    private final ApplicationEventPublisher eventos;
 
     @Override
     @Transactional
@@ -39,6 +49,7 @@ public class TiendaService implements TiendaUseCase {
         }
         Tienda creada = tiendaRepositoryPort.guardar(Tienda.crear(nombre, ubicacion));
         nodoRepositoryPort.guardar(Nodo.crearParaTienda(creada.getId(), TipoNodo.ALMACEN));
+        nodoRepositoryPort.guardar(Nodo.crearParaTienda(creada.getId(), TipoNodo.BODEGA_TIENDA));
         return creada;
     }
 
@@ -61,15 +72,51 @@ public class TiendaService implements TiendaUseCase {
         return tiendaRepositoryPort.guardar(tienda.actualizar(nombre, ubicacion));
     }
 
+    /** Una tienda ya inactiva no vuelve a publicar el evento. */
     @Override
+    @Transactional
     public void desactivar(UUID id) {
         Tienda tienda = obtenerPorId(id);
-        tiendaRepositoryPort.guardar(tienda.desactivar());
+        if (!tienda.estaActiva()) {
+            return;
+        }
+        Tienda desactivada = tienda.desactivar();
+        tiendaRepositoryPort.guardar(desactivada);
+        eventos.publishEvent(new TiendaDesactivada(id, desactivada.getActualizadoEn()));
     }
 
     @Override
     public Tienda activar(UUID id) {
         Tienda tienda = obtenerPorId(id);
         return tiendaRepositoryPort.guardar(tienda.activar());
+    }
+
+    @Override
+    public Optional<TiendaResumen> buscar(UUID tiendaId) {
+        return tiendaRepositoryPort.buscarPorId(tiendaId).map(TiendaService::resumir);
+    }
+
+    @Override
+    public List<TiendaResumen> buscarTodas(Collection<UUID> tiendaIds) {
+        return tiendaRepositoryPort.buscarPorIds(tiendaIds).stream().map(TiendaService::resumir).toList();
+    }
+
+    @Override
+    public List<TiendaResumen> listarActivas() {
+        return tiendaRepositoryPort.listarActivas().stream().map(TiendaService::resumir).toList();
+    }
+
+    @Override
+    public Optional<UUID> buscarAlmacen(UUID tiendaId) {
+        return nodoRepositoryPort.buscarPorTiendaYTipo(tiendaId, TipoNodo.ALMACEN).map(Nodo::getId);
+    }
+
+    @Override
+    public Optional<UUID> buscarBodega(UUID tiendaId) {
+        return nodoRepositoryPort.buscarPorTiendaYTipo(tiendaId, TipoNodo.BODEGA_TIENDA).map(Nodo::getId);
+    }
+
+    private static TiendaResumen resumir(Tienda tienda) {
+        return new TiendaResumen(tienda.getId(), tienda.getNombre(), tienda.estaActiva());
     }
 }

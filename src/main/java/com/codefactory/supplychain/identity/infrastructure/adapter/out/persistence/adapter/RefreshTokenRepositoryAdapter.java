@@ -39,4 +39,10 @@ public class RefreshTokenRepositoryAdapter implements RefreshTokenRepositoryPort
     public void revocarFamilia(UUID familiaId, Instant ahora) {
         jpaRepository.revocarFamilia(familiaId, ahora);
     }
+
+    @Override
+    @Transactional
+    public void revocarTodosDeUsuario(UUID usuarioId, Instant ahora) {
+        jpaRepository.revocarTodosDeUsuario(usuarioId, ahora);
+    }
 }

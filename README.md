@@ -18,6 +18,7 @@ de Puertos y Adaptadores (arquitectura hexagonal):
 
 ```
 <modulo>/
+├── api/               # Lo único que otros módulos pueden usar (solo si tiene consumidores)
 ├── domain/            # Reglas de negocio puras, sin dependencias de framework
 │   ├── model/
 │   └── exception/
@@ -36,8 +37,31 @@ Módulos actuales: `identity`, `catalogo`, `inventario`, `ventas`,
 excepciones globales, DTOs comunes) viven en `shared/`.
 
 **Regla no negociable:** ningún módulo accede directamente a las tablas o
-entidades JPA de otro módulo. La comunicación entre módulos ocurre siempre a
-través de los puertos de aplicación (`application/port/*`).
+entidades JPA de otro módulo. Un módulo solo puede usar de otro lo que este
+publica en su paquete `api/` (marcado con `@NamedInterface("api")`), y lo hace a
+través de un puerto propio y un adaptador. La guía completa, con ejemplos y el
+checklist para cada HU, está en [ARQUITECTURA.md](ARQUITECTURA.md).
+Spring Modulith la verifica en cada build (`ModularidadTest`): si un módulo usa un
+tipo interno de otro, o aparece un ciclo entre módulos, `./mvnw verify` falla.
+`shared` es un módulo abierto.
+
+**Eventos entre módulos.** Si un módulo necesita una respuesta de otro, usa un
+puerto síncrono; si solo informa un hecho, publica un evento. Todo listener que
+reacciona a un hecho de otro módulo sigue esta forma:
+
+```java
+@TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+@Transactional(propagation = Propagation.REQUIRES_NEW)
+public void alOcurrirAlgo(AlgoOcurrio evento) { ... }
+```
+
+Corre en el mismo hilo después del commit y antes de responder al cliente, así
+que sus efectos ya se ven al recibir la respuesta; si falla, Spring lo registra
+en el log y la operación de origen queda confirmada. Cada transacción
+`REQUIRES_NEW` usa otra conexión mientras la de origen sigue tomada: por eso el
+pool por defecto es de 10 (`DB_POOL_MAX_SIZE`). Spring no arranca si un listener
+declara `@Transactional` sin `REQUIRES_NEW`.
+Comportamiento fijado en `EventosReintentosZonaHorariaTest`.
 
 ## Primeros pasos
 
@@ -71,3 +95,18 @@ entidades del ERD de negocio, con UUID como identificador en todo el
 dominio de negocio. El esquema del módulo `identity` (usuarios/autenticación)
 se agrega en `V2` a `V8`; las migraciones posteriores (`V9` en adelante)
 extienden el esquema de negocio a medida que se desarrollan las features.
+
+## Pruebas
+
+- `./mvnw verify` corre todas las pruebas del equipo de desarrollo (sufijo `Test`),
+  con Postgres real vía Testcontainers, la verificación de módulos y el umbral de
+  cobertura de JaCoCo (85 %). Es lo mismo que corre la CI.
+- `./mvnw -P casos-qa-sprint1 verify` corre las pruebas funcionales de QA
+  (sufijo `IT`, en `src/test/.../qa/`) y genera su reporte.
+- Para probar autorización con usuarios reales, usar `soporte/UsuariosDePrueba`
+  (`@Import(UsuariosDePrueba.class)`): `usuarios.conRol("VENDEDOR", tiendaId)` o
+  `usuarios.conScopes(Set.of("ventas:anular"))` devuelven el usuario y su token
+  (`bearer()`), sin copiar en cada test el armado de usuario, rol y login.
+- Los roles y scopes sembrados por las migraciones (`ADMIN`, `VENDEDOR`,
+  `SUPERVISOR_TIENDA`, `OPERADOR_CD` y sus scopes) son nombres reservados: no
+  usarlos como datos de prueba nuevos.

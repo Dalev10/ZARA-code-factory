@@ -3,8 +3,10 @@ package com.codefactory.supplychain.shared.exception;
 import com.codefactory.supplychain.shared.dto.ErrorResponse;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.InvalidDataAccessApiUsageException;
+import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -13,8 +15,8 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import java.util.stream.Collectors;
 
 /**
- * Traduce las excepciones transversales (ReglaDeNegocioException, RecursoDuplicadoException)
- * y los errores de validación de Bean Validation a respuestas HTTP consistentes, sin que
+ * Traduce las excepciones transversales (ReglaDeNegocioException, RecursoDuplicadoException,
+ * ConflictoDeEstadoException, etc.) y los errores de validación de Bean Validation a respuestas HTTP consistentes, sin que
  * este componente dependa de las excepciones concretas de ningún módulo específico.
  *
  * Componentes transversales de tipo 'exception', compartidos por todos los módulos.
@@ -32,9 +34,31 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.CONFLICT).body(new ErrorResponse(ex.getMessage()));
     }
 
+    @ExceptionHandler(ConflictoDeEstadoException.class)
+    public ResponseEntity<ErrorResponse> handleConflictoDeEstado(ConflictoDeEstadoException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(new ErrorResponse(ex.getMessage()));
+    }
+
+    /** Se agotaron los reintentos optimistas (D-24): otra operación modificó el mismo registro. */
+    @ExceptionHandler(OptimisticLockingFailureException.class)
+    public ResponseEntity<ErrorResponse> handleConcurrencia(OptimisticLockingFailureException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(new ErrorResponse("Otra operación modificó el mismo registro; intente de nuevo"));
+    }
+
+    @ExceptionHandler(RecursoEnUsoException.class)
+    public ResponseEntity<ErrorResponse> handleRecursoEnUso(RecursoEnUsoException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(new ErrorResponse(ex.getMessage()));
+    }
+
     @ExceptionHandler(NoAutorizadoException.class)
     public ResponseEntity<ErrorResponse> handleNoAutorizado(NoAutorizadoException ex) {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ErrorResponse(ex.getMessage()));
+    }
+
+    @ExceptionHandler(ProhibidoException.class)
+    public ResponseEntity<ErrorResponse> handleProhibido(ProhibidoException ex) {
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(new ErrorResponse(ex.getMessage()));
     }
 
     @ExceptionHandler(RecursoNoEncontradoException.class)
@@ -58,7 +82,14 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(AccessDeniedException.class)
     public ResponseEntity<ErrorResponse> handleAccesoDenegado(AccessDeniedException ex) {
         return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                .body(new ErrorResponse("No tenés permisos para realizar esta acción"));
+                .body(new ErrorResponse("No tiene permisos para realizar esta acción"));
+    }
+
+    /** JSON mal formado o con un valor del tipo equivocado; sin esto Spring responde 400 sin cuerpo. */
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<ErrorResponse> handleCuerpoIlegible(HttpMessageNotReadableException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(new ErrorResponse("El cuerpo de la solicitud no es un JSON válido para esta operación"));
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
