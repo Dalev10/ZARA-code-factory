@@ -1,8 +1,7 @@
 name: CI
 
-# Se ejecuta en cada Pull Request hacia main o develop 
-# y también en cada push directo a esas ramas como
-# confirmación adicional.
+# Se ejecuta en cada Pull Request hacia main o develop
+# y también en cada push directo a esas ramas.
 on:
   pull_request:
     branches:
@@ -21,26 +20,39 @@ jobs:
     steps:
       - name: Descargar el código
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Sonar necesita el historial completo
 
       - name: Configurar JDK 21 (Temurin)
         uses: actions/setup-java@v4
         with:
-          distribution: 'temurin'
-          java-version: '21'
+          distribution: "temurin"
+          java-version: "21"
           cache: maven
+
+      - name: Cache de SonarCloud
+        uses: actions/cache@v4
+        with:
+          path: ~/.sonar/cache
+          key: ${{ runner.os }}-sonar
+          restore-keys: ${{ runner.os }}-sonar
 
       - name: Dar permisos de ejecución al Maven Wrapper
         run: chmod +x mvnw
 
-      # Los tests de repositorio (identity) usan Testcontainers para levantar
-      # un Postgres real y correr las migraciones de Flyway contra él. No se
-      # necesita un "services: postgres:" aparte: Testcontainers gestiona su
-      # propio contenedor efímero usando el daemon de Docker que ya viene
-      # preinstalado en los runners de GitHub Actions (ubuntu-latest).
-      #
-      # "verify" también corre los gates de calidad agregados en HU-27:
-      # JaCoCo falla el build si la cobertura de línea del proyecto cae por
-      # debajo del 85%, y Checkstyle publica su reporte sin romper el build
-      # todavía (failOnViolation=false) hasta que se cure el ruleset.
+      # Los tests de repositorio usan Testcontainers (Postgres real).
+      # "verify" también corre JaCoCo (piso de 85 %) y Checkstyle.
       - name: Compilar y verificar
         run: ./mvnw -B clean verify
+
+      # Analiza con SonarCloud usando el reporte de JaCoCo que dejó "verify".
+      # El token viene del secreto SONAR_TOKEN. Solo en main, porque el plan
+      # gratuito solo consulta datos de esa rama.
+      - name: Análisis de SonarCloud y Quality Gate
+        if: github.ref == 'refs/heads/main'
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        run: >
+          ./mvnw -B
+          org.sonarsource.scanner.maven:sonar-maven-plugin:sonar
+          -Dsonar.qualitygate.wait=true
