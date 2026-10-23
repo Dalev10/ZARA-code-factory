@@ -1420,5 +1420,1111 @@
       "Comparar con la referencia."
     ],
     "resultadoEsperado": "La información histórica requerida permanece disponible y consistente."
+  },
+  {
+    "id": "CP-HU38-001",
+    "nombre": "Ajuste positivo por conteo físico suma al stock y devuelve el saldo",
+    "modulo": "HU-38 — Ajuste de inventario",
+    "tipo": "Positivo",
+    "sprint": 2
+  },
+  {
+    "id": "CP-HU38-002",
+    "nombre": "Ajuste negativo por merma resta del stock",
+    "modulo": "HU-38 — Ajuste de inventario",
+    "tipo": "Positivo",
+    "sprint": 2
+  },
+  {
+    "id": "CP-HU38-003",
+    "nombre": "CORRECCION sin comentario se rechaza (400)",
+    "modulo": "HU-38 — Ajuste de inventario",
+    "tipo": "Negativo",
+    "sprint": 2
+  },
+  {
+    "id": "CP-HU38-004",
+    "nombre": "Un ajuste que dejaría el stock negativo se rechaza (400) sin cambiar el saldo",
+    "modulo": "HU-38 — Ajuste de inventario",
+    "tipo": "Negativo",
+    "sprint": 2
+  },
+  {
+    "id": "CP-HU38-005",
+    "nombre": "Un ajuste positivo sobre una variante sin fila crea la fila",
+    "modulo": "HU-38 — Ajuste de inventario",
+    "tipo": "Negativo",
+    "sprint": 2
+  },
+  {
+    "id": "CP-HU38-006",
+    "nombre": "Un ajuste negativo sobre una variante sin fila se rechaza (400) y no crea fila",
+    "modulo": "HU-38 — Ajuste de inventario",
+    "tipo": "Negativo",
+    "sprint": 2
+  },
+  {
+    "id": "CP-HU38-007",
+    "nombre": "Rechazar un motivo fuera de la lista (400)",
+    "modulo": "HU-38 — Ajuste de inventario",
+    "tipo": "Negativo",
+    "sprint": 2
+  },
+  {
+    "id": "CP-HU38-008",
+    "nombre": "Un VENDEDOR no puede ajustar inventario (403)",
+    "modulo": "HU-38 — Ajuste de inventario",
+    "tipo": "Negativo",
+    "sprint": 2
+  },
+  {
+    "id": "CP-HU38-009",
+    "nombre": "Ajustar un SKU inexistente se rechaza",
+    "modulo": "HU-38 — Ajuste de inventario",
+    "tipo": "Negativo",
+    "sprint": 2
+  },
+  {
+    "id": "CP-HU41-001",
+    "nombre": "Anular una línea de venta devuelve el stock al Almacén y registra el motivo",
+    "modulo": "HU-41 — Anular venta",
+    "tipo": "Positivo",
+    "sprint": 2
+  },
+  {
+    "id": "CP-HU41-002",
+    "nombre": "Anular sin motivo se rechaza (400) y la venta sigue registrada",
+    "modulo": "HU-41 — Anular venta",
+    "tipo": "Negativo",
+    "sprint": 2
+  },
+  {
+    "id": "CP-HU41-003",
+    "nombre": "Anular dos veces responde 200 con la anulación original y no devuelve stock doble",
+    "modulo": "HU-41 — Anular venta",
+    "tipo": "Negativo",
+    "sprint": 2
+  },
+  {
+    "id": "CP-HU41-004",
+    "nombre": "Anular por transacción anula todas sus líneas y devuelve todo el stock",
+    "modulo": "HU-41 — Anular venta",
+    "tipo": "Positivo",
+    "sprint": 2
+  },
+  {
+    "id": "CP-HU41-005",
+    "nombre": "Anular por transacción dos veces no devuelve stock otra vez",
+    "modulo": "HU-41 — Anular venta",
+    "tipo": "Negativo",
+    "sprint": 2
+  },
+  {
+    "id": "CP-HU41-006",
+    "nombre": "Anular una venta inexistente responde 404",
+    "modulo": "HU-41 — Anular venta",
+    "tipo": "Negativo",
+    "sprint": 2
+  },
+  {
+    "id": "CP-HU41-007",
+    "nombre": "Un supervisor no anula ventas de una tienda que no tiene asignada",
+    "modulo": "HU-41 — Anular venta",
+    "tipo": "Negativo",
+    "sprint": 2
+  },
+  {
+    "id": "CP-HU32-001",
+    "nombre": "Asignar una tienda a un usuario y consultarla en sus tiendas",
+    "modulo": "HU-32 — Asignar tiendas a usuario",
+    "tipo": "Positivo",
+    "sprint": 2
+  },
+  {
+    "id": "CP-HU32-002",
+    "nombre": "Un vendedor sin la tienda asignada no registra ventas en ella (403)",
+    "modulo": "HU-32 — Asignar tiendas a usuario",
+    "tipo": "Negativo",
+    "sprint": 2
+  },
+  {
+    "id": "CP-HU32-003",
+    "nombre": "La asignación aplica de inmediato sin pedir un token nuevo",
+    "modulo": "HU-32 — Asignar tiendas a usuario",
+    "tipo": "Negativo",
+    "sprint": 2
+  },
+  {
+    "id": "CP-HU32-004",
+    "nombre": "Quitar la tienda corta la operación del usuario en ella",
+    "modulo": "HU-32 — Asignar tiendas a usuario",
+    "tipo": "Positivo",
+    "sprint": 2
+  },
+  {
+    "id": "CP-HU32-005",
+    "nombre": "ADMIN opera en cualquier tienda sin tenerla asignada (tiendas:operar-todas)",
+    "modulo": "HU-32 — Asignar tiendas a usuario",
+    "tipo": "Negativo",
+    "sprint": 2
+  },
+  {
+    "id": "CP-HU32-006",
+    "nombre": "Rechazar asignar una tienda inexistente",
+    "modulo": "HU-32 — Asignar tiendas a usuario",
+    "tipo": "Negativo",
+    "sprint": 2
+  },
+  {
+    "id": "CP-HU37-001",
+    "nombre": "Cargar inventario inicial válido en el Almacén de una tienda",
+    "modulo": "HU-37 — Carga inicial de inventario",
+    "tipo": "Positivo",
+    "sprint": 2
+  },
+  {
+    "id": "CP-HU37-002",
+    "nombre": "Una cantidad en 0 cuenta como cargada y crea la fila",
+    "modulo": "HU-37 — Carga inicial de inventario",
+    "tipo": "Positivo",
+    "sprint": 2
+  },
+  {
+    "id": "CP-HU37-003",
+    "nombre": "Un SKU inexistente rechaza todo el lote (400) y no carga nada",
+    "modulo": "HU-37 — Carga inicial de inventario",
+    "tipo": "Negativo",
+    "sprint": 2
+  },
+  {
+    "id": "CP-HU37-004",
+    "nombre": "Un SKU repetido en el lote lo rechaza (400)",
+    "modulo": "HU-37 — Carga inicial de inventario",
+    "tipo": "Negativo",
+    "sprint": 2
+  },
+  {
+    "id": "CP-HU37-005",
+    "nombre": "Una variante que ya tiene fila en el nodo responde 409",
+    "modulo": "HU-37 — Carga inicial de inventario",
+    "tipo": "Negativo",
+    "sprint": 2
+  },
+  {
+    "id": "CP-HU37-006",
+    "nombre": "Rechazar una cantidad negativa (400)",
+    "modulo": "HU-37 — Carga inicial de inventario",
+    "tipo": "Negativo",
+    "sprint": 2
+  },
+  {
+    "id": "CP-HU37-007",
+    "nombre": "Rechazar un lote vacío y uno de más de 500 ítems (400)",
+    "modulo": "HU-37 — Carga inicial de inventario",
+    "tipo": "Negativo",
+    "sprint": 2
+  },
+  {
+    "id": "CP-HU37-008",
+    "nombre": "Cargar en la Bodega_Tienda y en un Centro de Distribución",
+    "modulo": "HU-37 — Carga inicial de inventario",
+    "tipo": "Positivo",
+    "sprint": 2
+  },
+  {
+    "id": "CP-HU37-009",
+    "nombre": "Un OPERADOR_CD no ve el nodo de una tienda (404) y un SUPERVISOR no carga en un CD (403)",
+    "modulo": "HU-37 — Carga inicial de inventario",
+    "tipo": "Negativo",
+    "sprint": 2
+  },
+  {
+    "id": "CP-HU37-010",
+    "nombre": "Un SUPERVISOR no carga en el nodo de una tienda que no tiene asignada (404)",
+    "modulo": "HU-37 — Carga inicial de inventario",
+    "tipo": "Negativo",
+    "sprint": 2
+  },
+  {
+    "id": "CP-HU37-011",
+    "nombre": "Cargar en un nodo inexistente responde 404",
+    "modulo": "HU-37 — Carga inicial de inventario",
+    "tipo": "Negativo",
+    "sprint": 2
+  },
+  {
+    "id": "CP-HU35-001",
+    "nombre": "Rechazar un template sin categoría (400 con mensaje)",
+    "modulo": "HU-35 — Categoría obligatoria en template",
+    "tipo": "Negativo",
+    "sprint": 2
+  },
+  {
+    "id": "CP-HU35-002",
+    "nombre": "Crear un template con categoría la conserva",
+    "modulo": "HU-35 — Categoría obligatoria en template",
+    "tipo": "Positivo",
+    "sprint": 2
+  },
+  {
+    "id": "CP-HU35-003",
+    "nombre": "Rechazar crear la categoría reservada SIN_CATEGORIA, sin distinguir mayúsculas (409)",
+    "modulo": "HU-35 — Categoría obligatoria en template",
+    "tipo": "Negativo",
+    "sprint": 2
+  },
+  {
+    "id": "CP-HU35-004",
+    "nombre": "Rechazar renombrar una categoría hacia SIN_CATEGORIA (409)",
+    "modulo": "HU-35 — Categoría obligatoria en template",
+    "tipo": "Negativo",
+    "sprint": 2
+  },
+  {
+    "id": "CP-HU35-005",
+    "nombre": "Rechazar un template con una categoría inexistente",
+    "modulo": "HU-35 — Categoría obligatoria en template",
+    "tipo": "Negativo",
+    "sprint": 2
+  },
+  {
+    "id": "CP-HU36-001",
+    "nombre": "Ventas simultáneas del mismo SKU no pierden ni duplican unidades",
+    "modulo": "HU-36 — Concurrencia de inventario",
+    "tipo": "Negativo",
+    "sprint": 2
+  },
+  {
+    "id": "CP-HU36-002",
+    "nombre": "Reintentar la misma transacción en paralelo registra la venta una sola vez",
+    "modulo": "HU-36 — Concurrencia de inventario",
+    "tipo": "Positivo",
+    "sprint": 2
+  },
+  {
+    "id": "CP-HU39-001",
+    "nombre": "Consultar el stock de un nodo",
+    "modulo": "HU-39 — Consultar inventario y kardex",
+    "tipo": "Positivo",
+    "sprint": 2
+  },
+  {
+    "id": "CP-HU39-002",
+    "nombre": "Consultar el stock de una variante en todos sus nodos",
+    "modulo": "HU-39 — Consultar inventario y kardex",
+    "tipo": "Positivo",
+    "sprint": 2
+  },
+  {
+    "id": "CP-HU39-003",
+    "nombre": "El kardex muestra cada movimiento en orden, con fechas en UTC",
+    "modulo": "HU-39 — Consultar inventario y kardex",
+    "tipo": "Positivo",
+    "sprint": 2
+  },
+  {
+    "id": "CP-HU39-004",
+    "nombre": "Filtrar el kardex por tipo y por rango de fechas UTC",
+    "modulo": "HU-39 — Consultar inventario y kardex",
+    "tipo": "Positivo",
+    "sprint": 2
+  },
+  {
+    "id": "CP-HU39-005",
+    "nombre": "Un vendedor no ve el inventario de una tienda que no tiene asignada (404)",
+    "modulo": "HU-39 — Consultar inventario y kardex",
+    "tipo": "Negativo",
+    "sprint": 2
+  },
+  {
+    "id": "CP-HU39-006",
+    "nombre": "La consulta por variante solo muestra nodos de las tiendas asignadas",
+    "modulo": "HU-39 — Consultar inventario y kardex",
+    "tipo": "Positivo",
+    "sprint": 2
+  },
+  {
+    "id": "CP-HU39-007",
+    "nombre": "Un CD lo ven ADMIN y OPERADOR_CD; un VENDEDOR recibe 404",
+    "modulo": "HU-39 — Consultar inventario y kardex",
+    "tipo": "Negativo",
+    "sprint": 2
+  },
+  {
+    "id": "CP-HU39-008",
+    "nombre": "Consultar inventario sin el scope inventario:consultar responde 403",
+    "modulo": "HU-39 — Consultar inventario y kardex",
+    "tipo": "Negativo",
+    "sprint": 2
+  },
+  {
+    "id": "CP-HU42-001",
+    "nombre": "Consultar ventas filtradas por tienda y por variante",
+    "modulo": "HU-42 — Consultar ventas",
+    "tipo": "Positivo",
+    "sprint": 2
+  },
+  {
+    "id": "CP-HU42-002",
+    "nombre": "Consultar una venta por id",
+    "modulo": "HU-42 — Consultar ventas",
+    "tipo": "Positivo",
+    "sprint": 2
+  },
+  {
+    "id": "CP-HU42-003",
+    "nombre": "Una venta de otra tienda responde 404 para un vendedor sin acceso",
+    "modulo": "HU-42 — Consultar ventas",
+    "tipo": "Negativo",
+    "sprint": 2
+  },
+  {
+    "id": "CP-HU42-004",
+    "nombre": "Filtrar por una tienda ajena devuelve una página vacía",
+    "modulo": "HU-42 — Consultar ventas",
+    "tipo": "Positivo",
+    "sprint": 2
+  },
+  {
+    "id": "CP-HU42-005",
+    "nombre": "Sin filtro de tienda, un vendedor solo ve las ventas de sus tiendas",
+    "modulo": "HU-42 — Consultar ventas",
+    "tipo": "Negativo",
+    "sprint": 2
+  },
+  {
+    "id": "CP-HU42-006",
+    "nombre": "Filtrar por estado ANULADA y por rango de fechas UTC",
+    "modulo": "HU-42 — Consultar ventas",
+    "tipo": "Positivo",
+    "sprint": 2
+  },
+  {
+    "id": "CP-HU42-007",
+    "nombre": "Consultar por transaccionId devuelve la transacción completa",
+    "modulo": "HU-42 — Consultar ventas",
+    "tipo": "Positivo",
+    "sprint": 2
+  },
+  {
+    "id": "CP-HU30-001",
+    "nombre": "Un usuario desactivado pierde el acceso con su token vigente (401 Bearer)",
+    "modulo": "HU-30 — Corte de acceso por estado del usuario",
+    "tipo": "Negativo",
+    "sprint": 2
+  },
+  {
+    "id": "CP-HU30-002",
+    "nombre": "Un usuario desactivado no puede iniciar sesión",
+    "modulo": "HU-30 — Corte de acceso por estado del usuario",
+    "tipo": "Negativo",
+    "sprint": 2
+  },
+  {
+    "id": "CP-HU31-001",
+    "nombre": "Reactivar un usuario le devuelve el acceso con un inicio de sesión nuevo",
+    "modulo": "HU-31 — Desactivar y activar usuario",
+    "tipo": "Positivo",
+    "sprint": 2
+  },
+  {
+    "id": "CP-HU31-002",
+    "nombre": "Rechazar que un usuario se desactive a sí mismo",
+    "modulo": "HU-31 — Desactivar y activar usuario",
+    "tipo": "Negativo",
+    "sprint": 2
+  },
+  {
+    "id": "CP-HU31-003",
+    "nombre": "Rechazar la desactivación del último ADMIN activo",
+    "modulo": "HU-31 — Desactivar y activar usuario",
+    "tipo": "Negativo",
+    "sprint": 2
+  },
+  {
+    "id": "CP-HU31-004",
+    "nombre": "Desactivar un usuario inexistente responde 404",
+    "modulo": "HU-31 — Desactivar y activar usuario",
+    "tipo": "Negativo",
+    "sprint": 2
+  },
+  {
+    "id": "CP-HU50-001",
+    "nombre": "Evaluar una tienda tras subir el mínimo ejecuta el traspaso",
+    "modulo": "HU-50 — Evaluación masiva de reposición",
+    "tipo": "Positivo",
+    "sprint": 2
+  },
+  {
+    "id": "CP-HU50-002",
+    "nombre": "Evaluar dos veces seguidas no ejecuta traspasos la segunda vez",
+    "modulo": "HU-50 — Evaluación masiva de reposición",
+    "tipo": "Negativo",
+    "sprint": 2
+  },
+  {
+    "id": "CP-HU50-003",
+    "nombre": "Evaluar todas las tiendas activas repone cada una",
+    "modulo": "HU-50 — Evaluación masiva de reposición",
+    "tipo": "Positivo",
+    "sprint": 2
+  },
+  {
+    "id": "CP-HU50-004",
+    "nombre": "La evaluación masiva omite las tiendas inactivas",
+    "modulo": "HU-50 — Evaluación masiva de reposición",
+    "tipo": "Negativo",
+    "sprint": 2
+  },
+  {
+    "id": "CP-HU50-005",
+    "nombre": "Evaluar una tienda inexistente responde 404",
+    "modulo": "HU-50 — Evaluación masiva de reposición",
+    "tipo": "Negativo",
+    "sprint": 2
+  },
+  {
+    "id": "CP-HU50-006",
+    "nombre": "La evaluación masiva exige reposicion:administrar (403 para un supervisor)",
+    "modulo": "HU-50 — Evaluación masiva de reposición",
+    "tipo": "Negativo",
+    "sprint": 2
+  },
+  {
+    "id": "CP-HU34-001",
+    "nombre": "Crear una tienda devuelve los ids de su Almacén y su Bodega",
+    "modulo": "HU-34 — Almacén y Bodega con la tienda",
+    "tipo": "Positivo",
+    "sprint": 2
+  },
+  {
+    "id": "CP-HU34-002",
+    "nombre": "GET /tiendas/{id} devuelve los mismos ids de nodo que la creación",
+    "modulo": "HU-34 — Almacén y Bodega con la tienda",
+    "tipo": "Positivo",
+    "sprint": 2
+  },
+  {
+    "id": "CP-HU34-003",
+    "nombre": "La Bodega consultada por tienda coincide con el bodegaId de la tienda",
+    "modulo": "HU-34 — Almacén y Bodega con la tienda",
+    "tipo": "Positivo",
+    "sprint": 2
+  },
+  {
+    "id": "CP-HU34-004",
+    "nombre": "El listado de tiendas no trae los ids de nodo",
+    "modulo": "HU-34 — Almacén y Bodega con la tienda",
+    "tipo": "Negativo",
+    "sprint": 2
+  },
+  {
+    "id": "CP-HU34-005",
+    "nombre": "El Centro de Distribución expone el id de su nodo en nodo.id",
+    "modulo": "HU-34 — Almacén y Bodega con la tienda",
+    "tipo": "Positivo",
+    "sprint": 2
+  },
+  {
+    "id": "CP-HU34-006",
+    "nombre": "Una tienda desactivada conserva su Bodega (baja lógica, D-50)",
+    "modulo": "HU-34 — Almacén y Bodega con la tienda",
+    "tipo": "Positivo",
+    "sprint": 2
+  },
+  {
+    "id": "CP-HU51-001",
+    "nombre": "Definir la prioridad de CDs respeta el orden de la lista",
+    "modulo": "HU-51 — Prioridad de CDs por tienda",
+    "tipo": "Positivo",
+    "sprint": 2
+  },
+  {
+    "id": "CP-HU51-002",
+    "nombre": "Un PUT nuevo reemplaza la lista completa",
+    "modulo": "HU-51 — Prioridad de CDs por tienda",
+    "tipo": "Positivo",
+    "sprint": 2
+  },
+  {
+    "id": "CP-HU51-003",
+    "nombre": "Una lista vacía deja la tienda sin prioridades y libera el CD",
+    "modulo": "HU-51 — Prioridad de CDs por tienda",
+    "tipo": "Negativo",
+    "sprint": 2
+  },
+  {
+    "id": "CP-HU51-004",
+    "nombre": "Un CD con prioridades no se elimina (409 con mensaje)",
+    "modulo": "HU-51 — Prioridad de CDs por tienda",
+    "tipo": "Negativo",
+    "sprint": 2
+  },
+  {
+    "id": "CP-HU51-005",
+    "nombre": "Rechazar un CD repetido o inexistente en la lista",
+    "modulo": "HU-51 — Prioridad de CDs por tienda",
+    "tipo": "Negativo",
+    "sprint": 2
+  },
+  {
+    "id": "CP-HU51-006",
+    "nombre": "Rechazar el cuerpo sin cdIds (400) y una tienda inexistente (404)",
+    "modulo": "HU-51 — Prioridad de CDs por tienda",
+    "tipo": "Negativo",
+    "sprint": 2
+  },
+  {
+    "id": "CP-HU51-007",
+    "nombre": "Definir prioridades exige inventario:administrar (403 para un vendedor)",
+    "modulo": "HU-51 — Prioridad de CDs por tienda",
+    "tipo": "Negativo",
+    "sprint": 2
+  },
+  {
+    "id": "CP-HU40-001",
+    "nombre": "Registrar una venta válida descuenta el Almacén y la firma el servidor",
+    "modulo": "HU-40 — Registrar venta",
+    "tipo": "Positivo",
+    "sprint": 2
+  },
+  {
+    "id": "CP-HU40-002",
+    "nombre": "Una venta sin stock suficiente responde 409 y no descuenta",
+    "modulo": "HU-40 — Registrar venta",
+    "tipo": "Negativo",
+    "sprint": 2
+  },
+  {
+    "id": "CP-HU40-003",
+    "nombre": "Un lote con una línea sin stock no registra ninguna línea (todo o nada)",
+    "modulo": "HU-40 — Registrar venta",
+    "tipo": "Negativo",
+    "sprint": 2
+  },
+  {
+    "id": "CP-HU40-004",
+    "nombre": "Una venta forzada sin stock deja el Almacén en negativo y queda marcada",
+    "modulo": "HU-40 — Registrar venta",
+    "tipo": "Negativo",
+    "sprint": 2
+  },
+  {
+    "id": "CP-HU40-005",
+    "nombre": "Reintentar con el mismo transaccionId y los mismos datos devuelve 200 sin duplicar",
+    "modulo": "HU-40 — Registrar venta",
+    "tipo": "Negativo",
+    "sprint": 2
+  },
+  {
+    "id": "CP-HU40-006",
+    "nombre": "Reutilizar un transaccionId con otros datos responde 409",
+    "modulo": "HU-40 — Registrar venta",
+    "tipo": "Negativo",
+    "sprint": 2
+  },
+  {
+    "id": "CP-HU40-007",
+    "nombre": "Un SKU inexistente responde 404",
+    "modulo": "HU-40 — Registrar venta",
+    "tipo": "Negativo",
+    "sprint": 2
+  },
+  {
+    "id": "CP-HU40-008",
+    "nombre": "Rechazar datos inválidos: cantidad 0, precio negativo o sin ítems (400)",
+    "modulo": "HU-40 — Registrar venta",
+    "tipo": "Negativo",
+    "sprint": 2
+  },
+  {
+    "id": "CP-HU40-009",
+    "nombre": "canal y forzarSinStock son opcionales",
+    "modulo": "HU-40 — Registrar venta",
+    "tipo": "Positivo",
+    "sprint": 2
+  },
+  {
+    "id": "CP-HU40-010",
+    "nombre": "Sin fila la variante tiene stock 0: venta normal 409, forzada crea la fila en negativo",
+    "modulo": "HU-40 — Registrar venta",
+    "tipo": "Negativo",
+    "sprint": 2
+  },
+  {
+    "id": "CP-HU40-011",
+    "nombre": "Si una venta forzada ya creó la fila, la carga inicial responde 409 y el ajuste sí aplica",
+    "modulo": "HU-40 — Registrar venta",
+    "tipo": "Negativo",
+    "sprint": 2
+  },
+  {
+    "id": "CP-HU40-012",
+    "nombre": "Forzar sin stock exige el scope ventas:forzar-sin-stock (403)",
+    "modulo": "HU-40 — Registrar venta",
+    "tipo": "Negativo",
+    "sprint": 2
+  },
+  {
+    "id": "CP-HU40-013",
+    "nombre": "No se registran ventas en una tienda desactivada",
+    "modulo": "HU-40 — Registrar venta",
+    "tipo": "Negativo",
+    "sprint": 2
+  },
+  {
+    "id": "CP-HU29-001",
+    "nombre": "Un JSON mal formado responde 400 con mensaje, no con cuerpo vacío",
+    "modulo": "HU-29 — Contrato de errores",
+    "tipo": "Negativo",
+    "sprint": 2
+  },
+  {
+    "id": "CP-HU29-002",
+    "nombre": "Sin token responde 401 con WWW-Authenticate: Bearer",
+    "modulo": "HU-29 — Contrato de errores",
+    "tipo": "Negativo",
+    "sprint": 2
+  },
+  {
+    "id": "CP-HU29-003",
+    "nombre": "Un recurso inexistente con usuario autenticado responde 404, no 401",
+    "modulo": "HU-29 — Contrato de errores",
+    "tipo": "Negativo",
+    "sprint": 2
+  },
+  {
+    "id": "CP-HU29-004",
+    "nombre": "Un método no permitido con usuario autenticado responde 405, no 401",
+    "modulo": "HU-29 — Contrato de errores",
+    "tipo": "Negativo",
+    "sprint": 2
+  },
+  {
+    "id": "CP-HU29-005",
+    "nombre": "Falta de scope responde 403 con mensaje en español neutro",
+    "modulo": "HU-29 — Contrato de errores",
+    "tipo": "Negativo",
+    "sprint": 2
+  },
+  {
+    "id": "CP-HU29-006",
+    "nombre": "Las fechas se responden en UTC (ISO-8601 con Z)",
+    "modulo": "HU-29 — Contrato de errores",
+    "tipo": "Positivo",
+    "sprint": 2
+  },
+  {
+    "id": "CP-HU29-007",
+    "nombre": "Un id con formato inválido en la ruta responde 400 con mensaje",
+    "modulo": "HU-29 — Contrato de errores",
+    "tipo": "Negativo",
+    "sprint": 2
+  },
+  {
+    "id": "CP-HU33-001",
+    "nombre": "El rol VENDEDOR viene sembrado con sus cuatro scopes",
+    "modulo": "HU-33 — Roles y scopes sembrados",
+    "tipo": "Positivo",
+    "sprint": 2
+  },
+  {
+    "id": "CP-HU33-002",
+    "nombre": "El rol SUPERVISOR_TIENDA tiene lo del vendedor más anular y administrar inventario",
+    "modulo": "HU-33 — Roles y scopes sembrados",
+    "tipo": "Positivo",
+    "sprint": 2
+  },
+  {
+    "id": "CP-HU33-003",
+    "nombre": "El rol OPERADOR_CD solo administra y consulta inventario de CD",
+    "modulo": "HU-33 — Roles y scopes sembrados",
+    "tipo": "Positivo",
+    "sprint": 2
+  },
+  {
+    "id": "CP-HU33-004",
+    "nombre": "ADMIN incluye tiendas:operar-todas y reposicion:administrar",
+    "modulo": "HU-33 — Roles y scopes sembrados",
+    "tipo": "Positivo",
+    "sprint": 2
+  },
+  {
+    "id": "CP-HU33-005",
+    "nombre": "Rechazar crear un rol con un nombre reservado (409)",
+    "modulo": "HU-33 — Roles y scopes sembrados",
+    "tipo": "Negativo",
+    "sprint": 2
+  },
+  {
+    "id": "CP-HU33-006",
+    "nombre": "Crear un scope sin el campo sensible lo deja en false",
+    "modulo": "HU-33 — Roles y scopes sembrados",
+    "tipo": "Negativo",
+    "sprint": 2
+  },
+  {
+    "id": "CP-HU33-007",
+    "nombre": "Un VENDEDOR no puede anular ventas (403, falta ventas:anular)",
+    "modulo": "HU-33 — Roles y scopes sembrados",
+    "tipo": "Negativo",
+    "sprint": 2
+  },
+  {
+    "id": "CP-HU43-001",
+    "nombre": "Registrar una solicitud guarda el stock del sistema aunque sea positivo",
+    "modulo": "HU-43 — Registrar solicitud no satisfecha",
+    "tipo": "Positivo",
+    "sprint": 2
+  },
+  {
+    "id": "CP-HU43-002",
+    "nombre": "La cantidad es opcional y sin fila el stock del sistema es 0",
+    "modulo": "HU-43 — Registrar solicitud no satisfecha",
+    "tipo": "Negativo",
+    "sprint": 2
+  },
+  {
+    "id": "CP-HU43-003",
+    "nombre": "La misma clave con los mismos datos responde 200 sin duplicar",
+    "modulo": "HU-43 — Registrar solicitud no satisfecha",
+    "tipo": "Negativo",
+    "sprint": 2
+  },
+  {
+    "id": "CP-HU43-004",
+    "nombre": "La misma clave con otros datos responde 409",
+    "modulo": "HU-43 — Registrar solicitud no satisfecha",
+    "tipo": "Negativo",
+    "sprint": 2
+  },
+  {
+    "id": "CP-HU43-005",
+    "nombre": "Una variante fuera de catálogo responde 404",
+    "modulo": "HU-43 — Registrar solicitud no satisfecha",
+    "tipo": "Negativo",
+    "sprint": 2
+  },
+  {
+    "id": "CP-HU43-006",
+    "nombre": "Registrar en una tienda no asignada responde 403",
+    "modulo": "HU-43 — Registrar solicitud no satisfecha",
+    "tipo": "Negativo",
+    "sprint": 2
+  },
+  {
+    "id": "CP-HU43-007",
+    "nombre": "Rechazar sin clave de idempotencia o con cantidad 0 (400)",
+    "modulo": "HU-43 — Registrar solicitud no satisfecha",
+    "tipo": "Negativo",
+    "sprint": 2
+  },
+  {
+    "id": "CP-HU44-001",
+    "nombre": "Consultar una solicitud por id; la de otra tienda responde 404",
+    "modulo": "HU-44 — Consultar y anular solicitud no satisfecha",
+    "tipo": "Negativo",
+    "sprint": 2
+  },
+  {
+    "id": "CP-HU44-002",
+    "nombre": "Anular una solicitud exige motivo y la deja ANULADA",
+    "modulo": "HU-44 — Consultar y anular solicitud no satisfecha",
+    "tipo": "Negativo",
+    "sprint": 2
+  },
+  {
+    "id": "CP-HU44-003",
+    "nombre": "Anular una solicitud dos veces responde 200 con la anulación original",
+    "modulo": "HU-44 — Consultar y anular solicitud no satisfecha",
+    "tipo": "Positivo",
+    "sprint": 2
+  },
+  {
+    "id": "CP-HU44-004",
+    "nombre": "Un vendedor no puede anular solicitudes (403)",
+    "modulo": "HU-44 — Consultar y anular solicitud no satisfecha",
+    "tipo": "Negativo",
+    "sprint": 2
+  },
+  {
+    "id": "CP-HU44-005",
+    "nombre": "Filtrar solicitudes por estado",
+    "modulo": "HU-44 — Consultar y anular solicitud no satisfecha",
+    "tipo": "Positivo",
+    "sprint": 2
+  },
+  {
+    "id": "CP-HU48-001",
+    "nombre": "Una venta deja el Almacén bajo el mínimo y se repone en la misma respuesta",
+    "modulo": "HU-48 — Traspaso automático",
+    "tipo": "Positivo",
+    "sprint": 2
+  },
+  {
+    "id": "CP-HU48-002",
+    "nombre": "Quedar exactamente en el mínimo no dispara traspaso (límite)",
+    "modulo": "HU-48 — Traspaso automático",
+    "tipo": "Negativo",
+    "sprint": 2
+  },
+  {
+    "id": "CP-HU48-003",
+    "nombre": "Si la Bodega no alcanza, el traspaso es parcial y la deja en 0",
+    "modulo": "HU-48 — Traspaso automático",
+    "tipo": "Negativo",
+    "sprint": 2
+  },
+  {
+    "id": "CP-HU48-004",
+    "nombre": "Con Almacén negativo la reposición usa MAX(almacén, 0)",
+    "modulo": "HU-48 — Traspaso automático",
+    "tipo": "Positivo",
+    "sprint": 2
+  },
+  {
+    "id": "CP-HU48-005",
+    "nombre": "El umbral de la variante gana sobre el de su categoría",
+    "modulo": "HU-48 — Traspaso automático",
+    "tipo": "Positivo",
+    "sprint": 2
+  },
+  {
+    "id": "CP-HU48-006",
+    "nombre": "Sin umbral de variante aplica el de su categoría",
+    "modulo": "HU-48 — Traspaso automático",
+    "tipo": "Negativo",
+    "sprint": 2
+  },
+  {
+    "id": "CP-HU48-007",
+    "nombre": "Un aumento de la Bodega con el Almacén bajo el mínimo dispara el traspaso",
+    "modulo": "HU-48 — Traspaso automático",
+    "tipo": "Positivo",
+    "sprint": 2
+  },
+  {
+    "id": "CP-HU48-008",
+    "nombre": "Un ajuste positivo de la Bodega también dispara el traspaso",
+    "modulo": "HU-48 — Traspaso automático",
+    "tipo": "Positivo",
+    "sprint": 2
+  },
+  {
+    "id": "CP-HU48-009",
+    "nombre": "Sin umbral configurado una venta no dispara traspaso",
+    "modulo": "HU-48 — Traspaso automático",
+    "tipo": "Negativo",
+    "sprint": 2
+  },
+  {
+    "id": "CP-HU48-010",
+    "nombre": "El traspaso automático que repone el Almacén cierra la ventana de quiebre",
+    "modulo": "HU-48 — Traspaso automático",
+    "tipo": "Positivo",
+    "sprint": 2
+  },
+  {
+    "id": "CP-HU49-001",
+    "nombre": "Registrar un traspaso manual mueve stock de la Bodega al Almacén",
+    "modulo": "HU-49 — Traspaso manual",
+    "tipo": "Positivo",
+    "sprint": 2
+  },
+  {
+    "id": "CP-HU49-002",
+    "nombre": "Un traspaso mayor que la Bodega se rechaza (409) sin mover stock",
+    "modulo": "HU-49 — Traspaso manual",
+    "tipo": "Negativo",
+    "sprint": 2
+  },
+  {
+    "id": "CP-HU49-003",
+    "nombre": "Rechazar cantidad 0 o sin variante (400)",
+    "modulo": "HU-49 — Traspaso manual",
+    "tipo": "Negativo",
+    "sprint": 2
+  },
+  {
+    "id": "CP-HU49-004",
+    "nombre": "Una variante inexistente responde 404",
+    "modulo": "HU-49 — Traspaso manual",
+    "tipo": "Negativo",
+    "sprint": 2
+  },
+  {
+    "id": "CP-HU49-005",
+    "nombre": "Un usuario con reposicion:administrar sin la tienda asignada recibe 403",
+    "modulo": "HU-49 — Traspaso manual",
+    "tipo": "Negativo",
+    "sprint": 2
+  },
+  {
+    "id": "CP-HU49-006",
+    "nombre": "Listar los traspasos de una tienda y consultar uno por id",
+    "modulo": "HU-49 — Traspaso manual",
+    "tipo": "Negativo",
+    "sprint": 2
+  },
+  {
+    "id": "CP-HU49-007",
+    "nombre": "Consultar un traspaso inexistente responde 404",
+    "modulo": "HU-49 — Traspaso manual",
+    "tipo": "Negativo",
+    "sprint": 2
+  },
+  {
+    "id": "CP-HU49-008",
+    "nombre": "El traspaso queda en el kardex de la Bodega y del Almacén",
+    "modulo": "HU-49 — Traspaso manual",
+    "tipo": "Positivo",
+    "sprint": 2
+  },
+  {
+    "id": "CP-HU47-001",
+    "nombre": "Crear un umbral por variante y consultarlo",
+    "modulo": "HU-47 — Umbrales de reposición",
+    "tipo": "Positivo",
+    "sprint": 2
+  },
+  {
+    "id": "CP-HU47-002",
+    "nombre": "Crear un umbral por categoría",
+    "modulo": "HU-47 — Umbrales de reposición",
+    "tipo": "Positivo",
+    "sprint": 2
+  },
+  {
+    "id": "CP-HU47-003",
+    "nombre": "Rechazar un umbral con variante y categoría a la vez, o sin ninguna (400)",
+    "modulo": "HU-47 — Umbrales de reposición",
+    "tipo": "Negativo",
+    "sprint": 2
+  },
+  {
+    "id": "CP-HU47-004",
+    "nombre": "Rechazar mínimo ≤ 0 u objetivo ≤ mínimo (400)",
+    "modulo": "HU-47 — Umbrales de reposición",
+    "tipo": "Negativo",
+    "sprint": 2
+  },
+  {
+    "id": "CP-HU47-005",
+    "nombre": "Rechazar un segundo umbral para el mismo alcance (409)",
+    "modulo": "HU-47 — Umbrales de reposición",
+    "tipo": "Negativo",
+    "sprint": 2
+  },
+  {
+    "id": "CP-HU47-006",
+    "nombre": "Modificar las cantidades de un umbral y eliminarlo",
+    "modulo": "HU-47 — Umbrales de reposición",
+    "tipo": "Positivo",
+    "sprint": 2
+  },
+  {
+    "id": "CP-HU47-007",
+    "nombre": "Crear un umbral no repone por sí solo",
+    "modulo": "HU-47 — Umbrales de reposición",
+    "tipo": "Negativo",
+    "sprint": 2
+  },
+  {
+    "id": "CP-HU47-008",
+    "nombre": "Un umbral sobre una variante inexistente responde 404",
+    "modulo": "HU-47 — Umbrales de reposición",
+    "tipo": "Negativo",
+    "sprint": 2
+  },
+  {
+    "id": "CP-HU47-009",
+    "nombre": "Administrar umbrales exige reposicion:administrar (403 para un supervisor)",
+    "modulo": "HU-47 — Umbrales de reposición",
+    "tipo": "Negativo",
+    "sprint": 2
+  },
+  {
+    "id": "CP-HU45-001",
+    "nombre": "Una venta que deja el Almacén en 0 abre una ventana de quiebre en la misma respuesta",
+    "modulo": "HU-45 — Ventanas de quiebre",
+    "tipo": "Positivo",
+    "sprint": 2
+  },
+  {
+    "id": "CP-HU45-002",
+    "nombre": "Reponer el Almacén por encima de 0 cierra la ventana con REPOSICION",
+    "modulo": "HU-45 — Ventanas de quiebre",
+    "tipo": "Positivo",
+    "sprint": 2
+  },
+  {
+    "id": "CP-HU45-003",
+    "nombre": "Una venta forzada cierra la ventana abierta con VENTA_FORZADA",
+    "modulo": "HU-45 — Ventanas de quiebre",
+    "tipo": "Positivo",
+    "sprint": 2
+  },
+  {
+    "id": "CP-HU45-004",
+    "nombre": "Una venta forzada que deja el Almacén en negativo no abre ventana",
+    "modulo": "HU-45 — Ventanas de quiebre",
+    "tipo": "Negativo",
+    "sprint": 2
+  },
+  {
+    "id": "CP-HU45-005",
+    "nombre": "Desactivar la tienda cierra sus ventanas con TIENDA_DESACTIVADA",
+    "modulo": "HU-45 — Ventanas de quiebre",
+    "tipo": "Positivo",
+    "sprint": 2
+  },
+  {
+    "id": "CP-HU45-006",
+    "nombre": "Una carga inicial en 0 no abre ventana",
+    "modulo": "HU-45 — Ventanas de quiebre",
+    "tipo": "Negativo",
+    "sprint": 2
+  },
+  {
+    "id": "CP-HU45-007",
+    "nombre": "Anular la venta que abrió la ventana devuelve stock y la cierra con REPOSICION",
+    "modulo": "HU-45 — Ventanas de quiebre",
+    "tipo": "Positivo",
+    "sprint": 2
+  },
+  {
+    "id": "CP-HU46-001",
+    "nombre": "Consultar una ventana por id y filtrar por abiertas",
+    "modulo": "HU-46 — Consultar y reconciliar ventanas de quiebre",
+    "tipo": "Positivo",
+    "sprint": 2
+  },
+  {
+    "id": "CP-HU46-002",
+    "nombre": "Una ventana de otra tienda responde 404 para un vendedor sin acceso",
+    "modulo": "HU-46 — Consultar y reconciliar ventanas de quiebre",
+    "tipo": "Negativo",
+    "sprint": 2
+  },
+  {
+    "id": "CP-HU46-003",
+    "nombre": "Reconciliar dos veces: la segunda ejecución no cambia nada",
+    "modulo": "HU-46 — Consultar y reconciliar ventanas de quiebre",
+    "tipo": "Negativo",
+    "sprint": 2
+  },
+  {
+    "id": "CP-HU46-004",
+    "nombre": "Reconciliar exige inventario:administrar (403 para un vendedor)",
+    "modulo": "HU-46 — Consultar y reconciliar ventanas de quiebre",
+    "tipo": "Negativo",
+    "sprint": 2
+  },
+  {
+    "id": "CP-HU46-005",
+    "nombre": "Reconciliar sin tiendaId se rechaza (400)",
+    "modulo": "HU-46 — Consultar y reconciliar ventanas de quiebre",
+    "tipo": "Negativo",
+    "sprint": 2
   }
 ]
