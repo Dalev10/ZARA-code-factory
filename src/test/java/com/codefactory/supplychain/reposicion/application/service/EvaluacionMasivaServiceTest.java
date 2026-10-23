@@ -3,6 +3,7 @@ package com.codefactory.supplychain.reposicion.application.service;
 import com.codefactory.supplychain.reposicion.application.port.in.TraspasoAutomaticoUseCase;
 import com.codefactory.supplychain.reposicion.application.port.out.ConsultarTiendasActivasPort;
 import com.codefactory.supplychain.reposicion.application.port.out.ConsultarExistenciasPort;
+import com.codefactory.supplychain.reposicion.domain.exception.ReposicionRecursoNoEncontradoException;
 import com.codefactory.supplychain.reposicion.domain.model.OrigenTraspaso;
 import com.codefactory.supplychain.reposicion.domain.model.TraspasoInterno;
 import org.junit.jupiter.api.BeforeEach;
@@ -14,6 +15,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -37,6 +39,7 @@ class EvaluacionMasivaServiceTest {
         traspasoAutomatico = mock(TraspasoAutomaticoUseCase.class);
         tiendasActivas = mock(ConsultarTiendasActivasPort.class);
         variantesPorTienda = mock(ConsultarExistenciasPort.class);
+        when(tiendasActivas.existe(any())).thenReturn(true);
         servicio = new EvaluacionMasivaService(traspasoAutomatico, tiendasActivas, variantesPorTienda);
     }
 
@@ -96,6 +99,16 @@ class EvaluacionMasivaServiceTest {
 
         assertThat(resultado).containsExactly(t1);
         verify(tiendasActivas, never()).listarTiendasActivas();
+    }
+
+    @Test
+    void evaluarTiendaInexistenteLanzaNoEncontrado() {
+        when(tiendasActivas.existe(TIENDA_A)).thenReturn(false);
+
+        assertThatThrownBy(() -> servicio.evaluarTienda(TIENDA_A))
+                .isInstanceOf(ReposicionRecursoNoEncontradoException.class)
+                .hasMessageContaining(TIENDA_A.toString());
+        verify(variantesPorTienda, never()).variantesConInventario(any());
     }
 
     @Test

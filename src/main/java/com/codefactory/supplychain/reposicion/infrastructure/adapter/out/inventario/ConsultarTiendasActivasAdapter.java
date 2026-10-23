@@ -27,4 +27,9 @@ public class ConsultarTiendasActivasAdapter implements ConsultarTiendasActivasPo
     public List<UUID> listarTiendasActivas() {
         return consultaTiendas.listarActivas().stream().map(TiendaResumen::id).toList();
     }
+
+    @Override
+    public boolean existe(UUID tiendaId) {
+        return consultaTiendas.buscar(tiendaId).isPresent();
+    }
 }

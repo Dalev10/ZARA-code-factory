@@ -6,6 +6,7 @@ import com.codefactory.supplychain.reposicion.application.port.out.ConsultarTien
 import com.codefactory.supplychain.reposicion.application.port.out.ConsultarExistenciasPort;
 
 
+import com.codefactory.supplychain.reposicion.domain.exception.ReposicionRecursoNoEncontradoException;
 import com.codefactory.supplychain.reposicion.domain.model.TraspasoInterno;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -51,6 +52,9 @@ public class EvaluacionMasivaService implements EvaluacionMasivaUseCase {
 
     @Override
     public List<TraspasoInterno> evaluarTienda(UUID tiendaId) {
+        if (!tiendasActivas.existe(tiendaId)) {
+            throw ReposicionRecursoNoEncontradoException.tienda(tiendaId);
+        }
         List<TraspasoInterno> resultado = new ArrayList<>();
         for (UUID varianteId : variantesPorTienda.variantesConInventario(tiendaId)) {
             try {

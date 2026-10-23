@@ -80,7 +80,7 @@ class SolicitudNoSatisfechaServiceTest {
     }
 
     @Test
-    void registraCantidadIndicadaYStockDesconocido() {
+    void registraCantidadIndicadaYStockDesconocidoEsCero() {
         prepararRegistro();
         when(stock.aLaMano(almacenId, varianteId)).thenReturn(Optional.empty());
         when(repositorio.insertarSiAusente(any())).thenReturn(true);
@@ -88,7 +88,7 @@ class SolicitudNoSatisfechaServiceTest {
         var resultado = servicio.registrar(comando(4, "clave-2"));
 
         assertThat(resultado.solicitud().getCantidad()).isEqualTo(4);
-        assertThat(resultado.solicitud().getStockSistema()).isNull();
+        assertThat(resultado.solicitud().getStockSistema()).isZero();
     }
 
     @Test

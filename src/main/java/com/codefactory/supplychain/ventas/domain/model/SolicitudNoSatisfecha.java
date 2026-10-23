@@ -9,7 +9,7 @@ import java.util.UUID;
 
 /**
  * Demanda insatisfecha registrada en una tienda (HU-43, HU-44). No valida quiebre: guarda el stock que el
- * sistema tenía en el Almacén al registrarla ({@code stockSistema}, nulo si la variante no tiene carga
+ * sistema tenía en el Almacén al registrarla ({@code stockSistema}, 0 si la variante no tiene carga
  * inicial en el Almacén), para distinguir quiebres reales de inventario fantasma.
  */
 public class SolicitudNoSatisfecha {

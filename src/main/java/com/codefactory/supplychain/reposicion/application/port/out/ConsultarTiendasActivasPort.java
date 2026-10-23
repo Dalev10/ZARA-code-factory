@@ -11,4 +11,6 @@ import java.util.UUID;
 public interface ConsultarTiendasActivasPort {
 
     List<UUID> listarTiendasActivas();
+
+    boolean existe(UUID tiendaId);
 }

@@ -69,7 +69,7 @@ public class SolicitudNoSatisfechaService implements SolicitudNoSatisfechaUseCas
         UUID almacenId = almacenes.almacenDeTienda(comando.tiendaId())
                 .orElseThrow(() -> new TiendaSinAlmacenException(comando.tiendaId()));
         // El stock observado se guarda tal cual: nunca se rechaza por tener stock > 0 (inventario fantasma).
-        Integer stockSistema = stock.aLaMano(almacenId, comando.varianteId()).orElse(null);
+        Integer stockSistema = stock.aLaMano(almacenId, comando.varianteId()).orElse(0);
 
         SolicitudNoSatisfecha nueva = SolicitudNoSatisfecha.registrar(comando.tiendaId(), comando.varianteId(),
                 cantidad, stockSistema, Instant.now(reloj), usuario.id(), comando.claveIdempotencia());

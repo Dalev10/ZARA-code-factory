@@ -11,7 +11,7 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parents[2]
 METADATA_PATH = Path(__file__).resolve().parent / "casos_metadata.json"
 
-CP_ID_RE = re.compile(r"cpHu(\d{2})(\d{3})")
+CP_ID_RE = re.compile(r"(?:CP-HU|cpHu)(\d{2})-?(\d{3})", re.IGNORECASE)
 
 VERDE = "\033[92m"
 ROJO = "\033[91m"
@@ -72,7 +72,7 @@ def imprimir_resumen_consola(total, aprobados, fallidos, omitidos, resultados, o
     linea = "=" * ancho
     print()
     print(f"{NEGRITA}{linea}{FIN}")
-    print(f"{NEGRITA}  RESUMEN — 56 Casos de Prueba (Sprint 1, QA){FIN}")
+    print(f"{NEGRITA}  RESUMEN — {total} Casos de Prueba (QA){FIN}")
     print(linea)
     print(f"  Total de casos    : {total}")
     print(f"  {VERDE}Aprobados         : {aprobados}{FIN}")
@@ -355,7 +355,7 @@ def main():
 
     if not resultados:
         print("[reporte-qa] No se encontraron resultados en target/failsafe-reports; "
-              "¿corriste './mvnw verify -Pcasos-qa-sprint1'?")
+              "¿corriste './mvnw verify -Pcasos-qa'?")
         return
 
     resultados.sort(key=lambda r: r["cpId"])
@@ -426,7 +426,7 @@ def main():
 
     out_dir = target_dir / "reports"
     out_dir.mkdir(parents=True, exist_ok=True)
-    out_file = out_dir / "casos-prueba-sprint1.html"
+    out_file = out_dir / "casos-prueba.html"
     out_file.write_text(pagina, encoding="utf-8")
     imprimir_resumen_consola(total, aprobados, fallidos, omitidos, resultados, out_file)
 

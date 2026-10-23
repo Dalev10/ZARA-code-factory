@@ -1,8 +1,12 @@
 package com.codefactory.supplychain.inventario.application.service;
 
 import com.codefactory.supplychain.inventario.application.port.in.PrioridadTiendaCdUseCase;
+import com.codefactory.supplychain.inventario.application.port.out.CentroDistribucionRepository;
 import com.codefactory.supplychain.inventario.application.port.out.PrioridadTiendaCdRepository;
+import com.codefactory.supplychain.inventario.application.port.out.TiendaRepositoryPort;
 import com.codefactory.supplychain.inventario.domain.exception.CdEnUsoPorPrioridadException;
+import com.codefactory.supplychain.inventario.domain.exception.CentroDistribucionNoEncontradoException;
+import com.codefactory.supplychain.inventario.domain.exception.TiendaNoEncontradaException;
 import com.codefactory.supplychain.inventario.domain.model.PrioridadTiendaCd;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,14 +27,25 @@ import java.util.UUID;
 public class PrioridadTiendaCdService implements PrioridadTiendaCdUseCase {
 
     private final PrioridadTiendaCdRepository repositorio;
+    private final TiendaRepositoryPort tiendas;
+    private final CentroDistribucionRepository centros;
 
-    public PrioridadTiendaCdService(PrioridadTiendaCdRepository repositorio) {
+    public PrioridadTiendaCdService(PrioridadTiendaCdRepository repositorio, TiendaRepositoryPort tiendas,
+                                    CentroDistribucionRepository centros) {
         this.repositorio = repositorio;
+        this.tiendas = tiendas;
+        this.centros = centros;
     }
 
     @Override
     @Transactional
     public List<PrioridadTiendaCd> reemplazar(UUID tiendaId, List<UUID> cdIds) {
+        tiendas.buscarPorId(tiendaId).orElseThrow(TiendaNoEncontradaException::new);
+        for (UUID cdId : cdIds) {
+            centros.buscarPorId(cdId).orElseThrow(() -> new CentroDistribucionNoEncontradoException(
+                    "No existe un centro de distribución con el id " + cdId));
+        }
+
         repositorio.eliminarPorTienda(tiendaId);
 
         List<PrioridadTiendaCd> nuevas = new ArrayList<>();

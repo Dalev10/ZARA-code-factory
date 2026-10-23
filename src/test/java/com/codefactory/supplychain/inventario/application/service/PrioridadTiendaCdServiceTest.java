@@ -1,16 +1,22 @@
 package com.codefactory.supplychain.inventario.application.service;
 
+import com.codefactory.supplychain.inventario.application.port.out.CentroDistribucionRepository;
 import com.codefactory.supplychain.inventario.application.port.out.PrioridadTiendaCdRepository;
+import com.codefactory.supplychain.inventario.application.port.out.TiendaRepositoryPort;
 import com.codefactory.supplychain.inventario.domain.exception.CdEnUsoPorPrioridadException;
+import com.codefactory.supplychain.inventario.domain.model.CentroDistribucion;
 import com.codefactory.supplychain.inventario.domain.model.PrioridadTiendaCd;
+import com.codefactory.supplychain.inventario.domain.model.Tienda;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -18,6 +24,8 @@ import static org.mockito.Mockito.when;
 class PrioridadTiendaCdServiceTest {
 
     private PrioridadTiendaCdRepository repositorio;
+    private TiendaRepositoryPort tiendas;
+    private CentroDistribucionRepository centros;
     private PrioridadTiendaCdService servicio;
 
     private static final UUID TIENDA = UUID.randomUUID();
@@ -28,7 +36,11 @@ class PrioridadTiendaCdServiceTest {
     @BeforeEach
     void setUp() {
         repositorio = mock(PrioridadTiendaCdRepository.class);
-        servicio = new PrioridadTiendaCdService(repositorio);
+        tiendas = mock(TiendaRepositoryPort.class);
+        centros = mock(CentroDistribucionRepository.class);
+        when(tiendas.buscarPorId(any())).thenReturn(Optional.of(mock(Tienda.class)));
+        when(centros.buscarPorId(any())).thenReturn(Optional.of(mock(CentroDistribucion.class)));
+        servicio = new PrioridadTiendaCdService(repositorio, tiendas, centros);
     }
 
     @Test

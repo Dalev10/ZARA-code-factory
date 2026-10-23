@@ -101,8 +101,9 @@ extienden el esquema de negocio a medida que se desarrollan las features.
 - `./mvnw verify` corre todas las pruebas del equipo de desarrollo (sufijo `Test`),
   con Postgres real vía Testcontainers, la verificación de módulos y el umbral de
   cobertura de JaCoCo (85 %). Es lo mismo que corre la CI.
-- `./mvnw -P casos-qa-sprint1 verify` corre las pruebas funcionales de QA
-  (sufijo `IT`, en `src/test/.../qa/`) y genera su reporte.
+- `./mvnw -P casos-qa verify` corre los escenarios BDD de QA
+  (`src/test/java/.../qa/features/`, con pasos en `qa/steps/`) y genera su reporte
+  en `target/reports/casos-prueba.html`.
 - Para probar autorización con usuarios reales, usar `soporte/UsuariosDePrueba`
   (`@Import(UsuariosDePrueba.class)`): `usuarios.conRol("VENDEDOR", tiendaId)` o
   `usuarios.conScopes(Set.of("ventas:anular"))` devuelven el usuario y su token

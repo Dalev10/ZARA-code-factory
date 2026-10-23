@@ -1,36 +1,55 @@
-# Casos de prueba de QA
+# Pruebas de aceptación (BDD)
 
-Casos `*IT` de caja negra contra la API real (RestAssured + PostgreSQL en Testcontainers).
-Cada clase agrupa los casos de una HU; si la HU tiene casos de varios tipos, la clase existe
-con el mismo nombre en cada carpeta que le corresponde. El id del caso (`cpHuNNXXX`) no cambia,
-así que la trazabilidad con la HU y el reporte se mantiene.
+Cada caso de aceptación (`CP-HUxx-yyy`) es un escenario Gherkin ejecutado con Cucumber
+sobre la API real (RestAssured + PostgreSQL en Testcontainers). Los pasos están
+implementados en Java; no hay una capa que "ejecute un test" por debajo.
 
 ```
 qa/
-├── soporte/                    Clases base: datos de prueba, usuarios, tiendas, inventario
-├── funcionales/
-│   ├── happypath/              Flujo principal con datos válidos: la operación tiene éxito
-│   ├── negativepath/           Entradas inválidas o reglas de negocio que deben rechazarse
-│   │                           (400, 404 de recurso inexistente, 405, 409)
-│   └── exceptionalpath/        Caminos alternos y casos borde válidos: límites, idempotencia,
-│                               reintentos, ventas forzadas, inventario fantasma, baja lógica
-└── nofuncionales/
-    ├── seguridad/              Autenticación, autorización por scope, alcance por tienda,
-    │                           corte de acceso de usuarios desactivados
-    ├── fiabilidad/             Concurrencia y tolerancia a errores (JSON mal formado, código
-    │                           real en vez de 401, cuerpo de error con mensaje)
-    └── interoperabilidad/      Formato del contrato (fechas en UTC, ISO-8601 con Z)
+├── features/                   Escenarios .feature (se copian al classpath desde aquí)
+│   ├── sprint1/
+│   └── sprint2/
+├── steps/                      Step definitions y hooks de Cucumber
+│   ├── PasosComunes.java       Autenticación, códigos y aserciones de contrato
+│   ├── PasosRecursos.java      Creación de tiendas, CDs, categorías, templates y variantes
+│   ├── PasosTiendas.java       Registro/consulta/modificación/eliminación de tiendas
+│   ├── PasosInventario.java    Bodegas, inventario, carga inicial, ajustes, kardex
+│   ├── PasosCatalogo.java      Productos, templates y categorías
+│   ├── PasosVentas.java        Ventas, solicitudes no satisfechas y ventanas de quiebre
+│   ├── PasosReposicion.java    Umbrales, traspasos, evaluación masiva y prioridad de CDs
+│   └── GanchosComunes.java     Omite los escenarios etiquetados con @omitido
+├── config/                     Infraestructura de ejecución
+│   ├── CucumberIT.java         Runner de JUnit Platform + Cucumber
+│   ├── ConfiguracionAceptacion.java  Spring Boot + Testcontainers
+│   └── ClienteApi.java         Cliente HTTP y sesión del escenario
+└── soporte/                    Estado del escenario y datos de apoyo por módulo
 ```
 
 ## Ejecutar
 
 ```
-./mvnw clean -P casos-qa-sprint1 verify                         # todos + reporte HTML
-./mvnw clean -P casos-qa-sprint1 verify -Dgroups=happy-path     # solo una categoría
-./mvnw clean -P casos-qa-sprint1 verify -Dgroups=no-funcional   # varias: "seguridad,fiabilidad"
+./mvnw clean -P casos-qa verify                          # todos + reporte HTML
+./mvnw clean -P casos-qa verify -Dcucumber.filter.tags="@sprint2"
+./mvnw clean -P casos-qa verify -Dcucumber.filter.tags="@inventario"
+./mvnw clean -P casos-qa verify -Dcucumber.filter.tags="@CP-HU40-001"
+./mvnw clean -P casos-qa verify -Dcucumber.filter.tags="@negativo"
 ```
 
-Etiquetas (`@Tag`) disponibles: `funcional`, `no-funcional`, `happy-path`, `negative-path`,
-`exceptional-path`, `seguridad`, `fiabilidad`, `interoperabilidad`.
+Etiquetas: `@sprint1`/`@sprint2`, `@identidad`/`@inventario`/`@catalogo`/`@ventas`/`@reposicion`
+/`@transversal`, `@CP-HUxx-yyy`, `@positivo`/`@negativo`, `@funcional`/`@no-funcional` y
+`@flujo-principal`/`@ruta-negativa`/`@caso-borde`/`@seguridad`/`@fiabilidad`/`@interoperabilidad`.
+
+Los escenarios `@omitido` (funcionalidad aún no implementada) se reportan como omitidos.
+
+El reporte queda en `target/reports/casos-prueba.html`. El perfil usa
+`testFailureIgnore=true`, así que revisar el resumen del reporte además del código de salida.
 
 Usar siempre `clean`: sin él, el reporte mezcla resultados viejos de `target/failsafe-reports`.
+
+## Agregar un escenario
+
+1. Escribe el escenario en el `.feature` del sprint que corresponda.
+2. Etiquétalo con su `@CP-HUxx-yyy` y los tags de tipo/ámbito/módulo.
+3. Implementa los pasos que falten en `steps/Pasos<Modulo>.java`. Reutiliza los pasos
+   comunes y los de `PasosRecursos` antes de crear unos nuevos.
+4. Ejecuta solo ese caso con `-Dcucumber.filter.tags="@CP-HUxx-yyy"`.

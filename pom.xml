@@ -222,6 +222,40 @@
             <scope>test</scope>
         </dependency>
 
+        <!-- ============================================================
+             Cucumber — los escenarios de aceptacion se escriben en
+             src/test/java/.../qa/features, con pasos en qa/steps, y se
+             ejecutan con el motor de JUnit Platform que ya usa el build.
+             ============================================================ -->
+        <dependency>
+            <groupId>io.cucumber</groupId>
+            <artifactId>cucumber-java</artifactId>
+            <version>7.22.1</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.cucumber</groupId>
+            <artifactId>cucumber-junit-platform-engine</artifactId>
+            <version>7.22.1</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.cucumber</groupId>
+            <artifactId>cucumber-spring</artifactId>
+            <version>7.22.1</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.platform</groupId>
+            <artifactId>junit-platform-suite</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.platform</groupId>
+            <artifactId>junit-platform-launcher</artifactId>
+            <scope>test</scope>
+        </dependency>
+
         <!-- Fijado a propósito: Spring Boot gestiona Groovy 5.x, pero rest-assured 5.5.1
              está compilado contra Groovy 4.0.22 (no actualizar sin actualizar rest-assured). -->
         <dependency>
@@ -246,6 +280,17 @@
     </dependencies>
 
     <build>
+        <testResources>
+            <testResource>
+                <directory>src/test/resources</directory>
+            </testResource>
+            <testResource>
+                <directory>src/test/java</directory>
+                <includes>
+                    <include>com/codefactory/supplychain/qa/features/**/*.feature</include>
+                </includes>
+            </testResource>
+        </testResources>
         <plugins>
             <plugin>
                 <groupId>org.springframework.boot</groupId>
@@ -379,7 +424,7 @@
             </build>
         </profile>
         <profile>
-            <id>casos-qa-sprint1</id>
+            <id>casos-qa</id>
             <properties>
                 <jacoco.skip>true</jacoco.skip>
                 <checkstyle.skip>true</checkstyle.skip>
@@ -417,7 +462,7 @@
                         <version>3.5.0</version>
                         <executions>
                             <execution>
-                                <id>reporte-casos-qa-sprint1</id>
+                                <id>reporte-casos-qa</id>
                                 <phase>verify</phase>
                                 <goals>
                                     <goal>exec</goal>
