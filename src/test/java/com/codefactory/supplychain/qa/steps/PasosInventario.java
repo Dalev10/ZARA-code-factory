@@ -299,7 +299,7 @@ public class PasosInventario {
     @Cuando("cargo inicialmente un lote de más de 500 ítems en el almacén de la tienda {string}")
     public void cargarLoteExcedido(String tienda) {
         soporte.cargaInicial(tokenAdmin(), nodoAlmacen(tienda),
-                InventarioSoporte.loteDeMasDe500("SKU-HU37-007"));
+                InventarioSoporte.loteDeMasDe500("SKU-QA37-007"));
     }
 
     @Cuando("cargo inicialmente en un nodo inexistente la variante {string} con {int} unidades")
@@ -357,12 +357,22 @@ public class PasosInventario {
 
     @Cuando("ajusto un SKU inexistente con {int} unidades por motivo {string} en el almacén de la tienda {string}")
     public void ajustarSkuInexistente(int delta, String motivo, String tienda) {
-        soporte.ajustar(tokenAdmin(), nodoAlmacen(tienda), "SKU-NO-EXISTE-HU38", delta, motivo, null);
+        soporte.ajustar(tokenAdmin(), nodoAlmacen(tienda), "SKU-NO-EXISTE-QA38", delta, motivo, null);
     }
 
     @Cuando("el vendedor ajusta la variante {string} con {int} unidades por motivo {string} en el almacén de la tienda {string}")
     public void vendedorAjusta(String variante, int delta, String motivo, String tienda) {
         soporte.ajustar(tokenVendedor(), nodoAlmacen(tienda), skuDe(variante), delta, motivo, null);
+    }
+
+    @Cuando("el supervisor ajusta la variante {string} con {int} unidades por motivo {string} en el almacén de la tienda {string}")
+    public void supervisorAjusta(String variante, int delta, String motivo, String tienda) {
+        soporte.ajustar(tokenSupervisor(), nodoAlmacen(tienda), skuDe(variante), delta, motivo, null);
+    }
+
+    @Cuando("ajusto la variante {string} con {int} unidades por motivo {string} en el nodo del centro de distribución {string}")
+    public void ajustarEnCentro(String variante, int delta, String motivo, String centro) {
+        soporte.ajustar(tokenAdmin(), nodoCentro(centro), skuDe(variante), delta, motivo, null);
     }
 
     // ------------------------------------------------------------------ ventas y concurrencia
@@ -611,6 +621,11 @@ public class PasosInventario {
                 .body("content", hasSize(1))
                 .body("content[0].tipo", equalTo(tipo))
                 .body("content[0].motivo", equalTo(motivo));
+    }
+
+    @Entonces("el movimiento del kardex fue registrado por el supervisor")
+    public void movimientoRegistradoPorSupervisor() {
+        contexto.getRespuesta().then().body("content[0].usuarioId", equalTo(contexto.id("supervisor:id")));
     }
 
     @Entonces("el kardex está vacío")

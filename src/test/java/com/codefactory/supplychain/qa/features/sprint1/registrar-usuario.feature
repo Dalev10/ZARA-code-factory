@@ -10,7 +10,7 @@ Característica: Registrar usuario
 
   @CP-HU01-001 @positivo @funcional @flujo-principal @identidad @sprint1
   Escenario: CP-HU01-001 — Registrar usuario con información válida, habilitado y con su rol
-    Cuando registro un usuario válido con nombre "QA Usuario HU01-001" y contraseña "ClaveSegura2026!"
+    Cuando registro un usuario válido con nombre "QA Usuario QA01-001" y contraseña "ClaveSegura2026!"
     Entonces la respuesta es 201
     Y el campo "estado" es "ACTIVO"
     Cuando creo un rol exclusivo y se lo asigno al usuario registrado

@@ -10,7 +10,7 @@ Característica: Registrar Bodega_Tienda
 
   @CP-HU07-001 @positivo @funcional @flujo-principal
   Escenario: CP-HU07-001 — Registrar Bodega_Tienda asociada a Tienda existente
-    Cuando registro una tienda llamada "HU07-001" ubicada en "Rionegro, Antioquia"
+    Cuando registro una tienda llamada "QA07-001" ubicada en "Rionegro, Antioquia"
     Entonces la respuesta es 201
     Cuando consulto la bodega de la tienda recién registrada
     Entonces la respuesta es 200

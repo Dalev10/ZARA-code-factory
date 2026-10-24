@@ -74,7 +74,7 @@ Característica: Traspaso manual
     Entonces la respuesta es 403
     Y la bodega de la tienda "t-49-005" tiene 5 unidades de la variante "tmpl-49-005"
 
-  @CP-HU49-006 @negativo @funcional @flujo-principal
+  @CP-HU49-006 @positivo @funcional @flujo-principal
   Escenario: CP-HU49-006 — Listar los traspasos de una tienda y consultar uno por id
     Dado que existe una tienda llamada "t-49-006"
     Y que existe una categoría llamada "cat-49-006"

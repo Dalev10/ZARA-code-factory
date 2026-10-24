@@ -85,3 +85,18 @@ Característica: Prioridad de CDs por tienda
     Y que existe un vendedor asignado a la tienda "t-51-007"
     Cuando el vendedor asignado define la prioridad de CDs de la tienda "t-51-007" como "cd-51-007"
     Entonces la respuesta es 403
+
+  @CP-HU51-008 @positivo @funcional @flujo-principal
+  Escenario: CP-HU51-008 — Cada tienda tiene su propio orden de prioridad con el mismo CD
+    Dado que existe una tienda llamada "t-51-008A"
+    Y que existe una tienda llamada "t-51-008B"
+    Y que existe un centro de distribución llamado "cd-51-008X"
+    Y que existe un centro de distribución llamado "cd-51-008Y"
+    Cuando defino la prioridad de CDs de la tienda "t-51-008A" como "cd-51-008X", "cd-51-008Y"
+    Entonces la respuesta es 200
+    Cuando defino la prioridad de CDs de la tienda "t-51-008B" como "cd-51-008Y", "cd-51-008X"
+    Entonces la respuesta es 200
+    Cuando consulto la prioridad de CDs de la tienda "t-51-008A"
+    Entonces la prioridad de CDs de la tienda "t-51-008A" es "cd-51-008X", "cd-51-008Y"
+    Cuando consulto la prioridad de CDs de la tienda "t-51-008B"
+    Entonces la prioridad de CDs de la tienda "t-51-008B" es "cd-51-008Y", "cd-51-008X"

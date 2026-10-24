@@ -5,12 +5,18 @@ import com.codefactory.supplychain.qa.soporte.ReposicionSoporte;
 import io.cucumber.java.es.Cuando;
 import io.cucumber.java.es.Dado;
 import io.cucumber.java.es.Entonces;
+import com.codefactory.supplychain.qa.soporte.InventarioSoporte;
 import io.restassured.response.Response;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.equalTo;
@@ -28,6 +34,9 @@ public class PasosReposicion {
 
     @Autowired
     private ReposicionSoporte soporte;
+
+    private int ventasConfirmadas;
+    private boolean ventasConCodigoValido;
 
     // ------------------------------------------------------------------ umbrales
 
@@ -130,6 +139,57 @@ public class PasosReposicion {
     @Cuando("se registra una venta forzada de {int} unidad(es) de la variante {string} en la tienda {string}")
     public void registrarVentaForzada(int cantidad, String variante, String tienda) {
         soporte.vender(contexto.getToken(), tienda, variante, cantidad, true);
+    }
+
+    @Cuando("se registran {int} ventas simultáneas con reposición de una unidad de la variante {string} en la tienda {string}")
+    public void ventasSimultaneasConReposicion(int numeroDeVentas, String variante, String tienda) throws Exception {
+        String token = contexto.getToken();
+        String tiendaId = soporte.nodos(tienda).tiendaId();
+        String sku = soporte.variante(variante).sku();
+        ExecutorService pool = Executors.newFixedThreadPool(numeroDeVentas);
+        List<Callable<Integer>> tareas = new ArrayList<>();
+        for (int i = 0; i < numeroDeVentas; i++) {
+            tareas.add(() -> InventarioSoporte.venderDirecto(token, tiendaId, sku, 1,
+                    InventarioSoporte.nuevaTransaccion()).statusCode());
+        }
+        ventasConfirmadas = 0;
+        ventasConCodigoValido = true;
+        try {
+            for (Future<Integer> futuro : pool.invokeAll(tareas)) {
+                int codigo = futuro.get();
+                if (codigo != 201 && codigo != 409) {
+                    ventasConCodigoValido = false;
+                }
+                if (codigo == 201) {
+                    ventasConfirmadas++;
+                }
+            }
+        } finally {
+            pool.shutdown();
+        }
+    }
+
+    @Entonces("todas las ventas simultáneas con reposición finalizan con código 201 o 409")
+    public void ventasConReposicionConCodigoValido() {
+        assertThat(ventasConCodigoValido).isTrue();
+        assertThat(ventasConfirmadas).isPositive();
+    }
+
+    @Entonces("el almacén y la bodega de la tienda {string} suman {int} unidades de la variante {string} menos las ventas confirmadas")
+    public void almacenYBodegaConservanUnidades(String tienda, int total, String variante) {
+        int enAlmacen = soporte.stock(tienda, variante, true);
+        int enBodega = soporte.stock(tienda, variante, false);
+        assertThat(enAlmacen + enBodega).isEqualTo(total - ventasConfirmadas);
+    }
+
+    @Entonces("el almacén de la tienda {string} queda entre {int} y {int} unidades de la variante {string}")
+    public void almacenQuedaEnRango(String tienda, int minimo, int maximo, String variante) {
+        assertThat(soporte.stock(tienda, variante, true)).isBetween(minimo, maximo);
+    }
+
+    @Entonces("la bodega de la tienda {string} no queda en negativo para la variante {string}")
+    public void bodegaNoNegativa(String tienda, String variante) {
+        assertThat(soporte.stock(tienda, variante, false)).isNotNegative();
     }
 
     @Cuando("se cargan {int} unidades de la variante {string} en la bodega de la tienda {string}")
@@ -365,6 +425,11 @@ public class PasosReposicion {
     public void prioridadDeCdsEnOrden(String tienda, String cd1, String cd2, String cd3) {
         assertThat(soporte.idsPrioridad()).containsExactly(
                 soporte.idCentro(cd1), soporte.idCentro(cd2), soporte.idCentro(cd3));
+    }
+
+    @Entonces("la prioridad de CDs de la tienda {string} es {string}, {string}")
+    public void prioridadDeDosCdsEnOrden(String tienda, String cd1, String cd2) {
+        assertThat(soporte.idsPrioridad()).containsExactly(soporte.idCentro(cd1), soporte.idCentro(cd2));
     }
 
     @Entonces("la tienda {string} tiene {int} CD(s) prioritario(s): {string}")

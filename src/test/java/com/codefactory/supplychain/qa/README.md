@@ -46,6 +46,13 @@ El reporte queda en `target/reports/casos-prueba.html`. El perfil usa
 
 Usar siempre `clean`: sin él, el reporte mezcla resultados viejos de `target/failsafe-reports`.
 
+## Reporte
+
+`tools/qa/generar_reporte_casos_prueba.py` cruza los resultados de Failsafe con los `.feature`
+(sprint, funcionalidad, etiquetas y pasos de cada caso). El HTML trae el resumen por sprint y
+por tipo de prueba, los casos fallidos y el detalle por funcionalidad con el escenario Gherkin;
+los fallidos incluyen la salida de la ejecución.
+
 ## Agregar un escenario
 
 1. Escribe el escenario en el `.feature` del sprint que corresponda.

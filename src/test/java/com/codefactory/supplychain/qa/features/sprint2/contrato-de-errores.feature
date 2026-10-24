@@ -43,7 +43,7 @@ Característica: Contrato de errores
   @CP-HU29-006 @positivo @no-funcional @interoperabilidad @transversal @sprint2
   Escenario: CP-HU29-006 — Las fechas se responden en UTC (ISO-8601 con Z)
     Dado que estoy autenticado como administrador
-    Y que existe una tienda llamada "HU29-006"
+    Y que existe una tienda llamada "QA29-006"
     Cuando consulto la última tienda creada
     Entonces la respuesta es 200
     Y el campo "creadoEn" termina en Z

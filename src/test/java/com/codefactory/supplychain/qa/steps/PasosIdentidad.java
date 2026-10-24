@@ -33,7 +33,7 @@ public class PasosIdentidad {
 
     @Cuando("registro un usuario válido con nombre {string} y contraseña {string}")
     public void registrarUsuarioValido(String nombreCompleto, String password) {
-        String email = generarCorreo("hu01-001");
+        String email = generarCorreo("qa01-001");
         contexto.texto("usuarioEmail", email);
         api.post("/usuarios", Map.of(
                 "email", email,
@@ -44,7 +44,7 @@ public class PasosIdentidad {
 
     @Cuando("creo un rol exclusivo y se lo asigno al usuario registrado")
     public void crearRolYAsignarlo() {
-        String rolId = crearRol(ClienteApi.unico("hu01-001-rol"));
+        String rolId = crearRol(ClienteApi.unico("qa01-001-rol"));
         asignarRol(contexto.id("usuarioId"), rolId);
         contexto.id("rolId", rolId);
     }
@@ -71,7 +71,7 @@ public class PasosIdentidad {
 
     @Cuando("registro un usuario sin nombre completo con un correo único y contraseña {string}")
     public void registrarUsuarioSinNombre(String password) {
-        String email = generarCorreo("hu01-002");
+        String email = generarCorreo("qa01-002");
         contexto.texto("usuarioEmail", email);
         api.post("/usuarios", Map.of(
                 "email", email,
@@ -81,7 +81,7 @@ public class PasosIdentidad {
 
     @Dado("que existe un usuario registrado con un correo único")
     public void usuarioRegistradoConCorreoUnico() {
-        crearUsuario("QA Usuario HU01-003", "ClaveSegura2026!", "hu01-003");
+        crearUsuario("QA Usuario QA01-003", "ClaveSegura2026!", "qa01-003");
     }
 
     @Cuando("registro otro usuario con el mismo correo")
@@ -94,7 +94,7 @@ public class PasosIdentidad {
 
     @Cuando("registro un usuario con nombre {string} y contraseña {string}")
     public void registrarUsuarioConDatos(String nombreCompleto, String password) {
-        String email = generarCorreo("hu01-004");
+        String email = generarCorreo("qa01-004");
         contexto.texto("usuarioEmail", email);
         api.post("/usuarios", Map.of(
                 "email", email,
@@ -104,9 +104,9 @@ public class PasosIdentidad {
 
     @Dado("que existe un usuario con el scope {string} y la contraseña {string}")
     public void usuarioConScope(String codigoScope, String password) {
-        String rolId = crearRol(ClienteApi.unico("hu02-rol"));
+        String rolId = crearRol(ClienteApi.unico("qa02-rol"));
         asignarScope(rolId, idDeScope(codigoScope));
-        crearUsuario("Usuario QA hu02", password, "hu02");
+        crearUsuario("Usuario QA qa02", password, "qa02");
         asignarRol(contexto.id("usuarioId"), rolId);
     }
 
@@ -123,7 +123,7 @@ public class PasosIdentidad {
     @Cuando("inicio sesión con un correo no registrado y la contraseña {string}")
     public void iniciarSesionConCorreoNoRegistrado(String password) {
         api.postSinAuth("/auth/login", Map.of(
-                "email", generarCorreo("hu02-003-inexistente"),
+                "email", generarCorreo("qa02-003-inexistente"),
                 "password", password));
     }
 
@@ -218,6 +218,13 @@ public class PasosIdentidad {
                 "password", password));
     }
 
+    @Cuando("el vendedor falla {int} veces el inicio de sesión con la contraseña {string}")
+    public void vendedorFallaInicioDeSesion(int intentos, String password) {
+        for (int i = 0; i < intentos; i++) {
+            vendedorIntentaIniciarSesion(password);
+        }
+    }
+
     @Cuando("el vendedor inicia sesión de nuevo con su contraseña {string}")
     public void vendedorIniciaSesionDeNuevo(String password) {
         Response respuesta = api.postSinAuth("/auth/login", Map.of(
@@ -235,7 +242,7 @@ public class PasosIdentidad {
 
     @Dado("que existe un gestor de usuarios autenticado con la contraseña {string}")
     public void gestorAutenticado(String password) {
-        String rolId = crearRol(ClienteApi.unico("hu31-gestor-rol"));
+        String rolId = crearRol(ClienteApi.unico("qa31-gestor-rol"));
         asignarScope(rolId, idDeScope("usuarios:administrar"));
         crearUsuario("Usuario QA gestor", password, "gestor");
         asignarRol(contexto.id("usuarioId"), rolId);
@@ -311,25 +318,25 @@ public class PasosIdentidad {
     @Dado("que existe una tienda con una variante disponible")
     public void tiendaConVarianteDisponible() {
         Response tienda = api.post("/tiendas", Map.of(
-                "nombre", ClienteApi.unico("Tienda HU32"),
+                "nombre", ClienteApi.unico("Tienda QA32"),
                 "ubicacion", "Medellín, Antioquia"));
         exigir(tienda, 201, "registrar la tienda");
         contexto.id("tiendaId", tienda.path("id"));
         contexto.id("almacenId", tienda.path("almacenId"));
 
         Response categoria = api.post("/categorias", Map.of(
-                "nombre", ClienteApi.unico("Cat HU32")));
+                "nombre", ClienteApi.unico("Cat QA32")));
         exigir(categoria, 201, "registrar la categoría");
 
         Response template = api.post("/templates", Map.of(
-                "nombre", ClienteApi.unico("Template HU32"),
+                "nombre", ClienteApi.unico("Template QA32"),
                 "temporada", "OI-2026",
                 "proveedor", "Proveedor QA",
                 "precioBase", 89900,
                 "categoriaId", categoria.path("id")));
         exigir(template, 201, "registrar el template");
 
-        String sku = ClienteApi.unico("SKU-HU32").toUpperCase();
+        String sku = ClienteApi.unico("SKU-QA32").toUpperCase();
         Response variante = api.post("/variantes", Map.of(
                 "sku", sku,
                 "talla", "M",
@@ -373,6 +380,25 @@ public class PasosIdentidad {
         contexto.getRespuesta().then().body(
                 "find { it.id == '" + contexto.id("tiendaId") + "' }.activa",
                 equalTo(true));
+    }
+
+    @Entonces("la tienda asignada está inactiva")
+    public void tiendaAsignadaEstaInactiva() {
+        contexto.getRespuesta().then().body(
+                "find { it.id == '" + contexto.id("tiendaId") + "' }.activa",
+                equalTo(false));
+    }
+
+    @Cuando("el administrador desactiva la tienda del escenario")
+    public void administradorDesactivaTienda() {
+        Response respuesta = api.delete("/tiendas/" + contexto.id("tiendaId"));
+        exigir(respuesta, 204, "desactivar la tienda");
+    }
+
+    @Cuando("el administrador activa la tienda del escenario")
+    public void administradorActivaTienda() {
+        Response respuesta = api.put("/tiendas/" + contexto.id("tiendaId") + "/activar", Map.of());
+        exigir(respuesta, 200, "activar la tienda");
     }
 
     @Cuando("el administrador quita la tienda al vendedor")

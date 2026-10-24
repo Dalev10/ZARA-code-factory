@@ -13,7 +13,7 @@ import java.util.Map;
 import java.util.UUID;
 
 /**
- * Datos y operaciones de apoyo para los escenarios de reposición (HU-47 a HU-51):
+ * Datos y operaciones de apoyo para los escenarios de reposición:
  * umbrales, traspasos automáticos y manuales, evaluación masiva y prioridad de CDs.
  * Todos los ids se guardan en {@link ContextoPrueba} usando el alias del recurso.
  */

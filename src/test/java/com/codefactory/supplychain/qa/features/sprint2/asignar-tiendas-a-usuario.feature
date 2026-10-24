@@ -10,7 +10,7 @@ Característica: Asignar tiendas a usuario
 
   @CP-HU32-001 @positivo @funcional @flujo-principal @identidad @sprint2
   Escenario: CP-HU32-001 — Asignar una tienda a un usuario y consultarla en sus tiendas
-    Dado que existe una tienda llamada "HU32-001"
+    Dado que existe una tienda llamada "QA32-001"
     Y que existe un vendedor con la contraseña "ClaveSegura-QA-2026!"
     Cuando el administrador asigna la tienda al vendedor
     Y consulto las tiendas asignadas al vendedor
@@ -59,3 +59,21 @@ Característica: Asignar tiendas a usuario
     Dado que existe un vendedor con la contraseña "ClaveSegura-QA-2026!"
     Cuando el administrador asigna una tienda inexistente al vendedor
     Entonces la respuesta es 404
+
+  @CP-HU32-007 @positivo @funcional @caso-borde @identidad @sprint2
+  Escenario: CP-HU32-007 — Se asigna una tienda inactiva, pero no se opera en ella hasta activarla
+    Dado que existe una tienda con una variante disponible
+    Y que la tienda tiene 5 unidades disponibles de la variante
+    Y que existe un vendedor autenticado con la contraseña "ClaveSegura-QA-2026!"
+    Cuando el administrador desactiva la tienda del escenario
+    Y el administrador asigna la tienda al vendedor
+    Y consulto las tiendas asignadas al vendedor
+    Entonces las tiendas asignadas incluyen la tienda del escenario
+    Y la tienda asignada está inactiva
+    Cuando el vendedor intenta registrar una venta de una unidad en la tienda
+    Entonces la respuesta es un error de cliente
+    Y la tienda conserva 5 unidades disponibles
+    Cuando el administrador activa la tienda del escenario
+    Y el vendedor registra una venta de una unidad en la tienda
+    Entonces la respuesta es 201
+    Y la tienda conserva 4 unidades disponibles

@@ -84,7 +84,7 @@ Característica: Traspaso automático
     Entonces la respuesta es 201
     Y el almacén de la tienda "t-48-005" tiene 6 unidades de la variante "tmpl-48-005"
 
-  @CP-HU48-006 @negativo @funcional @flujo-principal
+  @CP-HU48-006 @positivo @funcional @flujo-principal
   Escenario: CP-HU48-006 — Sin umbral de variante aplica el de su categoría
     Dado que existe una tienda llamada "t-48-006"
     Y que existe una categoría llamada "cat-48-006"
@@ -155,3 +155,18 @@ Característica: Traspaso automático
     Entonces la respuesta es 201
     Y el almacén de la tienda "t-48-010" tiene 4 unidades de la variante "tmpl-48-010"
     Y la ventana de quiebre de la variante "tmpl-48-010" en la tienda "t-48-010" está cerrada con motivo "REPOSICION"
+
+  @CP-HU48-011 @positivo @no-funcional @fiabilidad
+  Escenario: CP-HU48-011 — Ventas simultáneas no generan traspasos de más ni sobrecargan el Almacén
+    Dado que existe una tienda llamada "t-48-011"
+    Y que existe una categoría llamada "cat-48-011"
+    Y que existe un template llamado "tmpl-48-011" en la categoría "cat-48-011"
+    Y que existe una variante para el template "tmpl-48-011"
+    Y que la tienda "t-48-011" tiene 6 unidades de la variante "tmpl-48-011" en el almacén
+    Y que la tienda "t-48-011" tiene 10 unidades de la variante "tmpl-48-011" en la bodega
+    Y que existe un umbral para la variante "tmpl-48-011" con mínimo 3 y objetivo 6
+    Cuando se registran 6 ventas simultáneas con reposición de una unidad de la variante "tmpl-48-011" en la tienda "t-48-011"
+    Entonces todas las ventas simultáneas con reposición finalizan con código 201 o 409
+    Y el almacén y la bodega de la tienda "t-48-011" suman 16 unidades de la variante "tmpl-48-011" menos las ventas confirmadas
+    Y el almacén de la tienda "t-48-011" queda entre 3 y 6 unidades de la variante "tmpl-48-011"
+    Y la bodega de la tienda "t-48-011" no queda en negativo para la variante "tmpl-48-011"

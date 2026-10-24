@@ -28,3 +28,13 @@ Característica: Corte de acceso por estado del usuario
     Cuando el vendedor intenta iniciar sesión con su contraseña "ClaveSegura-QA-2026!"
     Entonces la respuesta es 401
     Y el campo "mensaje" no es nulo
+
+  @CP-HU30-003 @positivo @no-funcional @seguridad @identidad @sprint2
+  Escenario: CP-HU30-003 — El bloqueo temporal por intentos fallidos no corta la sesión vigente
+    Y que existe un vendedor autenticado con la contraseña "ClaveSegura-QA-2026!"
+    Cuando el vendedor falla 3 veces el inicio de sesión con la contraseña "Clave-Incorrecta-2026!"
+    Entonces la respuesta es 401
+    Cuando el vendedor intenta iniciar sesión con su contraseña "ClaveSegura-QA-2026!"
+    Entonces la respuesta es 401
+    Cuando el vendedor consulta las ventas con su token vigente
+    Entonces la respuesta es 200

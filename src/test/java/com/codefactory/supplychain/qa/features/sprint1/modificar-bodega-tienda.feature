@@ -10,13 +10,13 @@ Característica: Modificar Bodega_Tienda
 
   @CP-HU09-001 @positivo @funcional @ruta-negativa
   Escenario: CP-HU09-001 — Modificar datos permitidos de Bodega_Tienda
-    Dado que existe una tienda con almacén y bodega llamada "HU09-001" ubicada en "Girardota, Antioquia"
-    Cuando intento modificar la bodega de la tienda "HU09-001"
+    Dado que existe una tienda con almacén y bodega llamada "QA09-001" ubicada en "Girardota, Antioquia"
+    Cuando intento modificar la bodega de la tienda "QA09-001"
     Entonces la respuesta es 405
 
   @CP-HU09-002 @negativo @funcional @ruta-negativa
   Escenario: CP-HU09-002 — Rechazar cambio de Bodega_Tienda hacia Tienda inexistente
-    Dado que existe una tienda con almacén y bodega llamada "HU09-002" ubicada en "Girardota, Antioquia"
-    Cuando consulto directamente la bodega de la tienda "HU09-002"
+    Dado que existe una tienda con almacén y bodega llamada "QA09-002" ubicada en "Girardota, Antioquia"
+    Cuando consulto directamente la bodega de la tienda "QA09-002"
     Entonces la respuesta es 200
-    Y el campo "tiendaId" es el identificador de la tienda "HU09-002"
+    Y el campo "tiendaId" es el identificador de la tienda "QA09-002"
