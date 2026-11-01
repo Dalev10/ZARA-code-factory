@@ -14,6 +14,7 @@ import com.codefactory.supplychain.ventas.infrastructure.adapter.in.web.dto.Regi
 import com.codefactory.supplychain.ventas.infrastructure.adapter.in.web.dto.VentaResponse;
 import com.codefactory.supplychain.shared.security.UsuarioActual;
 import jakarta.validation.Valid;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -77,7 +78,7 @@ public class VentaController {
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant desde,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant hasta,
             @PageableDefault(size = 20, sort = "timestampVenta", direction = Sort.Direction.DESC)
-            Pageable pageable) {
+            @ParameterObject Pageable pageable) {
         return ResponseEntity.ok(consultarVentasUseCase
                 .consultar(usuario, new Filtros(tiendaId, varianteId, transaccionId, estado, desde, hasta), pageable)
                 .map(venta -> VentaResponse.from(List.of(venta))));

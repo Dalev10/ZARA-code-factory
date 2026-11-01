@@ -8,6 +8,7 @@ import com.codefactory.supplychain.ventas.infrastructure.adapter.in.web.dto.Reco
 import com.codefactory.supplychain.ventas.infrastructure.adapter.in.web.dto.VentanaQuiebreResponse;
 import com.codefactory.supplychain.shared.security.UsuarioActual;
 import jakarta.validation.Valid;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -47,7 +48,8 @@ public class VentanaQuiebreController {
             @RequestParam(required = false) Boolean abierta,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant desde,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant hasta,
-            @PageableDefault(size = 20, sort = "fechaInicio", direction = Sort.Direction.DESC) Pageable pageable) {
+            @PageableDefault(size = 20, sort = "fechaInicio", direction = Sort.Direction.DESC)
+            @ParameterObject Pageable pageable) {
         return ResponseEntity.ok(useCase
                 .consultar(usuario, new ConsultaFiltros(tiendaId, varianteId, abierta, desde, hasta), pageable)
                 .map(VentanaQuiebreResponse::desde));

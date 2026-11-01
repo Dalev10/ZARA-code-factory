@@ -10,6 +10,7 @@ import com.codefactory.supplychain.ventas.infrastructure.adapter.in.web.dto.Regi
 import com.codefactory.supplychain.ventas.infrastructure.adapter.in.web.dto.SolicitudNoSatisfechaResponse;
 import com.codefactory.supplychain.shared.security.UsuarioActual;
 import jakarta.validation.Valid;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
@@ -64,7 +65,8 @@ public class SolicitudNoSatisfechaController {
             @RequestParam(required = false) EstadoSolicitud estado,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant desde,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant hasta,
-            @PageableDefault(size = 20, sort = "registradaEn", direction = Sort.Direction.DESC) Pageable pageable) {
+            @PageableDefault(size = 20, sort = "registradaEn", direction = Sort.Direction.DESC)
+            @ParameterObject Pageable pageable) {
         return ResponseEntity.ok(useCase
                 .consultar(usuario, new ConsultaFiltros(tiendaId, varianteId, estado, desde, hasta), pageable)
                 .map(SolicitudNoSatisfechaResponse::desde));

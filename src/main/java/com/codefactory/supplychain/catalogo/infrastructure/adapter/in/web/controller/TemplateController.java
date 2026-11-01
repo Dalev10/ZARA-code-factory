@@ -7,6 +7,7 @@ import com.codefactory.supplychain.catalogo.infrastructure.adapter.in.web.dto.Te
 import com.codefactory.supplychain.catalogo.infrastructure.adapter.in.web.dto.TemplateResponse;
 import com.codefactory.supplychain.catalogo.infrastructure.adapter.in.web.mapper.TemplateWebMapper;
 import jakarta.validation.Valid;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
@@ -58,7 +59,7 @@ public class TemplateController {
     }
 
     @GetMapping
-    public ResponseEntity<Page<TemplateResponse>> listar(Pageable pageable) {
+    public ResponseEntity<Page<TemplateResponse>> listar(@ParameterObject Pageable pageable) {
         return ResponseEntity.ok(templateUseCase.listar(pageable).map(templateWebMapper::toResponse));
     }
 

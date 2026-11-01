@@ -7,6 +7,7 @@ import com.codefactory.supplychain.reposicion.infrastructure.adapter.in.web.dto.
 import com.codefactory.supplychain.reposicion.infrastructure.adapter.in.web.dto.UmbralReposicionResponse;
 import com.codefactory.supplychain.reposicion.infrastructure.adapter.in.web.mapper.UmbralReposicionWebMapper;
 import jakarta.validation.Valid;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
@@ -49,7 +50,7 @@ public class UmbralReposicionController {
     }
 
     @GetMapping
-    public ResponseEntity<Page<UmbralReposicionResponse>> listar(Pageable pageable) {
+    public ResponseEntity<Page<UmbralReposicionResponse>> listar(@ParameterObject Pageable pageable) {
         return ResponseEntity.ok(umbralUseCase.listar(pageable).map(webMapper::toResponse));
     }
 

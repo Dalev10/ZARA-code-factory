@@ -7,6 +7,7 @@ import com.codefactory.supplychain.catalogo.infrastructure.adapter.in.web.dto.Va
 import com.codefactory.supplychain.catalogo.infrastructure.adapter.in.web.dto.VarianteResponse;
 import com.codefactory.supplychain.catalogo.infrastructure.adapter.in.web.mapper.VarianteWebMapper;
 import jakarta.validation.Valid;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
@@ -51,7 +52,7 @@ public class VarianteController {
     }
 
     @GetMapping
-    public ResponseEntity<Page<VarianteResponse>> listar(Pageable pageable) {
+    public ResponseEntity<Page<VarianteResponse>> listar(@ParameterObject Pageable pageable) {
         return ResponseEntity.ok(varianteUseCase.listar(pageable).map(varianteWebMapper::toResponse));
     }
 

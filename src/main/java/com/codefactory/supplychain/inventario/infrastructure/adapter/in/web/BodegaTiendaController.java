@@ -3,6 +3,7 @@ package com.codefactory.supplychain.inventario.infrastructure.adapter.in.web;
 import com.codefactory.supplychain.inventario.application.port.in.BodegaTiendaUseCase;
 import com.codefactory.supplychain.inventario.infrastructure.adapter.in.web.dto.BodegaTiendaResponse;
 import lombok.RequiredArgsConstructor;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -27,7 +28,7 @@ public class BodegaTiendaController {
     private final BodegaTiendaUseCase bodegaTiendaUseCase;
 
     @GetMapping
-    public Page<BodegaTiendaResponse> listarTodas(Pageable pageable) {
+    public Page<BodegaTiendaResponse> listarTodas(@ParameterObject Pageable pageable) {
         return bodegaTiendaUseCase.listarTodas(pageable).map(BodegaTiendaResponse::from);
     }
 

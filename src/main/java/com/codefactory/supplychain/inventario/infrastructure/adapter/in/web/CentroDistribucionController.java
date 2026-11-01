@@ -8,6 +8,7 @@ import com.codefactory.supplychain.inventario.infrastructure.adapter.in.web.dto.
 import com.codefactory.supplychain.inventario.infrastructure.adapter.in.web.mapper.CentroDistribucionWebMapper;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
@@ -42,7 +43,7 @@ public class CentroDistribucionController {
             @RequestParam(required = false) UUID id,
             @RequestParam(required = false) String nombre,
             @RequestParam(required = false) String ubicacion,
-            Pageable pageable) {
+            @ParameterObject Pageable pageable) {
         return centroDistribucionUseCase.buscarCentrosDistribucion(id, nombre, ubicacion, pageable)
                 .map(centroDistribucionWebMapper::toResponse);
     }

@@ -7,6 +7,7 @@ import com.codefactory.supplychain.catalogo.infrastructure.adapter.in.web.dto.Ca
 import com.codefactory.supplychain.catalogo.infrastructure.adapter.in.web.dto.CategoriaResponse;
 import com.codefactory.supplychain.catalogo.infrastructure.adapter.in.web.mapper.CategoriaWebMapper;
 import jakarta.validation.Valid;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
@@ -50,7 +51,7 @@ public class CategoriaController {
     }
 
     @GetMapping
-    public ResponseEntity<Page<CategoriaResponse>> listar(Pageable pageable) {
+    public ResponseEntity<Page<CategoriaResponse>> listar(@ParameterObject Pageable pageable) {
         return ResponseEntity.ok(categoriaUseCase.listar(pageable).map(categoriaWebMapper::toResponse));
     }
 

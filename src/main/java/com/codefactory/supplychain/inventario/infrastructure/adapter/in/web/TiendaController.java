@@ -7,6 +7,7 @@ import com.codefactory.supplychain.inventario.infrastructure.adapter.in.web.dto.
 import com.codefactory.supplychain.inventario.infrastructure.adapter.in.web.dto.TiendaResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
@@ -46,7 +47,7 @@ public class TiendaController {
     }
 
     @GetMapping
-    public Page<TiendaResponse> listar(Pageable pageable) {
+    public Page<TiendaResponse> listar(@ParameterObject Pageable pageable) {
         return tiendaUseCase.listar(pageable).map(TiendaResponse::desde);
     }
 
