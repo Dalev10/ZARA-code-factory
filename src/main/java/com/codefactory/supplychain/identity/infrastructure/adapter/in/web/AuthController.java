@@ -16,6 +16,15 @@ import com.codefactory.supplychain.identity.infrastructure.adapter.in.web.dto.Lo
 import com.codefactory.supplychain.identity.infrastructure.adapter.in.web.dto.LoginResponse;
 import com.codefactory.supplychain.identity.infrastructure.adapter.in.web.dto.RefrescarTokenResponse;
 import com.codefactory.supplychain.identity.infrastructure.adapter.in.web.dto.UsuarioResponse;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.headers.Header;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.security.SecurityRequirements;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -38,10 +47,24 @@ import java.time.Instant;
 @RestController
 @RequestMapping("/api/v1/auth")
 @RequiredArgsConstructor
+@Tag(name = "Autenticación", description = "Inicio y cierre de sesión. Públicos: la credencial es el cuerpo "
+        + "o la cookie refresh_token (HttpOnly, Secure, SameSite=None, path /api/v1/auth).")
+@SecurityRequirements
 public class AuthController {
 
     private static final String COOKIE_REFRESH_TOKEN = "refresh_token";
     private static final String COOKIE_PATH = "/api/v1/auth";
+
+    private static final String EJEMPLO_LOGIN_COMPLETO = """
+            {"mfaRequerido": false, "mfaChallengeToken": null, "accessToken": "eyJhbGciOiJIUzI1NiJ9...",
+             "usuario": {"id": "3f8c2a1e-5b7d-4c9a-8e21-6d4f0b9a7c13", "email": "vendedor@supplychain.local",
+                         "nombreCompleto": "Laura Gómez", "estado": "ACTIVO",
+                         "creadoEn": "2026-10-01T14:30:00Z"}}
+            """;
+    private static final String EJEMPLO_LOGIN_MFA = """
+            {"mfaRequerido": true, "mfaChallengeToken": "eyJhbGciOiJIUzI1NiJ9...", "accessToken": null,
+             "usuario": null}
+            """;
 
     private final LoginUseCase loginUseCase;
     private final CompletarLoginMfaUseCase completarLoginMfaUseCase;
@@ -49,6 +72,20 @@ public class AuthController {
     private final LogoutUseCase logoutUseCase;
 
     @PostMapping("/login")
+    @Operation(
+            summary = "Iniciar sesión",
+            description = "Valida email y contraseña. Sin MFA, devuelve el access token (JWT, 15 minutos) y "
+                    + "deja el refresh token (7 días) en la cookie refresh_token. Con MFA, devuelve "
+                    + "mfaRequerido=true y un token de desafío (5 minutos) para POST /api/v1/auth/login/mfa. "
+                    + "Tras 3, 5, 7 y 10 intentos fallidos la cuenta se bloquea 1, 5, 15 y 60 minutos; "
+                    + "durante el bloqueo responde 401 aunque la contraseña sea correcta. HU-03, HU-04.")
+    @ApiResponse(responseCode = "200", description = "Sesión iniciada, o segundo factor requerido",
+            headers = @Header(name = "Set-Cookie", description = "refresh_token, solo si no se requiere MFA"),
+            content = @Content(schema = @Schema(implementation = LoginResponse.class), examples = {
+                    @ExampleObject(name = "Sesión iniciada", value = EJEMPLO_LOGIN_COMPLETO),
+                    @ExampleObject(name = "Requiere MFA", value = EJEMPLO_LOGIN_MFA)}))
+    @ApiResponse(responseCode = "401", description = "Credenciales inválidas, usuario no activo o cuenta "
+            + "bloqueada temporalmente. El mensaje es el mismo en los tres casos para no revelar cuál aplica")
     public LoginResponse login(@Valid @RequestBody LoginRequest request, HttpServletResponse response) {
         LoginResultado resultado = loginUseCase.login(new LoginComando(request.email(), request.password()));
         return construirRespuesta(resultado, response);
@@ -60,6 +97,18 @@ public class AuthController {
      * o de respaldo por los tokens reales de sesión.
      */
     @PostMapping("/login/mfa")
+    @Operation(
+            summary = "Completar el inicio de sesión con MFA",
+            description = "Cambia el token de desafío de /login y un código TOTP de 6 dígitos (o un código de "
+                    + "respaldo, que se consume) por el access token y la cookie refresh_token. Un código "
+                    + "incorrecto cuenta como intento fallido para el bloqueo progresivo de /login. HU-08.")
+    @ApiResponse(responseCode = "200", description = "Sesión iniciada",
+            headers = @Header(name = "Set-Cookie", description = "refresh_token"),
+            content = @Content(schema = @Schema(implementation = LoginResponse.class),
+                    examples = @ExampleObject(name = "Sesión iniciada", value = EJEMPLO_LOGIN_COMPLETO)))
+    @ApiResponse(responseCode = "400", description = "Código TOTP o de respaldo incorrecto, o cuerpo inválido")
+    @ApiResponse(responseCode = "401", description = "Token de desafío inválido o vencido, usuario no "
+            + "activo o cuenta bloqueada temporalmente")
     public LoginResponse completarLoginMfa(@Valid @RequestBody CompletarLoginMfaRequest request,
                                             HttpServletResponse response) {
         LoginResultado.Completado resultado = completarLoginMfaUseCase.completar(
@@ -68,7 +117,19 @@ public class AuthController {
     }
 
     @PostMapping("/refresh")
+    @Operation(
+            summary = "Renovar el access token",
+            description = "Usa la cookie refresh_token, la revoca y emite una nueva (rotación). Presentar un "
+                    + "refresh ya usado revoca todas las sesiones de esa familia y obliga a iniciar sesión de "
+                    + "nuevo. Desde esta página el navegador envía la cookie que dejó /login. HU-05.")
+    @ApiResponse(responseCode = "200", description = "Access token renovado",
+            headers = @Header(name = "Set-Cookie", description = "Nuevo refresh_token"),
+            content = @Content(schema = @Schema(implementation = RefrescarTokenResponse.class),
+                    examples = @ExampleObject(value = "{\"accessToken\": \"eyJhbGciOiJIUzI1NiJ9...\"}")))
+    @ApiResponse(responseCode = "401", description = "Sin cookie, refresh vencido, revocado o reusado, o "
+            + "usuario no activo")
     public RefrescarTokenResponse refresh(
+            @Parameter(description = "Refresh token emitido por /login, /login/mfa o /refresh")
             @CookieValue(name = COOKIE_REFRESH_TOKEN, required = false) String refreshTokenCookie,
             HttpServletResponse response) {
         if (refreshTokenCookie == null || refreshTokenCookie.isBlank()) {
@@ -92,7 +153,14 @@ public class AuthController {
      */
     @PostMapping("/logout")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void logout(@CookieValue(name = COOKIE_REFRESH_TOKEN, required = false) String refreshTokenCookie,
+    @Operation(
+            summary = "Cerrar sesión",
+            description = "Revoca el refresh token de la cookie y la borra. Siempre responde 204, haya o no "
+                    + "sesión, para no revelar su estado. El access token sigue válido hasta que vence. HU-06.")
+    @ApiResponse(responseCode = "204", description = "Sesión cerrada",
+            headers = @Header(name = "Set-Cookie", description = "refresh_token vacío con Max-Age=0"))
+    public void logout(@Parameter(description = "Refresh token a revocar; opcional")
+                        @CookieValue(name = COOKIE_REFRESH_TOKEN, required = false) String refreshTokenCookie,
                         HttpServletResponse response) {
         if (refreshTokenCookie != null && !refreshTokenCookie.isBlank()) {
             logoutUseCase.logout(new LogoutComando(refreshTokenCookie));
