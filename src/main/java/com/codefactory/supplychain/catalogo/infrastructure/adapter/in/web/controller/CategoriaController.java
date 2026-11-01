@@ -1,5 +1,8 @@
 package com.codefactory.supplychain.catalogo.infrastructure.adapter.in.web.controller;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.UUID;
 import com.codefactory.supplychain.catalogo.application.port.in.CategoriaUseCase;
 import com.codefactory.supplychain.catalogo.domain.model.Categoria;
@@ -32,6 +35,8 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/v1/categorias")
 @PreAuthorize("hasAuthority('catalogo:administrar')")
+@Tag(name = "Catálogo", description = "Jerarquía de producto: Categoría > Template > Variante (SKU). La "
+        + "Variante es la unidad que se vende y se almacena. Scope: catalogo:administrar.")
 public class CategoriaController {
 
     private final CategoriaUseCase categoriaUseCase;
@@ -44,6 +49,11 @@ public class CategoriaController {
     }
 
     @PostMapping
+    @Operation(summary = "Crear una categoría",
+            description = "SIN_CATEGORIA es un nombre reservado del sistema y no se puede usar. FEAT-05, HU-35.")
+    @ApiResponse(responseCode = "201", description = "Categoría creada")
+    @ApiResponse(responseCode = "409", description = "Ya existe una categoría con ese nombre, o el nombre es "
+            + "SIN_CATEGORIA")
     public ResponseEntity<CategoriaResponse> crear(@Valid @RequestBody CategoriaRequest request) {
         Categoria categoria = categoriaUseCase.crear(request.nombre());
         return ResponseEntity.status(HttpStatus.CREATED)
@@ -51,17 +61,27 @@ public class CategoriaController {
     }
 
     @GetMapping
+    @Operation(summary = "Listar categorías", description = "Paginado. FEAT-05.")
+    @ApiResponse(responseCode = "200", description = "Página de categorías")
     public ResponseEntity<Page<CategoriaResponse>> listar(@ParameterObject Pageable pageable) {
         return ResponseEntity.ok(categoriaUseCase.listar(pageable).map(categoriaWebMapper::toResponse));
     }
 
     @GetMapping("/{id}")
+    @Operation(summary = "Obtener una categoría", description = "FEAT-05.")
+    @ApiResponse(responseCode = "200", description = "Categoría encontrada")
+    @ApiResponse(responseCode = "404", description = "Categoría inexistente")
     public ResponseEntity<CategoriaResponse> obtenerPorId(@PathVariable UUID id) {
         Categoria categoria = categoriaUseCase.obtenerPorId(id);
         return ResponseEntity.ok(categoriaWebMapper.toResponse(categoria));
     }
 
     @PutMapping("/{id}")
+    @Operation(summary = "Renombrar una categoría",
+            description = "SIN_CATEGORIA no se puede renombrar ni usar como nombre nuevo. FEAT-05, HU-35.")
+    @ApiResponse(responseCode = "200", description = "Categoría modificada")
+    @ApiResponse(responseCode = "404", description = "Categoría inexistente")
+    @ApiResponse(responseCode = "409", description = "Nombre en uso por otra categoría, o involucra SIN_CATEGORIA")
     public ResponseEntity<CategoriaResponse> modificar(@PathVariable UUID id,
                                                          @Valid @RequestBody CategoriaRequest request) {
         Categoria categoria = categoriaUseCase.modificar(id, request.nombre());
@@ -69,6 +89,11 @@ public class CategoriaController {
     }
 
     @DeleteMapping("/{id}")
+    @Operation(summary = "Eliminar una categoría",
+            description = "Solo si ningún template la usa. SIN_CATEGORIA no se elimina. FEAT-05, HU-19, HU-35.")
+    @ApiResponse(responseCode = "204", description = "Categoría eliminada")
+    @ApiResponse(responseCode = "404", description = "Categoría inexistente")
+    @ApiResponse(responseCode = "409", description = "Tiene templates asociados, o es SIN_CATEGORIA")
     public ResponseEntity<Void> eliminar(@PathVariable UUID id) {
         categoriaUseCase.eliminar(id);
         return ResponseEntity.noContent().build();

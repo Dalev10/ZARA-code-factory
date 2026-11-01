@@ -95,6 +95,23 @@ class OpenApiConfigTest {
                 assertThat(porCodigo.keySet()).anyMatch(codigo -> codigo.startsWith("2")));
     }
 
+    // Un endpoint nuevo sin @Operation ni @Tag aparece en Swagger UI con el nombre del método y del controlador.
+    @Test
+    @DisplayName("toda operación tiene resumen, descripción y un grupo documentado")
+    void todaOperacionEstaDocumentada() throws Exception {
+        String json = mockMvc.perform(get("/v3/api-docs")).andReturn().getResponse().getContentAsString();
+        List<Map<String, Object>> operaciones = JsonPath.read(json, "$.paths.*.*");
+        List<String> gruposDocumentados = JsonPath.read(json, "$.tags[?(@.description)].name");
+
+        assertThat(operaciones).isNotEmpty().allSatisfy(operacion -> {
+            assertThat(operacion.get("summary")).as("summary de %s", operacion.get("operationId")).isNotNull();
+            assertThat(operacion.get("description")).as("description de %s", operacion.get("operationId"))
+                    .isNotNull();
+            assertThat((List<?>) operacion.get("tags")).as("tags de %s", operacion.get("operationId"))
+                    .hasSize(1).allMatch(gruposDocumentados::contains);
+        });
+    }
+
     @Test
     @DisplayName("los listados paginados publican page, size y sort como parámetros sueltos")
     void paginacionComoParametrosSueltos() throws Exception {
