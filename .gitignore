@@ -20,5 +20,7 @@ Thumbs.db
 # Variables de entorno locales (nunca versionar secretos)
 .env
 
-# Informes de desarrollo (locales, no se suben al remoto)
-docs/
+# Informes de desarrollo (locales, no se suben al remoto). Los .md y .puml de
+# docs/ (arquitectura, seguridad, ADR, CI/CD) sí se versionan.
+docs/*.pdf
+docs/*.drawio
