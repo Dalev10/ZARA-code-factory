@@ -65,8 +65,8 @@ class OpenApiConfigTest {
     @DisplayName("sin cuerpo no documenta 400; sin scope no documenta 403")
     void soloLoQueAplica() throws Exception {
         mockMvc.perform(get("/v3/api-docs"))
-                .andExpect(jsonPath("$.paths['/api/v1/ventas'].get.responses['400']").doesNotExist())
-                .andExpect(jsonPath("$.paths['/api/v1/ventas'].get.responses['403']").exists())
+                .andExpect(jsonPath("$.paths['/api/v1/ventas/{id}'].get.responses['400']").doesNotExist())
+                .andExpect(jsonPath("$.paths['/api/v1/ventas/{id}'].get.responses['403']").exists())
                 .andExpect(jsonPath("$.paths['/api/v1/mfa/activar'].post.responses['401']").exists())
                 .andExpect(jsonPath("$.paths['/api/v1/mfa/activar'].post.responses['403']").doesNotExist());
     }
