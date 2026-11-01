@@ -22,6 +22,11 @@
 
     <properties>
         <java.version>21</java.version>
+        <!-- SonarCloud (job "calidad" de .github/workflows/ci.yml, ver docs/ci-cd.md).
+             La cobertura la toma de target/site/jacoco/jacoco.xml, su ruta por defecto. -->
+        <sonar.organization>dalev10</sonar.organization>
+        <sonar.projectKey>Dalev10_ZARA-code-factory</sonar.projectKey>
+        <sonar.host.url>https://sonarcloud.io</sonar.host.url>
     </properties>
 
     <!-- Spring Boot no gestiona la versión de Spring Modulith: el BOM la fija
@@ -246,6 +251,16 @@
     </dependencies>
 
     <build>
+        <!-- Solo fija la versión para el job de SonarCloud; no corre en ./mvnw verify. -->
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>org.sonarsource.scanner.maven</groupId>
+                    <artifactId>sonar-maven-plugin</artifactId>
+                    <version>5.8.0.7211</version>
+                </plugin>
+            </plugins>
+        </pluginManagement>
         <plugins>
             <plugin>
                 <groupId>org.springframework.boot</groupId>

@@ -1,23 +1,33 @@
-name: CI
+name: CI/CD
 
-# Se ejecuta en cada Pull Request hacia main o develop 
-# y también en cada push directo a esas ramas como
-# confirmación adicional.
+# Flujo: feature/* --PR--> develop --PR--> main (producción en Render).
+#   verificar  En todo PR y push a develop/main: ./mvnw verify.
+#   calidad    Después de verificar: análisis de SonarCloud; falla si no pasa el Quality Gate.
+#   desplegar  Solo en push a main, si los dos anteriores pasaron: dispara el deploy hook de
+#              Render. Producción solo recibe código que pasó el pipeline (Auto-Deploy apagado
+#              en Render, ver docs/ci-cd.md).
 on:
   pull_request:
-    branches:
-      - main
-      - develop
+    branches: [main, develop]
   push:
-    branches:
-      - main
-      - develop
+    branches: [main, develop]
+  workflow_dispatch:
+
+# Un push nuevo cancela la ejecución anterior de la misma rama, salvo en main: ahí no se
+# corta un despliegue a medias.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+# Mínimo privilegio: el token del workflow solo lee el repositorio.
+permissions:
+  contents: read
 
 jobs:
-  build:
+  verificar:
     name: Build y verificación (JDK 21)
     runs-on: ubuntu-latest
-
+    timeout-minutes: 30
     steps:
       - name: Descargar el código
         uses: actions/checkout@v4
@@ -25,22 +35,97 @@ jobs:
       - name: Configurar JDK 21 (Temurin)
         uses: actions/setup-java@v4
         with:
-          distribution: 'temurin'
+          distribution: temurin
           java-version: '21'
           cache: maven
 
-      - name: Dar permisos de ejecución al Maven Wrapper
-        run: chmod +x mvnw
-
-      # Los tests de repositorio (identity) usan Testcontainers para levantar
-      # un Postgres real y correr las migraciones de Flyway contra él. No se
-      # necesita un "services: postgres:" aparte: Testcontainers gestiona su
-      # propio contenedor efímero usando el daemon de Docker que ya viene
-      # preinstalado en los runners de GitHub Actions (ubuntu-latest).
-      #
-      # "verify" también corre los gates de calidad agregados en HU-27:
-      # JaCoCo falla el build si la cobertura de línea del proyecto cae por
-      # debajo del 85%, y Checkstyle publica su reporte sin romper el build
-      # todavía (failOnViolation=false) hasta que se cure el ruleset.
+      # Pruebas con Postgres real (Testcontainers usa el Docker del runner), verificación de
+      # módulos (Spring Modulith), cobertura mínima del 85 % (JaCoCo) y reporte de Checkstyle.
       - name: Compilar y verificar
         run: ./mvnw -B clean verify
+
+      - name: Publicar informes de pruebas
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: informes-de-pruebas
+          path: target/surefire-reports/
+          retention-days: 7
+
+      # Lo que necesita SonarCloud para no recompilar ni repetir las pruebas.
+      - name: Guardar compilación y cobertura
+        uses: actions/upload-artifact@v4
+        with:
+          name: compilacion
+          path: |
+            target/classes/
+            target/test-classes/
+            target/site/jacoco/jacoco.xml
+          retention-days: 1
+
+  calidad:
+    name: Quality Gate SonarCloud
+    needs: verificar
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      # Historial completo: SonarCloud lo usa para saber qué líneas son código nuevo.
+      - name: Descargar el código
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Configurar JDK 21 (Temurin)
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+
+      - name: Recuperar compilación y cobertura
+        uses: actions/download-artifact@v4
+        with:
+          name: compilacion
+          path: target/
+
+      - name: Cache de SonarCloud
+        uses: actions/cache@v4
+        with:
+          path: ~/.sonar/cache
+          key: ${{ runner.os }}-sonar
+          restore-keys: ${{ runner.os }}-sonar
+
+      # qualitygate.wait: el job espera el veredicto y falla si el Quality Gate no pasa.
+      - name: Analizar y esperar el Quality Gate
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        run: |
+          if [ -z "$SONAR_TOKEN" ]; then
+            echo "::error::Falta el secreto SONAR_TOKEN. Ver docs/ci-cd.md."
+            exit 1
+          fi
+          ./mvnw -B org.sonarsource.scanner.maven:sonar-maven-plugin:sonar \
+            -Dsonar.qualitygate.wait=true -Dsonar.qualitygate.timeout=300
+
+  desplegar:
+    name: Desplegar en Render
+    needs: [verificar, calidad]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    # El entorno guarda el secreto, solo admite main y registra cada despliegue.
+    environment:
+      name: produccion
+      url: https://supplychain-api-dzmc.onrender.com/swagger-ui.html
+    steps:
+      # El hook es una URL secreta: quien la tenga puede desplegar.
+      - name: Disparar el deploy hook
+        env:
+          RENDER_DEPLOY_HOOK: ${{ secrets.RENDER_DEPLOY_HOOK }}
+        run: |
+          if [ -z "$RENDER_DEPLOY_HOOK" ]; then
+            echo "::error::Falta el secreto RENDER_DEPLOY_HOOK en el entorno 'produccion'. Ver docs/ci-cd.md."
+            exit 1
+          fi
+          curl --fail --silent --show-error --max-time 30 -X POST "$RENDER_DEPLOY_HOOK" > /dev/null
+          echo "Despliegue solicitado a Render para el commit ${GITHUB_SHA::7}."

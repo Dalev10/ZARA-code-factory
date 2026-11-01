@@ -1,5 +1,18 @@
 # Supply Chain MVP
 
+[![CI/CD](https://github.com/Dalev10/ZARA-code-factory/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/Dalev10/ZARA-code-factory/actions/workflows/ci.yml)
+[![CodeQL](https://github.com/Dalev10/ZARA-code-factory/actions/workflows/github-code-scanning/codeql/badge.svg)](https://github.com/Dalev10/ZARA-code-factory/actions/workflows/github-code-scanning/codeql)
+[![Quality Gate](https://sonarcloud.io/api/project_badges/measure?project=Dalev10_ZARA-code-factory&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=Dalev10_ZARA-code-factory)
+[![Coverage](https://sonarcloud.io/api/project_badges/measure?project=Dalev10_ZARA-code-factory&metric=coverage)](https://sonarcloud.io/summary/new_code?id=Dalev10_ZARA-code-factory)
+[![Security Rating](https://sonarcloud.io/api/project_badges/measure?project=Dalev10_ZARA-code-factory&metric=security_rating)](https://sonarcloud.io/summary/new_code?id=Dalev10_ZARA-code-factory)
+[![Maintainability Rating](https://sonarcloud.io/api/project_badges/measure?project=Dalev10_ZARA-code-factory&metric=sqale_rating)](https://sonarcloud.io/summary/new_code?id=Dalev10_ZARA-code-factory)
+[![Reliability Rating](https://sonarcloud.io/api/project_badges/measure?project=Dalev10_ZARA-code-factory&metric=reliability_rating)](https://sonarcloud.io/summary/new_code?id=Dalev10_ZARA-code-factory)
+[![Java 21](https://img.shields.io/badge/Java-21-ED8B00?logo=openjdk&logoColor=white)](https://openjdk.org/projects/jdk/21/)
+[![Spring Boot 4.1.1](https://img.shields.io/badge/Spring%20Boot-4.1.1-6DB33F?logo=springboot&logoColor=white)](https://spring.io/projects/spring-boot)
+
+**Producción:** <https://supplychain-api-dzmc.onrender.com/swagger-ui.html> ·
+**CI/CD:** [docs/ci-cd.md](docs/ci-cd.md)
+
 Sistema de planificación de cadena de suministro retail (MVP). Monolito modular
 con arquitectura hexagonal por módulo, expuesto vía API REST.
 
@@ -100,7 +113,8 @@ extienden el esquema de negocio a medida que se desarrollan las features.
 
 - `./mvnw verify` corre todas las pruebas del equipo de desarrollo (sufijo `Test`),
   con Postgres real vía Testcontainers, la verificación de módulos y el umbral de
-  cobertura de JaCoCo (85 %). Es lo mismo que corre la CI.
+  cobertura de JaCoCo (85 %). Es lo mismo que corre la CI, que además analiza el código
+  en SonarCloud y despliega `main` en Render (ver [docs/ci-cd.md](docs/ci-cd.md)).
 - `./mvnw -P casos-qa-sprint1 verify` corre las pruebas funcionales de QA
   (sufijo `IT`, en `src/test/.../qa/`) y genera su reporte.
 - Para probar autorización con usuarios reales, usar `soporte/UsuariosDePrueba`
