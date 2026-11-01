@@ -15,7 +15,7 @@ flowchart LR
 | Evento | `verificar` | `calidad` | `desplegar` |
 |---|:---:|:---:|:---:|
 | Pull request hacia `develop` o `main` | ✅ | ✅ si `verificar` pasa | — |
-| Push (merge) a `develop` | ✅ | ✅ si `verificar` pasa | — |
+| Push (merge) a `develop` | ✅ | — | — |
 | Push (merge) a `main` | ✅ | ✅ si `verificar` pasa | ✅ si ambos pasan |
 
 Un push nuevo cancela la ejecución en curso de la misma rama, salvo en `main`, para no
@@ -49,6 +49,14 @@ código nuevo:
 | Líneas duplicadas | ≤ 3 % |
 | Maintainability, Reliability y Security Rating | A |
 | Security Hotspots revisados | 100 % |
+
+**Por qué no corre en push a `develop`.** El plan gratuito de SonarCloud solo entrega el
+Quality Gate de la rama principal del proyecto en Sonar y de los pull requests; para
+cualquier otra rama responde *«Organization is not allowed to access data from non main
+branches»* y el job falla aunque el análisis se haya hecho. La rama principal en Sonar es
+`main`, porque es lo que está en producción y lo que muestran las insignias del README.
+`develop` no queda sin control: todo lo que entra en ella llega por un PR, y los PR
+siempre se analizan.
 
 ### `desplegar`: Desplegar en Render
 
@@ -88,9 +96,12 @@ Render inyecta `PORT`.
    `Dalev10_ZARA-code-factory` (plan Free, repositorio público).
 2. **Administration → Analysis Method**: desactivar **Automatic Analysis**; si queda activo,
    el análisis desde el pipeline falla.
-3. **My Account → Security → Generate Token** (*Project Analysis Token*).
-4. GitHub → **Settings → Secrets and variables → Actions** → secreto `SONAR_TOKEN`.
-5. El mismo secreto en **Settings → Secrets and variables → Dependabot**: los PR de
+3. **Administration → Branches and Pull Requests**: la rama principal debe llamarse `main`.
+   Sonar toma como principal la primera rama que analiza; si fue otra, se elimina la rama
+   `main` que haya quedado como secundaria y se renombra la principal a `main`.
+4. **My Account → Security → Generate Token** (*Project Analysis Token*).
+5. GitHub → **Settings → Secrets and variables → Actions** → secreto `SONAR_TOKEN`.
+6. El mismo secreto en **Settings → Secrets and variables → Dependabot**: los PR de
    Dependabot no ven los secretos de Actions y sin él su job `calidad` falla.
 
 Si falta un secreto, el job correspondiente falla con un mensaje que apunta a este
