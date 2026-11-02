@@ -115,12 +115,37 @@ private vulnerability reporting.
 
 ### 5. GitHub: protección de ramas
 
-**Settings → Rules → Rulesets**, para `main` y `develop`:
+**Settings → Branches → Add classic branch protection rule**, una regla por rama:
 
-- exigir pull request (`develop`: 1 aprobación; `main`: 0);
-- exigir que pasen **`Build y verificación (JDK 21)`** y **`Quality Gate SonarCloud`**.
-  Solo aparecen en la lista después de que el pipeline haya corrido una vez;
-- bloquear *force push*.
+| Opción | `develop` | `main` |
+|---|:---:|:---:|
+| Require a pull request before merging | ✅ | ✅ |
+| └ Require approvals | 1 | — (0) |
+| └ Dismiss stale pull request approvals when new commits are pushed | ✅ | — |
+| Require status checks to pass before merging | ✅ | ✅ |
+| └ Require branches to be up to date before merging | — | — |
+| Require conversation resolution before merging | ✅ | — |
+| Require linear history | — | — |
+| Do not allow bypassing the above settings | ✅ | ✅ |
+| Allow force pushes / Allow deletions | — | — |
+
+Checks requeridos en las dos ramas, con su origen:
+
+| Check | Origen |
+|---|---|
+| `Build y verificación (JDK 21)` | GitHub Actions |
+| `Quality Gate SonarCloud` | GitHub Actions |
+| `CodeQL` | GitHub Advanced Security |
+
+Un check solo aparece en el buscador si corrió en la última semana. **`Desplegar en Render` no
+se exige**: en los PR siempre se omite y dejaría el PR bloqueado. Tampoco hace falta
+`SonarCloud Code Analysis` (lo publica la app de SonarCloud y repite lo que valida
+`Quality Gate SonarCloud`) ni los `Analyze (…)`, cuyo resultado ya resume `CodeQL`.
+
+Con *Do not allow bypassing* nadie, ni un administrador, integra con un check en rojo; si
+SonarCloud no responde, hay que esperar o desmarcar la opción de forma temporal. «Up to date»
+queda desactivado: con PR en paralelo obligaría a actualizar cada rama una y otra vez, y el
+pipeline vuelve a correr al integrar.
 
 ## Lo que el pipeline todavía no hace
 

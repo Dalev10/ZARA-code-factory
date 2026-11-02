@@ -10,6 +10,9 @@ import com.codefactory.supplychain.identity.application.port.in.ObtenerScopeUseC
 import com.codefactory.supplychain.identity.domain.model.Scope;
 import com.codefactory.supplychain.identity.infrastructure.adapter.in.web.dto.ScopeRequest;
 import com.codefactory.supplychain.identity.infrastructure.adapter.in.web.dto.ScopeResponse;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -34,6 +37,8 @@ import java.util.UUID;
 @RequestMapping("/api/v1/scopes")
 @RequiredArgsConstructor
 @PreAuthorize("hasAuthority('scopes:administrar')")
+@Tag(name = "Scopes", description = "Permisos atómicos (recurso:acción) que exige cada operación. Scope: "
+        + "scopes:administrar.")
 public class ScopeController {
 
     private final CrearScopeUseCase crearScopeUseCase;
@@ -44,6 +49,11 @@ public class ScopeController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
+    @Operation(summary = "Crear un scope",
+            description = "Un scope nuevo no habilita nada hasta que una operación lo exija en el código. "
+                    + "«sensible» es una marca informativa y por defecto es false. HU-09.")
+    @ApiResponse(responseCode = "201", description = "Scope creado")
+    @ApiResponse(responseCode = "409", description = "Ya existe un scope con ese código")
     public ScopeResponse crear(@Valid @RequestBody ScopeRequest request) {
         Scope scope = crearScopeUseCase.crear(
                 new CrearScopeComando(request.codigo(), request.descripcion(), request.sensible()));
@@ -51,16 +61,26 @@ public class ScopeController {
     }
 
     @GetMapping
+    @Operation(summary = "Listar scopes", description = "Sin paginación. HU-09.")
     public List<ScopeResponse> listar() {
         return listarScopesUseCase.listar().stream().map(ScopeResponse::desde).toList();
     }
 
     @GetMapping("/{id}")
+    @Operation(summary = "Obtener un scope", description = "HU-09.")
+    @ApiResponse(responseCode = "200", description = "Scope encontrado")
+    @ApiResponse(responseCode = "404", description = "Scope inexistente")
     public ScopeResponse obtener(@PathVariable UUID id) {
         return ScopeResponse.desde(obtenerScopeUseCase.obtener(id));
     }
 
     @PutMapping("/{id}")
+    @Operation(summary = "Actualizar un scope",
+            description = "Cambiar el código de un scope que el sistema exige deja esa operación sin nadie que la "
+                    + "pueda ejecutar. HU-09.")
+    @ApiResponse(responseCode = "200", description = "Scope actualizado")
+    @ApiResponse(responseCode = "404", description = "Scope inexistente")
+    @ApiResponse(responseCode = "409", description = "Ya existe otro scope con ese código")
     public ScopeResponse actualizar(@PathVariable UUID id, @Valid @RequestBody ScopeRequest request) {
         Scope scope = actualizarScopeUseCase.actualizar(
                 new ActualizarScopeComando(id, request.codigo(), request.descripcion(), request.sensible()));
@@ -69,6 +89,10 @@ public class ScopeController {
 
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
+    @Operation(summary = "Eliminar un scope", description = "Solo si ningún rol lo tiene asignado. HU-09.")
+    @ApiResponse(responseCode = "204", description = "Scope eliminado")
+    @ApiResponse(responseCode = "400", description = "El scope está asignado a uno o más roles")
+    @ApiResponse(responseCode = "404", description = "Scope inexistente")
     public void eliminar(@PathVariable UUID id) {
         eliminarScopeUseCase.eliminar(id);
     }
