@@ -74,7 +74,7 @@ operar en la tienda del recurso; si no puede, el recurso se trata como inexisten
 | `POST /api/v1/ventas` | Registra una venta por lote y descuenta el stock del Almacén. Sin stock responde 409 salvo venta forzada; un reintento con el mismo `transaccionId` devuelve 200 con la venta original | `ventas:registrar` · por tienda | HU-40 | `VentaControllerTest` |
 | `GET /api/v1/ventas` | Lista paginada, filtrable por tienda, variante, transacción, estado y fechas | `ventas:consultar` · por tienda | HU-42 | `VentaControllerTest` |
 | `GET /api/v1/ventas/{id}` | Una venta; la de otra tienda responde 404 | `ventas:consultar` · por tienda | HU-42 | `VentaControllerTest` |
-| `POST /api/v1/ventas/{id}/anular` | Anula una línea con motivo y repone el stock; no se anula dos veces | `ventas:anular` · por tienda | HU-41 | `VentaControllerTest` |
+| `POST /api/v1/ventas/{id}/anular` | Anula una línea con motivo y repone el stock; idempotente: anularla otra vez no repone de nuevo | `ventas:anular` · por tienda | HU-41 | `VentaControllerTest` |
 | `POST /api/v1/ventas/transacciones/{transaccionId}/anular` | Anula todas las líneas de una transacción | `ventas:anular` · por tienda | HU-41 | `VentaControllerTest` |
 | `POST /api/v1/solicitudes-no-satisfechas` | Registra demanda perdida con el stock del Almacén en ese momento; idempotente por clave | `ventas:registrar` · por tienda | HU-43 | `SolicitudNoSatisfechaControllerTest` |
 | `GET /api/v1/solicitudes-no-satisfechas` | Lista paginada y filtrable | `ventas:consultar` · por tienda | HU-44 | `SolicitudNoSatisfechaControllerTest` |
@@ -101,8 +101,8 @@ operar en la tienda del recurso; si no puede, el recurso se trata como inexisten
 | `POST /api/v1/tiendas/{tiendaId}/traspasos-internos` | Traspaso manual Bodega → Almacén; nunca deja la Bodega en negativo | `reposicion:administrar` · por tienda | HU-49 | `TraspasoInternoControllerTest` |
 | `GET /api/v1/tiendas/{tiendaId}/traspasos-internos` | Traspasos de una tienda, automáticos y manuales | `reposicion:administrar` · por tienda | HU-49 | `TraspasoInternoControllerTest` |
 | `GET /api/v1/traspasos-internos/{id}` | Un traspaso | `reposicion:administrar` · por tienda | HU-49 | `TraspasoInternoControllerTest` |
-| `POST /api/v1/reposicion-interna/evaluar` | Evalúa la reposición de todas las tiendas activas | `reposicion:administrar` | HU-50 | `EvaluacionMasivaControllerTest` |
-| `POST /api/v1/reposicion-interna/tiendas/{tiendaId}/evaluar` | Evalúa la reposición de una tienda | `reposicion:administrar` | HU-50 | `EvaluacionMasivaControllerTest` |
+| `POST /api/v1/reposicion-interna/evaluar` | Evalúa la reposición de las tiendas activas en las que opera el usuario | `reposicion:administrar` · por tienda | HU-50 | `EvaluacionMasivaControllerTest` |
+| `POST /api/v1/reposicion-interna/tiendas/{tiendaId}/evaluar` | Evalúa la reposición de una tienda; una tienda ajena responde 403 | `reposicion:administrar` · por tienda | HU-50 | `EvaluacionMasivaControllerTest` |
 
 El traspaso automático Bodega → Almacén (HU-48) no tiene endpoint: lo dispara el evento
 `ExistenciasActualizadas` después de cada venta o ajuste.
