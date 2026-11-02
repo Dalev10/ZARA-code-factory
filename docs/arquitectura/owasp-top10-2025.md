@@ -148,7 +148,7 @@ fijada por SHA con su versión en un comentario.
 | Códigos de respaldo y refresh tokens | Solo se guarda su hash SHA-256; el valor es aleatorio (`SecureRandom`) | `HashingSupport` |
 | Access token | JWT HS256. `Keys.hmacShaKeyFor` rechaza una clave de menos de 256 bits al arrancar | `JjwtAccessTokenAdapter.java:29` |
 | Cookie de refresh | `HttpOnly`, `Secure`, `path=/api/v1/auth` | `AuthController` |
-| Tránsito | HTTPS terminado por Render | — |
+| Tránsito | HTTPS terminado por Render; JDBC hacia Supabase con TLS (`sslmode=require`) | `SPRING_DATASOURCE_URL` en Render |
 
 **H-11 · SonarCloud S4790: uso de SHA-1** · Informativa · ⚪ Falso positivo
 
