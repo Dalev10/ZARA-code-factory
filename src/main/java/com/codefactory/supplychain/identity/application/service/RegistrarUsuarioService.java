@@ -35,7 +35,7 @@ public class RegistrarUsuarioService implements RegistrarUsuarioUseCase {
         Password password = Password.de(comando.password());
         if (passwordComprometidaPort.estaComprometida(password)) {
             throw new PasswordComprometidaException(
-                    "La contraseña ingresada aparece en filtraciones conocidas; elegí otra");
+                    "La contraseña ingresada aparece en filtraciones conocidas; se debe elegir otra");
         }
 
         PasswordHash passwordHash = passwordHasherPort.hashear(password);

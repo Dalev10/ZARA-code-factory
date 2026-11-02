@@ -198,6 +198,6 @@ class ScopeControllerTest {
                         .header(HttpHeaders.AUTHORIZATION, "Bearer " + token))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.mensaje").value(
-                        "El scope está asignado a uno o más roles; quitá esas asignaciones antes de eliminarlo"));
+                        "El scope está asignado a uno o más roles; se deben quitar esas asignaciones antes de eliminarlo"));
     }
 }

@@ -8,6 +8,6 @@ import com.codefactory.supplychain.shared.exception.ReglaDeNegocioException;
 public class RolEnUsoException extends ReglaDeNegocioException {
 
     public RolEnUsoException() {
-        super("El rol tiene usuarios asignados; quitá esas asignaciones antes de eliminarlo");
+        super("El rol tiene usuarios asignados; se deben quitar esas asignaciones antes de eliminarlo");
     }
 }
