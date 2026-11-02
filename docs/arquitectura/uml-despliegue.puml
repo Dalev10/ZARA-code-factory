@@ -1,0 +1,138 @@
+@startuml uml-despliegue
+' Diagrama de despliegue de supply-chain-mvp (backend). El frontend en Vercel queda fuera
+' del alcance de este entregable. «previsto» = existe en el diseño, todavía no en el código.
+
+title Supply Chain MVP · Diagrama de despliegue (producción)
+
+skinparam backgroundColor white
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam defaultFontSize 12
+skinparam ArrowColor #333333
+skinparam node {
+  BackgroundColor #F7F9FC
+  BorderColor #4A6FA5
+}
+skinparam cloud {
+  BackgroundColor #FFFFFF
+  BorderColor #7A869A
+}
+skinparam database {
+  BackgroundColor #EAF4EA
+  BorderColor #3C7A3C
+}
+skinparam artifact {
+  BackgroundColor #FFF8E6
+  BorderColor #B8860B
+}
+skinparam component {
+  BackgroundColor #FFFFFF
+  BorderColor #4A6FA5
+}
+
+actor "Usuario" as usuario
+node "Navegador\n(Swagger UI o cliente HTTP)" as navegador <<device>>
+
+cloud "GitHub" as github {
+  artifact "Dalev10/ZARA-code-factory\n(develop y main protegidas)" as repo
+  node "GitHub Actions · ci.yml" as actions <<executionEnvironment>> {
+    component "verificar\n./mvnw verify" as jobVerificar
+    component "calidad\nQuality Gate" as jobCalidad
+    component "desplegar\nsolo push a main" as jobDesplegar
+  }
+}
+
+cloud "SonarCloud" as sonar {
+  component "Quality Gate\nSonar way" as qualityGate
+}
+
+cloud "Render · plan Free" as render {
+  node "Render Edge\nTLS" as edge <<proxy>>
+  node "Render Build" as build <<executionEnvironment>>
+  node "Web Service supplychain-api\nimagen eclipse-temurin:21-jre-alpine\n1 instancia · usuario app (sin root)" as servicio <<container>> {
+    node "JRE 21 · Tomcat embebido" as jre <<executionEnvironment>> {
+      artifact "supply-chain-mvp.jar\nSpring Boot 4.1.1 · monolito modular" as jar {
+        component "identity" as modIdentity
+        component "catalogo" as modCatalogo
+        component "inventario" as modInventario
+        component "ventas" as modVentas
+        component "reposicion" as modReposicion
+        component "shared" as modShared
+        component "logistica" as modLogistica <<previsto>> #F2F2F2;line:999999;line.dashed;text:777777
+      }
+    }
+  }
+}
+
+cloud "Supabase" as supabase {
+  node "Supavisor\nmodo session" as pooler <<proxy>>
+  database "PostgreSQL\nesquema Flyway V1–V28" as postgres
+}
+
+cloud "Have I Been Pwned" as hibp {
+  component "api.pwnedpasswords.com" as hibpApi
+}
+
+' Los módulos en dos filas, para que el JAR no ocupe más que su contenido.
+modIdentity -[hidden]right- modCatalogo
+modCatalogo -[hidden]right- modInventario
+modInventario -[hidden]right- modVentas
+modIdentity -[hidden]down- modReposicion
+modReposicion -[hidden]right- modShared
+modShared -[hidden]right- modLogistica
+
+' --- Tráfico de la aplicación
+usuario --> navegador
+navegador --> edge : HTTPS :443
+edge --> jre : HTTP :$PORT
+jre --> pooler : JDBC :5432\nTLS (sslmode=require)
+pooler --> postgres
+jre --> hibpApi : HTTPS\nprefijo SHA-1
+
+' --- Entrega continua
+repo --> jobVerificar : PR / push
+jobVerificar --> jobCalidad : compilación\ny cobertura
+jobCalidad --> qualityGate : análisis
+jobCalidad --> jobDesplegar
+jobDesplegar --> build : deploy hook
+build --> repo : clona main
+build --> servicio : docker build
+
+note right of jar
+  <b>Módulos</b> (paquetes de un solo JAR)
+  identity: login, MFA TOTP, JWT, usuarios, roles, scopes
+  catalogo: categorías, templates, variantes (SKU)
+  inventario: nodos, stock, kardex, carga y ajustes
+  ventas: ventas, demanda no satisfecha, ventanas de quiebre
+  reposicion: umbrales y traspasos Bodega → Almacén
+  shared: seguridad JWT, CORS, OpenAPI, errores
+  logistica: «previsto», hoy solo estructura
+end note
+
+note bottom of servicio
+  <b>Configuración</b> (variables de entorno de Render)
+  SPRING_DATASOURCE_URL · SPRING_DATASOURCE_USERNAME
+  SPRING_DATASOURCE_PASSWORD · JWT_SECRET
+  MFA_ENCRYPTION_KEY · CORS_ALLOWED_ORIGINS
+  Render inyecta PORT y comprueba GET /actuator/health.
+  Se suspende sin tráfico: la primera petición tarda ~50 s.
+  Auto-Deploy apagado: solo despliega el job «desplegar».
+end note
+
+note right of postgres
+  Flyway aplica y valida las
+  migraciones al arrancar;
+  Hibernate solo valida el
+  esquema (ddl-auto=validate).
+end note
+
+legend right
+  |= Elemento |= Significado |
+  | «device» | dispositivo del usuario |
+  | «proxy» | infraestructura del proveedor, no administrada por el equipo |
+  | «executionEnvironment» | entorno que ejecuta artefactos |
+  | «container» | servicio de contenedor |
+  | «previsto» (borde discontinuo) | definido en la arquitectura, sin implementar |
+endlegend
+
+@enduml
