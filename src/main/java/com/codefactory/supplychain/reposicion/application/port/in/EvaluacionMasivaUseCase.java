@@ -1,6 +1,7 @@
 package com.codefactory.supplychain.reposicion.application.port.in;
 
 import com.codefactory.supplychain.reposicion.domain.model.TraspasoInterno;
+import com.codefactory.supplychain.shared.security.UsuarioActual;
 
 import java.util.List;
 import java.util.UUID;
@@ -13,14 +14,15 @@ import java.util.UUID;
 public interface EvaluacionMasivaUseCase {
 
     /**
-     * Evalúa todas las tiendas activas que tengan al menos un umbral configurado.
+     * Evalúa las tiendas activas en las que el usuario puede operar (todas, con
+     * tiendas:operar-todas).
      *
      * @return traspasos ejecutados (vacíos = todo en umbral o sin stock en bodega).
      */
-    List<TraspasoInterno> evaluarTodas();
+    List<TraspasoInterno> evaluarTodas(UsuarioActual usuario);
 
     /**
-     * Evalúa solo la tienda indicada.
+     * Evalúa solo la tienda indicada; falla si el usuario no puede operar en ella.
      */
-    List<TraspasoInterno> evaluarTienda(UUID tiendaId);
+    List<TraspasoInterno> evaluarTienda(UsuarioActual usuario, UUID tiendaId);
 }
