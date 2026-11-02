@@ -89,6 +89,9 @@ public class OpenApiConfig {
     @Bean
     public OperationCustomizer respuestasDeErrorComunes() {
         return (operation, handlerMethod) -> {
+            if (operation.getResponses() == null) {
+                operation.setResponses(new ApiResponses());
+            }
             boolean publico = operation.getSecurity() != null && operation.getSecurity().isEmpty();
             if (!publico) {
                 agregarError(operation, "401", "No autenticado: sin token, token inválido o vencido, o usuario no activo");
@@ -99,6 +102,13 @@ public class OpenApiConfig {
             if (recibeCuerpo(handlerMethod)) {
                 agregarError(operation, "400", "Cuerpo ilegible o con campos que no cumplen las validaciones");
             }
+            // Un 4xx declarado con @ApiResponse sin contenido, springdoc lo rellena con el tipo de retorno
+            // del método; el cuerpo real de todo error es ErrorResponse (GlobalExceptionHandler).
+            operation.getResponses().forEach((codigo, respuesta) -> {
+                if (codigo.startsWith("4")) {
+                    respuesta.setContent(contenidoDeError());
+                }
+            });
             return operation;
         };
     }
@@ -114,12 +124,13 @@ public class OpenApiConfig {
     }
 
     private static void agregarError(Operation operation, String codigo, String descripcion) {
-        if (operation.getResponses() == null) {
-            operation.setResponses(new ApiResponses());
-        }
         operation.getResponses().putIfAbsent(codigo, new ApiResponse()
                 .description(descripcion)
-                .content(new Content().addMediaType(org.springframework.http.MediaType.APPLICATION_JSON_VALUE,
-                        new MediaType().schema(new Schema<>().$ref(ESQUEMA_ERROR)))));
+                .content(contenidoDeError()));
+    }
+
+    private static Content contenidoDeError() {
+        return new Content().addMediaType(org.springframework.http.MediaType.APPLICATION_JSON_VALUE,
+                new MediaType().schema(new Schema<>().$ref(ESQUEMA_ERROR)));
     }
 }

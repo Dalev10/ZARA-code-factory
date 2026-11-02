@@ -4,6 +4,9 @@ import com.codefactory.supplychain.reposicion.application.port.in.EvaluacionMasi
 import com.codefactory.supplychain.reposicion.domain.model.TraspasoInterno;
 import com.codefactory.supplychain.reposicion.infrastructure.adapter.in.web.dto.EvaluacionMasivaResponse;
 import com.codefactory.supplychain.reposicion.infrastructure.adapter.in.web.mapper.TraspasoInternoWebMapper;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -21,6 +24,9 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api/v1/reposicion-interna")
 @PreAuthorize("hasAuthority('reposicion:administrar')")
+@Tag(name = "Reposición interna", description = "Traspasos de la Bodega al Almacén de una tienda. Se "
+        + "disparan solos cuando el Almacén queda por debajo del umbral mínimo; también se pueden registrar "
+        + "a mano o forzar una evaluación. Scope: reposicion:administrar.")
 public class EvaluacionMasivaController {
 
     private final EvaluacionMasivaUseCase evaluacionMasiva;
@@ -37,6 +43,12 @@ public class EvaluacionMasivaController {
      * POST /api/v1/reposicion-interna/evaluar
      */
     @PostMapping("/evaluar")
+    @Operation(summary = "Evaluar la reposición de todas las tiendas",
+            description = "Recorre las tiendas activas y ejecuta los traspasos que procedan. Por cada variante "
+                    + "con inventario, si el Almacén está por debajo del mínimo de su umbral (el de la variante "
+                    + "o, si no tiene, el de su categoría), traslada MIN(objetivo − MAX(Almacén, 0), Bodega). Una "
+                    + "variante que falla se registra en el log y no detiene al resto. HU-50.")
+    @ApiResponse(responseCode = "200", description = "Traspasos ejecutados")
     public ResponseEntity<EvaluacionMasivaResponse> evaluarTodas() {
         List<TraspasoInterno> traspasos = evaluacionMasiva.evaluarTodas();
         return ResponseEntity.ok(new EvaluacionMasivaResponse(
@@ -50,6 +62,10 @@ public class EvaluacionMasivaController {
      * POST /api/v1/reposicion-interna/tiendas/{tiendaId}/evaluar
      */
     @PostMapping("/tiendas/{tiendaId}/evaluar")
+    @Operation(summary = "Evaluar la reposición de una tienda",
+            description = "La misma evaluación, solo para la tienda indicada. Una tienda inexistente o sin "
+                    + "inventario devuelve 0 traspasos. HU-50.")
+    @ApiResponse(responseCode = "200", description = "Traspasos ejecutados")
     public ResponseEntity<EvaluacionMasivaResponse> evaluarTienda(@PathVariable UUID tiendaId) {
         List<TraspasoInterno> traspasos = evaluacionMasiva.evaluarTienda(tiendaId);
         return ResponseEntity.ok(new EvaluacionMasivaResponse(
