@@ -46,6 +46,7 @@ public class LoginService implements LoginUseCase {
         // Una cuenta bloqueada temporalmente rechaza de una, sin sumar más intentos ni
         // extender el bloqueo — la duración quedó fijada cuando se activó el bloqueo.
         if (usuarioOpt.isPresent() && usuarioOpt.get().estaBloqueadoTemporalmente(ahora)) {
+            RegistroSeguridad.rechazoPorBloqueo(usuarioOpt.get());
             throw new CredencialesInvalidasException();
         }
 
@@ -59,7 +60,11 @@ public class LoginService implements LoginUseCase {
                 && usuarioOpt.get().getEstado() == EstadoUsuario.ACTIVO;
 
         if (!credencialesValidas) {
-            usuarioOpt.ifPresent(usuario -> usuarioRepositoryPort.guardar(usuario.registrarIntentoFallido(ahora)));
+            usuarioOpt.ifPresentOrElse(usuario -> {
+                Usuario conFallo = usuario.registrarIntentoFallido(ahora);
+                usuarioRepositoryPort.guardar(conFallo);
+                RegistroSeguridad.intentoFallido(conFallo, "contraseña", ahora);
+            }, RegistroSeguridad::emailNoRegistrado);
             throw new CredencialesInvalidasException();
         }
 

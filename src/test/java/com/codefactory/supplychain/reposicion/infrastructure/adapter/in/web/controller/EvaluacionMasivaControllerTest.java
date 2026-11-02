@@ -110,6 +110,15 @@ class EvaluacionMasivaControllerTest {
                 .andExpect(status().isForbidden());
     }
 
+    @Test
+    @DisplayName("Con el scope pero sin acceso a la tienda, evaluarla responde 403")
+    void evaluarUnaTiendaAjenaEsProhibido() throws Exception {
+        String sinTiendas = usuarios.conScopes(Set.of("reposicion:administrar")).bearer();
+
+        mockMvc.perform(post(RUTA_EVALUAR_TIENDA, crearTienda()).header(HttpHeaders.AUTHORIZATION, sinTiendas))
+                .andExpect(status().isForbidden());
+    }
+
     private void crearUmbral(UUID varianteId, int minimo, int objetivo) throws Exception {
         mockMvc.perform(post("/api/v1/umbrales-reposicion")
                         .header(HttpHeaders.AUTHORIZATION, admin.bearer())

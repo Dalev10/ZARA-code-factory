@@ -8,6 +8,6 @@ import com.codefactory.supplychain.shared.exception.ReglaDeNegocioException;
 public class MfaNoConfiguradoException extends ReglaDeNegocioException {
 
     public MfaNoConfiguradoException() {
-        super("Primero debés iniciar la activación de MFA");
+        super("Primero se debe iniciar la activación de MFA");
     }
 }
