@@ -11,7 +11,8 @@
 [![Spring Boot 4.1.1](https://img.shields.io/badge/Spring%20Boot-4.1.1-6DB33F?logo=springboot&logoColor=white)](https://spring.io/projects/spring-boot)
 
 **Producción:** <https://supplychain-api-dzmc.onrender.com/swagger-ui.html> ·
-**CI/CD:** [docs/ci-cd.md](docs/ci-cd.md)
+**CI/CD:** [docs/ci-cd.md](docs/ci-cd.md) ·
+**Entregables de arquitectura:** [docs/entregables.md](docs/entregables.md)
 
 Sistema de planificación de cadena de suministro retail (MVP). Monolito modular
 con arquitectura hexagonal por módulo, expuesto vía API REST.

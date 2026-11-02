@@ -198,7 +198,7 @@ class RolControllerTest {
                         .header(HttpHeaders.AUTHORIZATION, "Bearer " + token))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.mensaje").value(
-                        "El rol tiene usuarios asignados; quitá esas asignaciones antes de eliminarlo"));
+                        "El rol tiene usuarios asignados; se deben quitar esas asignaciones antes de eliminarlo"));
     }
 
     @Test

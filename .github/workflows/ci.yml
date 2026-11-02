@@ -26,6 +26,7 @@ concurrency:
 permissions:
   contents: read
 
+# Actions fijadas por SHA, con la versión al lado: un tag se puede mover a otro código, un SHA no.
 jobs:
   verificar:
     name: Build y verificación (JDK 21)
@@ -33,10 +34,10 @@ jobs:
     timeout-minutes: 30
     steps:
       - name: Descargar el código
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Configurar JDK 21 (Temurin)
-        uses: actions/setup-java@v6
+        uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
         with:
           distribution: temurin
           java-version: '21'
@@ -49,7 +50,7 @@ jobs:
 
       - name: Publicar informes de pruebas
         if: failure()
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: informes-de-pruebas
           path: target/surefire-reports/
@@ -57,7 +58,7 @@ jobs:
 
       # Lo que necesita SonarCloud para no recompilar ni repetir las pruebas.
       - name: Guardar compilación y cobertura
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: compilacion
           path: |
@@ -75,25 +76,25 @@ jobs:
     steps:
       # Historial completo: SonarCloud lo usa para saber qué líneas son código nuevo.
       - name: Descargar el código
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
 
       - name: Configurar JDK 21 (Temurin)
-        uses: actions/setup-java@v6
+        uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
         with:
           distribution: temurin
           java-version: '21'
           cache: maven
 
       - name: Recuperar compilación y cobertura
-        uses: actions/download-artifact@v8
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           name: compilacion
           path: target/
 
       - name: Cache de SonarCloud
-        uses: actions/cache@v6
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ~/.sonar/cache
           key: ${{ runner.os }}-sonar

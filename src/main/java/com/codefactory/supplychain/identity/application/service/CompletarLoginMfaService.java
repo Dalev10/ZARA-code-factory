@@ -49,11 +49,14 @@ public class CompletarLoginMfaService implements CompletarLoginMfaUseCase {
                 .orElseThrow(TokenInvalidoException::new);
 
         if (usuario.estaBloqueadoTemporalmente(ahora)) {
+            RegistroSeguridad.rechazoPorBloqueo(usuario);
             throw new CredencialesInvalidasException();
         }
 
         if (!verificarSegundoFactor(usuario, comando.codigo(), ahora)) {
-            usuarioRepositoryPort.guardar(usuario.registrarIntentoFallido(ahora));
+            Usuario conFallo = usuario.registrarIntentoFallido(ahora);
+            usuarioRepositoryPort.guardar(conFallo);
+            RegistroSeguridad.intentoFallido(conFallo, "segundo factor", ahora);
             throw new CodigoMfaInvalidoException();
         }
 
