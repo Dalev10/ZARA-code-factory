@@ -2,25 +2,32 @@ package com.codefactory.supplychain.inventario.infrastructure.adapter.in.modulo;
 
 import com.codefactory.supplychain.inventario.api.ReservasInventario;
 import com.codefactory.supplychain.inventario.api.ResultadoReserva;
+import com.codefactory.supplychain.inventario.application.port.in.ReservarInventarioUseCase;
+import com.codefactory.supplychain.inventario.application.port.in.ResultadoReservaCd;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.util.UUID;
 
 /**
- * Implementación de {@link ReservasInventario}.
- *
- * TODO HD-01 paso 2 (V29): delegar en el servicio de abastecimiento. Mientras
- * tanto el bean existe para que los consumidores puedan inyectar el contrato,
- * pero cualquier llamada falla de forma explícita.
+ * Implementa {@link ReservasInventario} (API pública) sobre
+ * {@link ReservarInventarioUseCase}. Solo traduce: las reglas viven en el
+ * agregado {@code Inventario}.
  *
  * Módulo: inventario.
  */
 @Component
+@RequiredArgsConstructor
 class ReservasInventarioAdapter implements ReservasInventario {
+
+    private final ReservarInventarioUseCase reservarInventario;
 
     @Override
     public ResultadoReserva reservar(UUID cdId, UUID tiendaId, UUID varianteId, int cantidad, UUID referenciaId) {
-        throw new UnsupportedOperationException("reservar se implementa en HD-01 paso 2");
+        ResultadoReservaCd resultado = reservarInventario.reservar(cdId, tiendaId, varianteId, cantidad, referenciaId);
+        return resultado.asignada()
+                ? ResultadoReserva.asignado(resultado.disponibleActual())
+                : ResultadoReserva.sinDisponible(resultado.disponibleActual());
     }
 
     @Override
@@ -31,6 +38,6 @@ class ReservasInventarioAdapter implements ReservasInventario {
             int reservaALiberar,
             int entranteALiberar,
             UUID referenciaId) {
-        throw new UnsupportedOperationException("liberar se implementa en HD-01 paso 2");
+        reservarInventario.liberar(cdId, tiendaId, varianteId, reservaALiberar, entranteALiberar, referenciaId);
     }
 }

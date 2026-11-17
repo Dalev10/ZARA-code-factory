@@ -440,9 +440,9 @@ class InventarioIntegracionTest {
 
     @Test
     @DisplayName("""
-            Escenario: la base rechaza magnitudes incoherentes (HU-36, D-21, D-22)
+            Escenario: la base rechaza magnitudes incoherentes (HU-36, D-21, D-22, D-81)
               Dada una fila de inventario con 5 unidades
-              Cuando se intenta guardar un disponible o un pronosticado que no corresponde a a_la_mano
+              Cuando se intenta guardar un disponible o un pronosticado incoherente, o un entrante negativo
               Entonces la base rechaza el cambio y la fila queda igual""")
     void laBaseRechazaMagnitudesIncoherentes() {
         inventarioUseCase.cargar(nodoId, varianteId, 5, null);
@@ -456,10 +456,15 @@ class InventarioIntegracionTest {
                 .isInstanceOf(DataIntegrityViolationException.class)
                 .hasMessageContaining("chk_inventario_pronosticado_coherente");
         assertThatThrownBy(() -> jdbc.update(
-                "UPDATE inventario SET entrante = 1, pronosticado = 6 WHERE nodo_id = ? AND variante_id = ?",
+                "UPDATE inventario SET entrante = -1, pronosticado = 4 WHERE nodo_id = ? AND variante_id = ?",
                 nodoId, varianteId))
                 .isInstanceOf(DataIntegrityViolationException.class)
-                .hasMessageContaining("chk_inventario_sin_entrante");
+                .hasMessageContaining("chk_inventario_entrante_no_negativo");
+        assertThatThrownBy(() -> jdbc.update(
+                "UPDATE inventario SET saliente = 2, pronosticado = 3 WHERE nodo_id = ? AND variante_id = ?",
+                nodoId, varianteId))
+                .isInstanceOf(DataIntegrityViolationException.class)
+                .hasMessageContaining("chk_inventario_disponible_coherente");
         assertThat(jdbc.queryForMap(
                 "SELECT a_la_mano, disponible_para_uso, pronosticado FROM inventario WHERE nodo_id = ? AND variante_id = ?",
                 nodoId, varianteId))
