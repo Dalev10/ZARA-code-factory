@@ -36,7 +36,8 @@ public interface MovimientosAbastecimiento {
      * Registra lo recibido en la Bodega_Tienda de la tienda:
      * {@code a_la_mano += cantidad} y {@code entrante −= cantidad} (sin bajar de
      * cero). Si la variante nunca estuvo en la Bodega_Tienda, crea la fila
-     * (D-104). No lanza errores de stock.
+     * (D-104). No lanza errores de stock. {@code cantidad} debe ser mayor que
+     * cero: una recepción de 0 unidades no se registra en el inventario.
      *
      * @param referenciaId id de la recepción
      */
