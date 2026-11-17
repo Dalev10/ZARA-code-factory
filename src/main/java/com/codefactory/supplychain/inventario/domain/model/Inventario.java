@@ -11,7 +11,8 @@ import java.util.UUID;
  * Agregado que mantiene las magnitudes y reglas de un inventario.
  *
  * {@code disponible} y {@code pronosticado} son magnitudes derivadas y solo
- * se actualizan en {@link #recalcular()}.
+ * se actualizan en {@link #recalcular()}: {@code disponible = aLaMano − saliente}
+ * (D-81) y {@code pronosticado = aLaMano + entrante − saliente} (D-22).
  */
 public final class Inventario {
 
@@ -146,6 +147,46 @@ public final class Inventario {
         return registrar(TipoMovimientoInventario.AJUSTE, delta, motivo.name(), comentario, false, usuarioId, null);
     }
 
+    /** Indica si el disponible del nodo cubre {@code cantidad} unidades para una reserva. */
+    public boolean cubre(int cantidad) {
+        return disponible >= cantidad;
+    }
+
+    /**
+     * Reserva {@code cantidad} unidades del nodo (lo hace el CD al asignarse a
+     * una orden, D-81): suma {@code saliente} y baja {@code disponible}. No
+     * cambia {@code aLaMano} ni entra al kardex (D-93).
+     */
+    public void reservarSalida(int cantidad) {
+        validarCantidadPositiva(cantidad);
+        if (!cubre(cantidad)) {
+            throw new StockInsuficienteException(disponible, cantidad);
+        }
+        saliente += cantidad;
+        recalcular();
+    }
+
+    /** Suma unidades en camino hacia el nodo (la Bodega_Tienda de una orden con CD, D-102). */
+    public void sumarEntrante(int cantidad) {
+        validarCantidadPositiva(cantidad);
+        entrante += cantidad;
+        recalcular();
+    }
+
+    /** Libera hasta {@code cantidad} unidades reservadas, sin dejar {@code saliente} negativo. */
+    public void liberarSalida(int cantidad) {
+        validarCantidadNoNegativa(cantidad);
+        saliente -= Math.min(cantidad, saliente);
+        recalcular();
+    }
+
+    /** Resta hasta {@code cantidad} unidades en camino, sin dejar {@code entrante} negativo. */
+    public void liberarEntrante(int cantidad) {
+        validarCantidadNoNegativa(cantidad);
+        entrante -= Math.min(cantidad, entrante);
+        recalcular();
+    }
+
     /** Devuelve al nodo las unidades de una venta anulada. */
     public MovimientoInventario revertir(int cantidad, UUID ventaId) {
         validarCantidadPositiva(cantidad);
@@ -175,14 +216,24 @@ public final class Inventario {
                 Instant.now());
     }
 
+    /**
+     * {@code disponible} puede quedar negativo si un ajuste baja {@code aLaMano}
+     * por debajo de lo reservado (D-105).
+     */
     private void recalcular() {
-        disponible = aLaMano;
+        disponible = aLaMano - saliente;
         pronosticado = aLaMano + entrante - saliente;
     }
 
     private static void validarCantidadPositiva(int cantidad) {
         if (cantidad <= 0) {
             throw new InventarioInvalidoException("La cantidad debe ser mayor que cero");
+        }
+    }
+
+    private static void validarCantidadNoNegativa(int cantidad) {
+        if (cantidad < 0) {
+            throw new InventarioInvalidoException("La cantidad a liberar no puede ser negativa");
         }
     }
 

@@ -9,5 +9,7 @@ public enum TipoMovimientoInventario {
     VENTA,
     ANULACION_VENTA,
     TRASPASO_SALIDA,
-    TRASPASO_ENTRADA
+    TRASPASO_ENTRADA,
+    DESPACHO,
+    RECEPCION
 }
