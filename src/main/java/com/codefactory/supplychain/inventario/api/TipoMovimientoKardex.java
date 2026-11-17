@@ -9,5 +9,9 @@ public enum TipoMovimientoKardex {
     VENTA,
     ANULACION_VENTA,
     TRASPASO_SALIDA,
-    TRASPASO_ENTRADA
+    TRASPASO_ENTRADA,
+    /** Salida física de un CD por un ciclo de despacho (HU-46). */
+    DESPACHO,
+    /** Entrada en la Bodega_Tienda por una recepción (HU-49). */
+    RECEPCION
 }
