@@ -45,4 +45,9 @@ public class ConsultarOrdenesService implements ConsultarOrdenesUseCase {
                 .filter(orden -> usuario.puedeOperarEn(orden.getTiendaId()))
                 .orElseThrow(() -> ReposicionRecursoNoEncontradoException.orden(id));
     }
+
+    @Override
+    public java.util.Optional<OrdenReabastecimiento> buscar(UUID id) {
+        return repository.buscarPorId(id);
+    }
 }

@@ -28,4 +28,10 @@ public interface ConsultarOrdenesUseCase {
      *         si no existe o es de una tienda fuera del alcance
      */
     OrdenReabastecimiento obtener(UsuarioActual usuario, UUID id);
+
+    /**
+     * Búsqueda sin alcance de usuario, para la consulta entre módulos ({@code reposicion/api}).
+     * El alcance por tienda lo aplica el módulo consumidor en su propia operación.
+     */
+    java.util.Optional<OrdenReabastecimiento> buscar(UUID id);
 }
