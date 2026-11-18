@@ -28,6 +28,7 @@
         <sonar.projectKey>mateor32_ZARA-code-factory</sonar.projectKey>
         <sonar.host.url>https://sonarcloud.io</sonar.host.url>
         <sonar.coverage.jacoco.xmlReportPaths>${project.build.directory}/site/jacoco/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
+        <jjwt.version>0.12.6</jjwt.version>
     </properties>
 
     <!-- Spring Boot no gestiona la versión de Spring Modulith: el BOM la fija

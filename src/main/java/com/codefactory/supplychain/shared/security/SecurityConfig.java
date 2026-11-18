@@ -66,6 +66,8 @@ public class SecurityConfig {
                         .permitAll()
                         .requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**").permitAll()
                         .requestMatchers("/actuator/health").permitAll()
+                        .requestMatchers("/", "/index.html", "/register.html", "/templates.html",
+                                "/css/**", "/js/**", "/favicon.ico").permitAll()
                         // El despacho de error solo informa el estado del request original, que ya
                         // pasó por estas reglas; sin esto, un 404 o 405 llega al cliente como 401.
                         .dispatcherTypeMatchers(DispatcherType.ERROR).permitAll()

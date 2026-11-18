@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="es">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Supply Chain — Registrar usuario</title>
+    <link rel="stylesheet" href="/css/styles.css" />
+</head>
+<body>
+<main class="card">
+    <h1>Registrar usuario</h1>
+    <p class="hint">Requiere sesión de administrador (haz login primero).</p>
+    <form id="register-form" autocomplete="off">
+        <label>Correo
+            <input type="email" data-testid="reg-email" id="reg-email" required />
+        </label>
+        <label>Nombre completo
+            <input type="text" data-testid="reg-nombre" id="reg-nombre" maxlength="150" required />
+        </label>
+        <label>Contraseña (12–128)
+            <input type="password" data-testid="reg-password" id="reg-password" minlength="12" maxlength="128" required />
+        </label>
+        <button type="submit" data-testid="reg-submit">Registrar</button>
+    </form>
+    <p class="msg success" data-testid="reg-success" hidden></p>
+    <p class="msg error" data-testid="reg-error" hidden></p>
+    <p><a href="/index.html">Volver al login</a> · <a href="/templates.html">Productos</a></p>
+</main>
+<script src="/js/api.js"></script>
+<script src="/js/register.js"></script>
+</body>
+</html>

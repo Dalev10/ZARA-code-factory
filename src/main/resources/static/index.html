@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="es">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Supply Chain — Iniciar sesión</title>
+    <link rel="stylesheet" href="/css/styles.css" />
+</head>
+<body>
+<main class="card">
+    <h1>Iniciar sesión</h1>
+    <form id="login-form" autocomplete="off">
+        <label>Correo
+            <input type="email" data-testid="email-input" id="email" required />
+        </label>
+        <label>Contraseña
+            <input type="password" data-testid="password-input" id="password" required />
+        </label>
+        <button type="submit" data-testid="login-submit">Entrar</button>
+    </form>
+    <p class="msg error" data-testid="login-error" hidden></p>
+    <p class="msg success" data-testid="login-success" hidden></p>
+    <p><a href="/register.html">Registrar usuario</a></p>
+</main>
+<script src="/js/api.js"></script>
+<script src="/js/login.js"></script>
+</body>
+</html>
