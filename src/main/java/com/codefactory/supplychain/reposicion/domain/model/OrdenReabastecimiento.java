@@ -1,6 +1,7 @@
 package com.codefactory.supplychain.reposicion.domain.model;
 
 import com.codefactory.supplychain.reposicion.domain.exception.OrdenInvalidaException;
+import com.codefactory.supplychain.reposicion.domain.exception.TransicionOrdenInvalidaException;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.ToString;
@@ -24,6 +25,10 @@ import java.util.UUID;
  *   <li>Un CD sirve solo si cubre toda la cantidad; no se divide la orden.</li>
  * </ul>
  * Al crear: {@code cantidad_pendiente = S} y {@code cantidad_despachada_acumulada = 0}.
+ * <p>
+ * Transiciones del ciclo (sección 2.3, HD-02): APROBADA o REABIERTA → EN_DESPACHO →
+ * DESPACHADA → EN_TRANSITO → CERRADA (pasando por RECIBIDA_TOTAL) o REABIERTA (pasando
+ * por RECIBIDA_PARCIAL). No tocan el inventario: lo mueve logística.
  *
  * Módulo: reposicion.
  */
@@ -40,8 +45,8 @@ public final class OrdenReabastecimiento {
     private UUID cdAsignadoId;
     private String motivoAsignacion;
     private final int cantidadTotalSolicitada;
-    private final int cantidadPendiente;
-    private final int cantidadDespachadaAcumulada;
+    private int cantidadPendiente;
+    private int cantidadDespachadaAcumulada;
     private EstadoOrden estado;
     private final Instant fechaCreacion;
     private final Long version;
@@ -122,6 +127,82 @@ public final class OrdenReabastecimiento {
     /** D-92: {@code max(S − ΣD, 0)}. */
     public int reservaRestante() {
         return Math.max(cantidadTotalSolicitada - cantidadDespachadaAcumulada, 0);
+    }
+
+    // -------------------------------------------------------------------------
+    // Transiciones del ciclo de abastecimiento (sección 2.3)
+    // -------------------------------------------------------------------------
+
+    /** APROBADA o REABIERTA → EN_DESPACHO. El ciclo solicita {@link #getCantidadPendiente()}. */
+    public void iniciarDespacho() {
+        exigirEstado("iniciar el despacho", EstadoOrden.APROBADA, EstadoOrden.REABIERTA);
+        this.estado = EstadoOrden.EN_DESPACHO;
+    }
+
+    /**
+     * EN_DESPACHO → DESPACHADA; acumula lo despachado (ΣD).
+     *
+     * @param cantidadDespachada mayor que 0 y no mayor que lo solicitado en el ciclo (el pendiente)
+     */
+    public void confirmarDespacho(int cantidadDespachada) {
+        exigirEstado("confirmar el despacho", EstadoOrden.EN_DESPACHO);
+        if (cantidadDespachada <= 0 || cantidadDespachada > cantidadPendiente) {
+            throw new OrdenInvalidaException("La cantidad despachada debe estar entre 1 y " + cantidadPendiente
+                    + " (lo solicitado en el ciclo)");
+        }
+        this.cantidadDespachadaAcumulada += cantidadDespachada;
+        this.estado = EstadoOrden.DESPACHADA;
+    }
+
+    /** DESPACHADA → EN_TRANSITO (salida del viaje). */
+    public void marcarEnTransito() {
+        exigirEstado("marcar en tránsito", EstadoOrden.DESPACHADA);
+        this.estado = EstadoOrden.EN_TRANSITO;
+    }
+
+    /**
+     * EN_TRANSITO → RECIBIDA_TOTAL → CERRADA si el pendiente llega a 0, o
+     * RECIBIDA_PARCIAL → REABIERTA si queda pendiente. Lo no recibido del
+     * ciclo es pérdida en tránsito y lo registra logística.
+     *
+     * @param cantidadRecibida entre 0 y {@link #maximoRecibible()}
+     * @return el estado final: CERRADA o REABIERTA
+     */
+    public EstadoOrden registrarRecepcion(int cantidadRecibida) {
+        exigirEstado("registrar la recepción", EstadoOrden.EN_TRANSITO);
+        int maximo = maximoRecibible();
+        if (cantidadRecibida < 0 || cantidadRecibida > maximo) {
+            throw new OrdenInvalidaException("La cantidad recibida debe estar entre 0 y " + maximo);
+        }
+        this.cantidadPendiente -= cantidadRecibida;
+        // RECIBIDA_TOTAL y RECIBIDA_PARCIAL son pasos inmediatos, sin acción entre medio:
+        // se persiste directamente el estado final.
+        this.estado = cantidadPendiente == 0 ? EstadoOrden.CERRADA : EstadoOrden.REABIERTA;
+        return estado;
+    }
+
+    /** ΣR = S − P */
+    public int cantidadRecibidaAcumulada() {
+        return cantidadTotalSolicitada - cantidadPendiente;
+    }
+
+    /**
+     * Tope de lo que puede recibirse en el ciclo: {@code min(ΣD − ΣR, P)}. ΣD − ΣR incluye
+     * la pérdida en tránsito de ciclos anteriores, y P la acota: nunca deja el pendiente
+     * en negativo. La orden no guarda lo despachado de cada ciclo; el tope exacto
+     * (recibido ≤ despachado del ciclo) lo valida logística con su Ciclo_Despacho.
+     */
+    public int maximoRecibible() {
+        return Math.min(cantidadDespachadaAcumulada - cantidadRecibidaAcumulada(), cantidadPendiente);
+    }
+
+    private void exigirEstado(String operacion, EstadoOrden... permitidos) {
+        for (EstadoOrden permitido : permitidos) {
+            if (estado == permitido) {
+                return;
+            }
+        }
+        throw new TransicionOrdenInvalidaException(id, estado, operacion);
     }
 
     public List<IntentoCd> getIntentos() {
