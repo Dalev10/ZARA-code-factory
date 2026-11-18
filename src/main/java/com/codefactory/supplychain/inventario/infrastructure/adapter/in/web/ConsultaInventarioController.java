@@ -7,9 +7,11 @@ import com.codefactory.supplychain.inventario.infrastructure.adapter.in.web.dto.
 import com.codefactory.supplychain.inventario.infrastructure.adapter.in.web.dto.StockResponse;
 import com.codefactory.supplychain.shared.security.UsuarioActual;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import lombok.RequiredArgsConstructor;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -33,6 +35,9 @@ import java.util.UUID;
 @RequestMapping("/api/v1")
 @RequiredArgsConstructor
 @PreAuthorize("hasAuthority('inventario:consultar')")
+@Tag(name = "Inventario", description = "Existencias por nodo (CD, Almacén o Bodega de tienda), kardex, "
+        + "carga inicial y ajustes. Las operaciones sobre un nodo de tienda exigen que el usuario opere en "
+        + "ella; si no, el nodo se trata como inexistente (404).")
 public class ConsultaInventarioController {
 
     private final ConsultarInventarioUseCase consultarInventarioUseCase;
@@ -41,7 +46,8 @@ public class ConsultaInventarioController {
     @Operation(
             summary = "Consultar el stock de un nodo",
             description = "Existencias de todas las variantes cargadas en el nodo, paginadas y ordenadas "
-                    + "por variante. Un usuario sin acceso global solo ve los nodos de sus tiendas.")
+                    + "por variante. Un usuario sin acceso global solo ve los nodos de sus tiendas. "
+                    + "Scope: inventario:consultar. HU-39.")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Página de existencias"),
             @ApiResponse(responseCode = "401", description = "Token inválido o usuario inactivo"),
@@ -51,7 +57,7 @@ public class ConsultaInventarioController {
     public Page<StockResponse> stockDeNodo(
             @PathVariable UUID nodoId,
             @AuthenticationPrincipal UsuarioActual usuario,
-            Pageable pageable) {
+            @ParameterObject Pageable pageable) {
         return consultarInventarioUseCase.stockDeNodo(nodoId, usuario, pageable)
                 .map(StockResponse::desde);
     }
@@ -60,7 +66,8 @@ public class ConsultaInventarioController {
     @Operation(
             summary = "Consultar el stock de una variante",
             description = "Existencias de la variante en cada nodo visible para el usuario. Un nodo fuera "
-                    + "de su alcance no aparece; si no hay ninguno visible, la lista va vacía.")
+                    + "de su alcance no aparece; si no hay ninguno visible, la lista va vacía. Sin paginación. "
+                    + "Scope: inventario:consultar. HU-39.")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Existencias por nodo visible"),
             @ApiResponse(responseCode = "401", description = "Token inválido o usuario inactivo"),
@@ -78,7 +85,7 @@ public class ConsultaInventarioController {
     @Operation(
             summary = "Consultar el kardex de un nodo",
             description = "Movimientos del nodo ordenados por fecha ascendente, con filtros opcionales por "
-                    + "tipo y por rango de fechas (inclusive). Paginado.")
+                    + "tipo y por rango de fechas (inclusive). Paginado. Scope: inventario:consultar. HU-39.")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Página del kardex"),
             @ApiResponse(responseCode = "400", description = "Tipo de movimiento desconocido o fecha inválida"),
@@ -92,7 +99,7 @@ public class ConsultaInventarioController {
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant desde,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant hasta,
             @AuthenticationPrincipal UsuarioActual usuario,
-            Pageable pageable) {
+            @ParameterObject Pageable pageable) {
         var comando = new ConsultaKardexComando(nodoId, tipo, desde, hasta, usuario);
         return consultarInventarioUseCase.kardex(comando, pageable)
                 .map(MovimientoKardexResponse::desde);

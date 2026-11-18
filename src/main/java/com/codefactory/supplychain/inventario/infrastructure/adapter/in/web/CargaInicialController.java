@@ -7,6 +7,10 @@ import com.codefactory.supplychain.inventario.infrastructure.adapter.in.web.dto.
 import com.codefactory.supplychain.inventario.infrastructure.adapter.in.web.dto.CargaInicialResponse;
 import com.codefactory.supplychain.shared.security.UsuarioActual;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.validation.Valid;
@@ -34,6 +38,9 @@ import java.util.UUID;
 @RequestMapping("/api/v1/nodos/{nodoId}/inventario")
 @RequiredArgsConstructor
 @PreAuthorize("hasAnyAuthority('inventario:administrar', 'inventario-cd:administrar')")
+@Tag(name = "Inventario", description = "Existencias por nodo (CD, Almacén o Bodega de tienda), kardex, "
+        + "carga inicial y ajustes. Las operaciones sobre un nodo de tienda exigen que el usuario opere en "
+        + "ella; si no, el nodo se trata como inexistente (404).")
 public class CargaInicialController {
 
     private final CargarInventarioInicialUseCase cargarInventarioInicialUseCase;
@@ -44,9 +51,16 @@ public class CargaInicialController {
             summary = "Registrar la carga inicial de un nodo",
             description = "Lote de 1 a 500 ítems {sku, cantidad >= 0}, todo o nada. Solo crea filas "
                     + "nuevas: si alguna variante ya está cargada en el nodo se rechaza el lote completo. "
-                    + "Los CD exigen inventario-cd:administrar; las tiendas, inventario:administrar.")
+                    + "Los CD exigen inventario-cd:administrar; las tiendas, inventario:administrar. Cada fila "
+                    + "deja su movimiento CARGA_INICIAL en el kardex. HU-37.")
+    @io.swagger.v3.oas.annotations.parameters.RequestBody(content = @Content(examples = @ExampleObject(
+            value = "{\"items\": [{\"sku\": \"CAM-OXF-AZ-M\", \"cantidad\": 40}, "
+                    + "{\"sku\": \"PAN-CHI-BE-32\", \"cantidad\": 25}]}")))
     @ApiResponses({
-            @ApiResponse(responseCode = "201", description = "Lote cargado"),
+            @ApiResponse(responseCode = "201", description = "Lote cargado", content = @Content(
+                    schema = @Schema(implementation = CargaInicialResponse.class),
+                    examples = @ExampleObject(value = "{\"nodoId\": \"4b6d8f0a-2c3e-4f5a-b6c7-d8e9f0a1b2c3\", "
+                            + "\"filasCreadas\": 2, \"unidadesTotales\": 65}"))),
             @ApiResponse(responseCode = "400", description = "Lote inválido, SKU repetidos o inexistentes"),
             @ApiResponse(responseCode = "401", description = "Token inválido o usuario inactivo"),
             @ApiResponse(responseCode = "403", description = "Sin el scope que exige el tipo de nodo"),

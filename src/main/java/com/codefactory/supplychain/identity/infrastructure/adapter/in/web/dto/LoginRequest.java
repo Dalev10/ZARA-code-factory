@@ -1,5 +1,6 @@
 package com.codefactory.supplychain.identity.infrastructure.adapter.in.web.dto;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
@@ -14,11 +15,13 @@ import jakarta.validation.constraints.Size;
  */
 public record LoginRequest(
 
+        @Schema(example = "vendedor@supplychain.local")
         @NotBlank(message = "el email es obligatorio")
         @Email(message = "el email no tiene un formato válido")
         @Size(max = 255, message = "el email no puede superar 255 caracteres")
         String email,
 
+        @Schema(example = "una-contraseña-larga-y-única")
         @NotBlank(message = "la contraseña es obligatoria")
         @Size(max = 128, message = "la contraseña no puede superar 128 caracteres")
         String password) {

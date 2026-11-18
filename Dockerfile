@@ -13,12 +13,18 @@ RUN ./mvnw clean package -DskipTests -B
 
 # Etapa 2: ejecución
 FROM eclipse-temurin:21-jre-alpine
+# Sin privilegios: si alguien llega a ejecutar código en el contenedor, no es root.
+RUN addgroup -S app && adduser -S app -G app
 WORKDIR /app
-COPY --from=build /app/target/*.jar app.jar
+COPY --from=build --chown=app:app /app/target/*.jar app.jar
+USER app
 
 # Documentativo: en local/docker-compose la app escucha en 8080 (no se define
 # PORT). En Render, la plataforma inyecta su propia variable de entorno PORT
 # en el contenedor y la app la respeta (server.port=${PORT:8080} en
 # application.yml) — el puerto real en ese caso NO es este 8080.
 EXPOSE 8080
+# Para docker compose; Render ignora esta instrucción y usa su propio Health Check Path.
+HEALTHCHECK --interval=30s --timeout=3s --start-period=60s --retries=3 \
+    CMD wget -q --spider http://localhost:${PORT:-8080}/actuator/health || exit 1
 ENTRYPOINT ["java", "-jar", "app.jar"]

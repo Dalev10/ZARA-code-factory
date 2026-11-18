@@ -15,7 +15,10 @@ import com.codefactory.supplychain.identity.domain.model.RefreshToken;
 import com.codefactory.supplychain.identity.domain.model.Usuario;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
+import org.springframework.boot.test.system.CapturedOutput;
+import org.springframework.boot.test.system.OutputCaptureExtension;
 
 import java.time.Instant;
 import java.util.Optional;
@@ -31,6 +34,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+@ExtendWith(OutputCaptureExtension.class)
 class LoginServiceTest {
 
     private static final PasswordHash HASH = PasswordHash.de("$2a$10$abcdefghijklmnopqrstuv");
@@ -136,7 +140,7 @@ class LoginServiceTest {
     }
 
     @Test
-    void alTercerIntentoFallidoConsecutivoQuedaBloqueadaTemporalmente() {
+    void alTercerIntentoFallidoConsecutivoQuedaBloqueadaTemporalmente(CapturedOutput salida) {
         Usuario usuarioConDosFallos = Usuario.reconstruir(UUID.randomUUID(), Email.de("ana@ejemplo.com"),
                 "Usuario de Prueba", HASH, EstadoUsuario.ACTIVO, 2, null, false, null, null,
                 Instant.now(), Instant.now());
@@ -151,6 +155,20 @@ class LoginServiceTest {
         verify(usuarioRepositoryPort).guardar(captor.capture());
         assertThat(captor.getValue().getIntentosFallidos()).isEqualTo(3);
         assertThat(captor.getValue().getBloqueadoHasta()).isNotNull();
+        // A09: el bloqueo queda en el log de seguridad, identificado por id y sin el email.
+        assertThat(salida).contains("Cuenta " + usuarioConDosFallos.getId() + " bloqueada hasta")
+                .doesNotContain("ana@ejemplo.com");
+    }
+
+    @Test
+    void unEmailNoRegistradoQuedaEnElLogSinRevelarElEmail(CapturedOutput salida) {
+        when(usuarioRepositoryPort.buscarPorEmail(any())).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> servicio.login(new LoginComando("nadie@ejemplo.com", "incorrecta")))
+                .isInstanceOf(CredencialesInvalidasException.class);
+
+        assertThat(salida).contains("Intento de inicio de sesión con un email no registrado")
+                .doesNotContain("nadie@ejemplo.com");
     }
 
     @Test

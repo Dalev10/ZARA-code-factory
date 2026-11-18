@@ -4,9 +4,9 @@ import com.codefactory.supplychain.reposicion.application.port.in.EvaluacionMasi
 import com.codefactory.supplychain.reposicion.application.port.in.TraspasoAutomaticoUseCase;
 import com.codefactory.supplychain.reposicion.application.port.out.ConsultarTiendasActivasPort;
 import com.codefactory.supplychain.reposicion.application.port.out.ConsultarExistenciasPort;
-
-
+import com.codefactory.supplychain.reposicion.domain.exception.TiendaNoPermitidaException;
 import com.codefactory.supplychain.reposicion.domain.model.TraspasoInterno;
+import com.codefactory.supplychain.shared.security.UsuarioActual;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -41,16 +41,25 @@ public class EvaluacionMasivaService implements EvaluacionMasivaUseCase {
     }
 
     @Override
-    public List<TraspasoInterno> evaluarTodas() {
+    public List<TraspasoInterno> evaluarTodas(UsuarioActual usuario) {
         List<TraspasoInterno> resultado = new ArrayList<>();
         for (UUID tiendaId : tiendasActivas.listarTiendasActivas()) {
-            resultado.addAll(evaluarTienda(tiendaId));
+            if (usuario.puedeOperarEn(tiendaId)) {
+                resultado.addAll(evaluar(tiendaId));
+            }
         }
         return resultado;
     }
 
     @Override
-    public List<TraspasoInterno> evaluarTienda(UUID tiendaId) {
+    public List<TraspasoInterno> evaluarTienda(UsuarioActual usuario, UUID tiendaId) {
+        if (!usuario.puedeOperarEn(tiendaId)) {
+            throw new TiendaNoPermitidaException(tiendaId);
+        }
+        return evaluar(tiendaId);
+    }
+
+    private List<TraspasoInterno> evaluar(UUID tiendaId) {
         List<TraspasoInterno> resultado = new ArrayList<>();
         for (UUID varianteId : variantesPorTienda.variantesConInventario(tiendaId)) {
             try {

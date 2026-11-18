@@ -8,6 +8,6 @@ import com.codefactory.supplychain.shared.exception.ReglaDeNegocioException;
 public class ScopeEnUsoException extends ReglaDeNegocioException {
 
     public ScopeEnUsoException() {
-        super("El scope está asignado a uno o más roles; quitá esas asignaciones antes de eliminarlo");
+        super("El scope está asignado a uno o más roles; se deben quitar esas asignaciones antes de eliminarlo");
     }
 }

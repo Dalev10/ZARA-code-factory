@@ -148,6 +148,6 @@ class MfaControllerTest {
                                 {"codigo": "123456"}
                                 """))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.mensaje").value("Primero debés iniciar la activación de MFA"));
+                .andExpect(jsonPath("$.mensaje").value("Primero se debe iniciar la activación de MFA"));
     }
 }

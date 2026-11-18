@@ -5,6 +5,9 @@ import com.codefactory.supplychain.inventario.domain.model.PrioridadTiendaCd;
 import com.codefactory.supplychain.inventario.infrastructure.adapter.in.web.dto.PrioridadTiendaCdRequest;
 import com.codefactory.supplychain.inventario.infrastructure.adapter.in.web.dto.PrioridadTiendaCdResponse;
 import com.codefactory.supplychain.inventario.infrastructure.adapter.in.web.mapper.PrioridadTiendaCdWebMapper;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -29,6 +32,7 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api/v1/tiendas/{tiendaId}/prioridad-cd")
 @PreAuthorize("hasAuthority('inventario:administrar')")
+@Tag(name = "Tiendas")
 public class PrioridadTiendaCdController {
 
     private final PrioridadTiendaCdUseCase useCase;
@@ -41,6 +45,12 @@ public class PrioridadTiendaCdController {
     }
 
     @PutMapping
+    @Operation(summary = "Reemplazar la prioridad de CD de una tienda",
+            description = "Recibe la lista completa de CD en orden (el primero es la prioridad 1) y reemplaza la "
+                    + "anterior; una lista vacía la borra. Scope: inventario:administrar. HU-51.")
+    @ApiResponse(responseCode = "200", description = "Prioridad guardada, en orden")
+    @ApiResponse(responseCode = "409", description = "CD repetido en la lista, o tienda o CD inexistente (lo "
+            + "rechazan las restricciones de la base)")
     public ResponseEntity<List<PrioridadTiendaCdResponse>> reemplazar(
             @PathVariable UUID tiendaId,
             @Valid @RequestBody PrioridadTiendaCdRequest request) {
@@ -50,6 +60,9 @@ public class PrioridadTiendaCdController {
     }
 
     @GetMapping
+    @Operation(summary = "Consultar la prioridad de CD de una tienda",
+            description = "Lista ordenada; vacía si no tiene. Sin paginación. Scope: inventario:administrar. HU-51.")
+    @ApiResponse(responseCode = "200", description = "CD en orden de prioridad")
     public ResponseEntity<List<PrioridadTiendaCdResponse>> listar(@PathVariable UUID tiendaId) {
         return ResponseEntity.ok(useCase.listar(tiendaId).stream().map(webMapper::toResponse).toList());
     }

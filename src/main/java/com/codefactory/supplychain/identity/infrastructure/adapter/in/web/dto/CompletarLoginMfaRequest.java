@@ -1,5 +1,6 @@
 package com.codefactory.supplychain.identity.infrastructure.adapter.in.web.dto;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 
 /**
@@ -11,9 +12,11 @@ import jakarta.validation.constraints.NotBlank;
  */
 public record CompletarLoginMfaRequest(
 
+        @Schema(description = "Token de desafío devuelto por /login", example = "eyJhbGciOiJIUzI1NiJ9...")
         @NotBlank(message = "el token de desafío es obligatorio")
         String mfaChallengeToken,
 
+        @Schema(description = "Código TOTP de 6 dígitos o código de respaldo de 10 caracteres", example = "492817")
         @NotBlank(message = "el código es obligatorio")
         String codigo) {
 }

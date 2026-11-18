@@ -77,3 +77,8 @@ app:
       # Clave AES-256 (32 bytes en base64) para cifrar el secreto TOTP en reposo.
       # Igual que el secreto JWT: sin default embebido a propósito.
       encryption-key: ${MFA_ENCRYPTION_KEY}
+springdoc:
+  # Sin esto springdoc publica las respuestas como */*; la API solo responde JSON.
+  default-produces-media-type: application/json
+  swagger-ui:
+    tags-sorter: alpha
