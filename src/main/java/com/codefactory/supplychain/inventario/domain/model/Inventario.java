@@ -187,6 +187,41 @@ public final class Inventario {
         recalcular();
     }
 
+    /**
+     * Salida física de un despacho del CD (HU-46): {@code aLaMano −= cantidadQueSale}
+     * y {@code saliente −= reservaALiberar}, sin bajar de cero.
+     *
+     * Las dos cantidades pueden diferir: al despachar de nuevo unidades perdidas
+     * tras una reapertura, la reserva ya se consumió en el primer despacho (D-92).
+     *
+     * @param cicloDespachoId ciclo que origina el movimiento (referencia del kardex)
+     */
+    public MovimientoInventario despacharAbastecimiento(int cantidadQueSale, int reservaALiberar,
+                                                        UUID cicloDespachoId) {
+        validarCantidadPositiva(cantidadQueSale);
+        validarCantidadNoNegativa(reservaALiberar);
+        if (cantidadQueSale > aLaMano) {
+            throw new StockInsuficienteException(aLaMano, cantidadQueSale);
+        }
+        aLaMano -= cantidadQueSale;
+        saliente -= Math.min(reservaALiberar, saliente);
+        return registrar(TipoMovimientoInventario.DESPACHO, -cantidadQueSale, null, null, false, null,
+                cicloDespachoId);
+    }
+
+    /**
+     * Entrada de lo recibido en la Bodega_Tienda (HU-49): {@code aLaMano += cantidad}
+     * y {@code entrante −= cantidad}, sin bajar de cero.
+     *
+     * @param recepcionId recepción que origina el movimiento (referencia del kardex)
+     */
+    public MovimientoInventario recibirAbastecimiento(int cantidad, UUID recepcionId) {
+        validarCantidadPositiva(cantidad);
+        aLaMano += cantidad;
+        entrante -= Math.min(cantidad, entrante);
+        return registrar(TipoMovimientoInventario.RECEPCION, cantidad, null, null, false, null, recepcionId);
+    }
+
     /** Devuelve al nodo las unidades de una venta anulada. */
     public MovimientoInventario revertir(int cantidad, UUID ventaId) {
         validarCantidadPositiva(cantidad);
