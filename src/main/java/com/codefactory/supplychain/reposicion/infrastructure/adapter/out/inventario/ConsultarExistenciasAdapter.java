@@ -44,6 +44,13 @@ public class ConsultarExistenciasAdapter implements ConsultarExistenciasPort {
     }
 
     @Override
+    public Optional<Integer> consultarPronosticadoBodega(UUID tiendaId, UUID varianteId) {
+        return consultarNodos.buscarNodoBodega(tiendaId)
+                .flatMap(nodoId -> consultaInventario.consultarStock(nodoId, varianteId))
+                .map(StockResumen::pronosticado);
+    }
+
+    @Override
     public List<UUID> variantesConInventario(UUID tiendaId) {
         return Stream.of(consultarNodos.buscarNodoAlmacen(tiendaId), consultarNodos.buscarNodoBodega(tiendaId))
                 .flatMap(Optional::stream)

@@ -25,6 +25,14 @@ public class ReposicionRecursoNoEncontradoException extends RecursoNoEncontradoE
         return new ReposicionRecursoNoEncontradoException("No existe una tienda con id " + id);
     }
 
+    public static ReposicionRecursoNoEncontradoException recomendacion(UUID id) {
+        return new ReposicionRecursoNoEncontradoException("No existe una recomendación con id " + id);
+    }
+
+    public static ReposicionRecursoNoEncontradoException orden(UUID id) {
+        return new ReposicionRecursoNoEncontradoException("No existe una orden de reabastecimiento con id " + id);
+    }
+
     public static ReposicionRecursoNoEncontradoException traspaso(UUID id) {
         return new ReposicionRecursoNoEncontradoException("No existe un traspaso interno con id " + id);
     }
