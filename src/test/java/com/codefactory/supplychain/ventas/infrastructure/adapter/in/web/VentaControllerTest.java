@@ -146,6 +146,27 @@ class VentaControllerTest {
     }
 
     @Test
+    @DisplayName("""
+            Escenario: el traspaso cierra la ventana abierta por una venta que agota el Almacén
+              Dado un Almacén con 1 unidad, una Bodega con 10 y un umbral de mínimo 3 y objetivo 6
+              Cuando se vende la última unidad
+              Entonces el traspaso repone el Almacén y no queda ninguna ventana abierta""")
+    void ventaQueAgotaElAlmacenYSeReponeNoDejaVentanaAbierta() throws Exception {
+        inventario.cargar(almacenId, varianteId, 1, null);
+        inventario.cargar(bodegaId, varianteId, 10, null);
+        crearUmbral(3, 6);
+
+        vender(vendedor, UUID.randomUUID(), 1, false).andExpect(status().isCreated());
+
+        assertThat(aLaMano(almacenId)).isEqualTo(6);
+        assertThat(aLaMano(bodegaId)).isEqualTo(4);
+        assertThat(jdbc.queryForList("SELECT motivo_cierre FROM ventana_quiebre WHERE tienda_id = ? AND variante_id = ?",
+                String.class, tiendaId, varianteId)).containsExactly("REPOSICION");
+        assertThat(jdbc.queryForObject("SELECT count(*) FROM ventana_quiebre WHERE tienda_id = ? AND variante_id = ? AND fecha_fin IS NULL",
+                Integer.class, tiendaId, varianteId)).isZero();
+    }
+
+    @Test
     @DisplayName("Al desactivar la tienda, sus ventanas abiertas se cierran con TIENDA_DESACTIVADA (D-50)")
     void desactivarLaTiendaCierraSusVentanas() throws Exception {
         inventario.cargar(almacenId, varianteId, 1, null);
