@@ -17,6 +17,10 @@ public class ReposicionRecursoNoEncontradoException extends RecursoNoEncontradoE
         return new ReposicionRecursoNoEncontradoException("No existe un umbral de reposición con id " + id);
     }
 
+    public static ReposicionRecursoNoEncontradoException nivel(UUID id) {
+        return new ReposicionRecursoNoEncontradoException("No existe un nivel de reposición al CD con id " + id);
+    }
+
     public static ReposicionRecursoNoEncontradoException variante(UUID id) {
         return new ReposicionRecursoNoEncontradoException("No existe una Variante con id " + id);
     }

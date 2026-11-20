@@ -16,6 +16,7 @@ import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.context.annotation.Import;
+import org.springframework.context.annotation.Primary;
 import org.springframework.http.HttpHeaders;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ActiveProfiles;
@@ -322,8 +323,12 @@ class RecomendacionControllerTest {
         return id;
     }
 
-    /** Doble de {@link ResolverNivelPort} (HD-04) mientras su implementación llega a develop. */
+    /**
+     * Doble de {@link ResolverNivelPort}: permite fijar niveles y simular fallas por variante.
+     * Es {@code @Primary} porque la implementación real (HD-04) también está en el contexto.
+     */
     @TestConfiguration
+    @Primary
     static class NivelesDePrueba implements ResolverNivelPort {
 
         private final Map<UUID, NivelAplicable> porVariante = new ConcurrentHashMap<>();

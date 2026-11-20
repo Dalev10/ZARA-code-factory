@@ -23,21 +23,19 @@ import java.util.UUID;
  * lee de la Bodega en el momento de evaluar, así que una orden con CD ya sumada como
  * {@code entrante} queda incluida y no se recomienda de nuevo lo pedido.
  * <p>
- * {@link ResolverNivelPort} lo implementa HD-04. Se inyecta con {@link ObjectProvider}
- * para que la aplicación arranque mientras HD-04 no esté: sin
- * implementación se comporta como "sin nivel configurado" y no recomienda.
+ * El nivel lo resuelve {@link ResolverNivelPort} (HD-04).
  */
 @Service
 @Transactional
 public class EvaluarRecomendacionService implements EvaluarRecomendacionUseCase {
 
-    private final ObjectProvider<ResolverNivelPort> resolverNivel;
+    private final ResolverNivelPort resolverNivel;
     private final ConsultarExistenciasPort consultarExistencias;
     private final CdsPorPrioridadPort cdsPorPrioridad;
     private final RecomendacionRepository recomendaciones;
     private final Clock clock;
 
-    public EvaluarRecomendacionService(ObjectProvider<ResolverNivelPort> resolverNivel,
+    public EvaluarRecomendacionService(ResolverNivelPort resolverNivel,
                                        ConsultarExistenciasPort consultarExistencias,
                                        CdsPorPrioridadPort cdsPorPrioridad,
                                        RecomendacionRepository recomendaciones,
@@ -51,7 +49,7 @@ public class EvaluarRecomendacionService implements EvaluarRecomendacionUseCase 
 
     @Override
     public Optional<Recomendacion> evaluar(UUID tiendaId, UUID varianteId) {
-        Optional<NivelAplicable> nivel = nivelDe(tiendaId, varianteId);
+        Optional<NivelAplicable> nivel = resolverNivel.resolver(tiendaId, varianteId);
         if (nivel.isEmpty()
                 || recomendaciones.existeBorrador(tiendaId, varianteId)
                 || recomendaciones.existeOrdenGeneradaSinCd(tiendaId, varianteId)) {
@@ -66,10 +64,5 @@ public class EvaluarRecomendacionService implements EvaluarRecomendacionUseCase 
                         nivel.get().cantidadMinima(), nivel.get().cantidadObjetivo(),
                         cdSugerido, clock.instant())
                 .map(recomendaciones::guardar);
-    }
-
-    private Optional<NivelAplicable> nivelDe(UUID tiendaId, UUID varianteId) {
-        ResolverNivelPort resolver = resolverNivel.getIfAvailable();
-        return resolver == null ? Optional.empty() : resolver.resolver(tiendaId, varianteId);
     }
 }
