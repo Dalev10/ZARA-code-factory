@@ -50,21 +50,6 @@ public class NivelReposicionCdPersistenceAdapter implements NivelReposicionCdRep
     }
 
     @Override
-    public boolean existePorId(UUID id) {
-        return jpaRepository.existsById(id);
-    }
-
-    @Override
-    public boolean existePorVariante(UUID varianteId) {
-        return jpaRepository.existsByVarianteId(varianteId);
-    }
-
-    @Override
-    public boolean existePorCategoria(UUID categoriaId) {
-        return jpaRepository.existsByCategoriaId(categoriaId);
-    }
-
-    @Override
     public void eliminarPorId(UUID id) {
         jpaRepository.deleteById(id);
     }

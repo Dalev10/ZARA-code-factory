@@ -14,8 +14,4 @@ public interface NivelReposicionCdJpaRepository extends JpaRepository<NivelRepos
     Optional<NivelReposicionCdEntity> findByVarianteId(UUID varianteId);
 
     Optional<NivelReposicionCdEntity> findByCategoriaId(UUID categoriaId);
-
-    boolean existsByVarianteId(UUID varianteId);
-
-    boolean existsByCategoriaId(UUID categoriaId);
 }

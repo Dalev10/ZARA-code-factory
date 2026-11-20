@@ -22,11 +22,5 @@ public interface NivelReposicionCdRepository {
 
     Page<NivelReposicionCd> listar(Pageable pageable);
 
-    boolean existePorId(UUID id);
-
-    boolean existePorVariante(UUID varianteId);
-
-    boolean existePorCategoria(UUID categoriaId);
-
     void eliminarPorId(UUID id);
 }

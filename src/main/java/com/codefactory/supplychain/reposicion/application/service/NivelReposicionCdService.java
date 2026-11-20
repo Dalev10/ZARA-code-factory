@@ -38,10 +38,10 @@ public class NivelReposicionCdService implements NivelReposicionCdUseCase {
         if (nivel.esPorVariante()) {
             varianteConsulta.buscar(varianteId)
                     .orElseThrow(() -> ReposicionRecursoNoEncontradoException.variante(varianteId));
-            if (nivelRepository.existePorVariante(varianteId)) {
+            if (nivelRepository.buscarPorVariante(varianteId).isPresent()) {
                 throw NivelReposicionYaExisteException.paraVariante(varianteId);
             }
-        } else if (nivelRepository.existePorCategoria(categoriaId)) {
+        } else if (nivelRepository.buscarPorCategoria(categoriaId).isPresent()) {
             throw NivelReposicionYaExisteException.paraCategoria(categoriaId);
         }
         return nivelRepository.guardar(nivel);
@@ -66,9 +66,7 @@ public class NivelReposicionCdService implements NivelReposicionCdUseCase {
     @Override
     @Transactional
     public void eliminar(UUID id) {
-        if (!nivelRepository.existePorId(id)) {
-            throw ReposicionRecursoNoEncontradoException.nivel(id);
-        }
+        obtenerPorId(id);
         nivelRepository.eliminarPorId(id);
     }
 }
