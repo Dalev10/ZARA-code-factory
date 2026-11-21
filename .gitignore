@@ -24,3 +24,4 @@ Thumbs.db
 # docs/ (arquitectura, seguridad, ADR, CI/CD) sí se versionan.
 docs/*.pdf
 docs/*.drawio
+demo.json
