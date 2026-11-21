@@ -15,8 +15,8 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import java.util.stream.Collectors;
 
 /**
- * Traduce las excepciones transversales (ReglaDeNegocioException, RecursoDuplicadoException,
- * ConflictoDeEstadoException, etc.) y los errores de validación de Bean Validation a respuestas HTTP consistentes, sin que
+ * Traduce las excepciones transversales (ReglaDeNegocioException, ReglaNoProcesableException,
+ * RecursoDuplicadoException, ConflictoDeEstadoException, etc.) y los errores de validación de Bean Validation a respuestas HTTP consistentes, sin que
  * este componente dependa de las excepciones concretas de ningún módulo específico.
  *
  * Componentes transversales de tipo 'exception', compartidos por todos los módulos.
@@ -27,6 +27,11 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(ReglaDeNegocioException.class)
     public ResponseEntity<ErrorResponse> handleReglaDeNegocio(ReglaDeNegocioException ex) {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ErrorResponse(ex.getMessage()));
+    }
+
+    @ExceptionHandler(ReglaNoProcesableException.class)
+    public ResponseEntity<ErrorResponse> handleReglaNoProcesable(ReglaNoProcesableException ex) {
+        return ResponseEntity.status(HttpStatus.UNPROCESSABLE_CONTENT).body(new ErrorResponse(ex.getMessage()));
     }
 
     @ExceptionHandler(RecursoDuplicadoException.class)

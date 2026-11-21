@@ -4,7 +4,6 @@ import com.codefactory.supplychain.logistica.application.port.in.ConsultarParada
 import com.codefactory.supplychain.logistica.application.port.in.RegistrarRecepcionUseCase;
 import com.codefactory.supplychain.logistica.application.port.in.RegistrarRecepcionUseCase.Comando;
 import com.codefactory.supplychain.logistica.application.port.in.RegistrarRecepcionUseCase.ResultadoRecepcion;
-import com.codefactory.supplychain.logistica.domain.exception.CantidadRecibidaExcedeDespachoException;
 import com.codefactory.supplychain.logistica.infrastructure.adapter.in.web.dto.ParadaPorRecibirResponse;
 import com.codefactory.supplychain.logistica.infrastructure.adapter.in.web.dto.RecepcionResponse;
 import com.codefactory.supplychain.logistica.infrastructure.adapter.in.web.dto.RegistrarRecepcionRequest;
@@ -22,7 +21,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -112,14 +110,5 @@ public class RecepcionController {
     @ApiResponse(responseCode = "403", description = "Sin el scope recepcion:registrar")
     public List<ParadaPorRecibirResponse> paradasPorRecibir(@AuthenticationPrincipal UsuarioActual actor) {
         return consultarParadas.listar(actor).stream().map(ParadaPorRecibirResponse::from).toList();
-    }
-
-    /**
-     * La ficha de HU-49 pide 422 para este caso. El manejador global traduce las reglas de negocio
-     * a 400, y un manejador del controlador tiene prioridad sobre él.
-     */
-    @ExceptionHandler(CantidadRecibidaExcedeDespachoException.class)
-    public ResponseEntity<ErrorResponse> cantidadExcedeDespacho(CantidadRecibidaExcedeDespachoException ex) {
-        return ResponseEntity.status(HttpStatus.UNPROCESSABLE_CONTENT).body(new ErrorResponse(ex.getMessage()));
     }
 }
