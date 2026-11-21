@@ -4,8 +4,11 @@ import com.codefactory.supplychain.logistica.application.port.in.ArmarViajeUseCa
 import com.codefactory.supplychain.logistica.application.port.in.ArmarViajeUseCase.Comando;
 import com.codefactory.supplychain.logistica.application.port.in.ArmarViajeUseCase.ParadaPedida;
 import com.codefactory.supplychain.logistica.application.port.in.ConsultarViajesUseCase;
+import com.codefactory.supplychain.logistica.application.port.in.RegistrarTrayectoViajeUseCase;
 import com.codefactory.supplychain.logistica.domain.model.EstadoViaje;
 import com.codefactory.supplychain.logistica.infrastructure.adapter.in.web.dto.ArmarViajeRequest;
+import com.codefactory.supplychain.logistica.infrastructure.adapter.in.web.dto.RegistrarLlegadaRequest;
+import com.codefactory.supplychain.logistica.infrastructure.adapter.in.web.dto.RegistrarSalidaRequest;
 import com.codefactory.supplychain.logistica.infrastructure.adapter.in.web.dto.ViajeResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -34,7 +37,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.UUID;
 
 /**
- * Viajes del CD a las tiendas (HU-47; la salida y la llegada son HU-48). Scope
+ * Viajes del CD a las tiendas: se arman (HU-47), salen y llegan a cada parada (HU-48). Scope
  * {@code transporte:operar}.
  *
  * Módulo: logistica.
@@ -54,6 +57,7 @@ public class ViajeController {
 
     private final ArmarViajeUseCase armarViaje;
     private final ConsultarViajesUseCase consultarViajes;
+    private final RegistrarTrayectoViajeUseCase trayecto;
 
     @PostMapping
     @Operation(summary = "Armar un viaje",
@@ -91,5 +95,41 @@ public class ViajeController {
     @ApiResponse(responseCode = "404", description = "El viaje no existe")
     public ViajeResponse obtener(@PathVariable UUID id) {
         return ViajeResponse.desde(consultarViajes.obtener(id));
+    }
+
+    @PostMapping("/{id}/salida")
+    @Operation(summary = "Registrar la salida del viaje",
+            description = "El viaje debe estar ARMADO. Pasa a EN_CURSO, sus paradas a EN_TRANSITO y las órdenes de sus "
+                    + "ciclos a EN_TRANSITO. fechaSalida es opcional (si falta, la hora del servidor); no puede ser "
+                    + "futura (se toleran 2 minutos de reloj adelantado) ni anterior al despacho de sus ciclos. HU-48.")
+    @io.swagger.v3.oas.annotations.parameters.RequestBody(required = false, content = @Content(
+            examples = @ExampleObject(value = "{\"fechaSalida\": \"2026-11-21T14:30:00Z\"}")))
+    @ApiResponse(responseCode = "200", description = "Salida registrada")
+    @ApiResponse(responseCode = "400", description = "La hora es posterior a la actual")
+    @ApiResponse(responseCode = "404", description = "El viaje no existe")
+    @ApiResponse(responseCode = "409", description = "El viaje no está ARMADO o alguna orden no está DESPACHADA")
+    @ApiResponse(responseCode = "422", description = "La salida es anterior al despacho de alguno de sus ciclos")
+    public ViajeResponse registrarSalida(@PathVariable UUID id,
+                                         @RequestBody(required = false) RegistrarSalidaRequest request) {
+        return ViajeResponse.desde(trayecto.registrarSalida(id, request == null ? null : request.fechaSalida()));
+    }
+
+    @PostMapping("/{id}/paradas/{paradaId}/llegada")
+    @Operation(summary = "Registrar la llegada a una parada",
+            description = "El viaje debe estar EN_CURSO y la parada EN_TRANSITO. La parada queda ENTREGADO; cuando "
+                    + "todas lo están, el viaje pasa a CERRADO con la llegada más tardía como cierre. fechaLlegada "
+                    + "es opcional (si falta, la hora del servidor); no puede ser futura (2 minutos de tolerancia) "
+                    + "ni anterior a la salida. Registrar de nuevo una llegada responde 409. HU-48.")
+    @io.swagger.v3.oas.annotations.parameters.RequestBody(required = false, content = @Content(
+            examples = @ExampleObject(value = "{\"fechaLlegada\": \"2026-11-21T16:05:00Z\"}")))
+    @ApiResponse(responseCode = "200", description = "Llegada registrada")
+    @ApiResponse(responseCode = "400", description = "La hora es posterior a la actual")
+    @ApiResponse(responseCode = "404", description = "El viaje no existe o la parada no es de ese viaje")
+    @ApiResponse(responseCode = "409", description = "El viaje no está EN_CURSO o la parada ya estaba ENTREGADO")
+    @ApiResponse(responseCode = "422", description = "La llegada es anterior a la salida del viaje")
+    public ViajeResponse registrarLlegada(@PathVariable UUID id, @PathVariable UUID paradaId,
+                                          @RequestBody(required = false) RegistrarLlegadaRequest request) {
+        return ViajeResponse.desde(trayecto.registrarLlegada(id, paradaId,
+                request == null ? null : request.fechaLlegada()));
     }
 }

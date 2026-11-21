@@ -1,5 +1,8 @@
 package com.codefactory.supplychain.logistica.domain.model;
 
+import com.codefactory.supplychain.logistica.domain.exception.CronologiaViajeInvalidaException;
+import com.codefactory.supplychain.logistica.domain.exception.ParadaDeViajeNoEncontradaException;
+import com.codefactory.supplychain.logistica.domain.exception.ViajeEstadoInvalidoException;
 import com.codefactory.supplychain.logistica.domain.exception.ViajeInvalidoException;
 import lombok.Getter;
 
@@ -12,7 +15,8 @@ import java.util.Set;
 import java.util.UUID;
 
 /**
- * Un viaje que parte de un CD con varias paradas, una por ciclo de despacho (HU-47).
+ * Un viaje que parte de un CD con varias paradas, una por ciclo de despacho (HU-47). Sale una
+ * vez y llega a cada parada; con la última llegada se cierra (HU-48).
  * Las reglas que necesitan otros datos (el CD del ciclo, si ya está en otro viaje) las valida
  * el caso de uso; aquí solo las de forma del viaje.
  *
@@ -92,6 +96,54 @@ public final class Viaje {
         List<ParadaViaje> ordenadas = new ArrayList<>(paradas);
         ordenadas.sort(Comparator.comparingInt(ParadaViaje::getOrdenParada));
         return new Viaje(id, cdId, vehiculo, fechaCreacion, version, ordenadas, estado, fechaSalida, fechaCierre);
+    }
+
+    /**
+     * ARMADO → EN_CURSO; todas las paradas pasan a EN_TRANSITO con la misma hora.
+     *
+     * @param ultimoDespacho la fecha de despacho más reciente de sus ciclos
+     * @throws ViajeEstadoInvalidoException     si el viaje no está ARMADO (409)
+     * @throws CronologiaViajeInvalidaException si sale antes de que se despachara algún ciclo (422)
+     */
+    public void registrarSalida(Instant fecha, Instant ultimoDespacho) {
+        if (estado != EstadoViaje.ARMADO) {
+            throw new ViajeEstadoInvalidoException("El viaje " + id + " está " + estado + ", no ARMADO: ya salió");
+        }
+        if (fecha.isBefore(ultimoDespacho)) {
+            throw new CronologiaViajeInvalidaException("La salida no puede ser anterior al despacho de sus ciclos ("
+                    + ultimoDespacho + ")");
+        }
+        estado = EstadoViaje.EN_CURSO;
+        fechaSalida = fecha;
+        paradas.forEach(parada -> parada.salir(fecha));
+    }
+
+    /**
+     * La parada pasa a ENTREGADO. Cuando todas lo están, el viaje se cierra con la llegada más tardía.
+     *
+     * @throws ParadaDeViajeNoEncontradaException si la parada no es de este viaje (404)
+     * @throws ViajeEstadoInvalidoException       si el viaje no está EN_CURSO o la parada ya llegó (409)
+     * @throws CronologiaViajeInvalidaException   si la llegada es anterior a la salida (422)
+     */
+    public void registrarLlegada(UUID paradaId, Instant fecha) {
+        ParadaViaje parada = paradas.stream().filter(p -> p.getId().equals(paradaId)).findFirst()
+                .orElseThrow(() -> new ParadaDeViajeNoEncontradaException(id, paradaId));
+        if (estado != EstadoViaje.EN_CURSO) {
+            throw new ViajeEstadoInvalidoException("El viaje " + id + " está " + estado + ", no EN_CURSO");
+        }
+        if (parada.getEstado() != EstadoParada.EN_TRANSITO) {
+            throw new ViajeEstadoInvalidoException("La parada " + paradaId + " ya está " + parada.getEstado());
+        }
+        if (fecha.isBefore(fechaSalida)) {
+            throw new CronologiaViajeInvalidaException("La llegada no puede ser anterior a la salida del viaje ("
+                    + fechaSalida + ")");
+        }
+        parada.llegar(fecha);
+        if (paradas.stream().allMatch(p -> p.getEstado() == EstadoParada.ENTREGADO)) {
+            estado = EstadoViaje.CERRADO;
+            fechaCierre = paradas.stream().map(ParadaViaje::getFechaLlegada).max(Comparator.naturalOrder())
+                    .orElse(fecha);
+        }
     }
 
     public List<ParadaViaje> getParadas() {

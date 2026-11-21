@@ -33,6 +33,16 @@ public final class ParadaViaje {
         this.fechaLlegada = fechaLlegada;
     }
 
+    void salir(Instant fecha) {
+        estado = EstadoParada.EN_TRANSITO;
+        fechaSalidaCd = fecha;
+    }
+
+    void llegar(Instant fecha) {
+        estado = EstadoParada.ENTREGADO;
+        fechaLlegada = fecha;
+    }
+
     static ParadaViaje nueva(UUID cicloDespachoId, UUID tiendaId, int ordenParada) {
         return new ParadaViaje(UUID.randomUUID(), cicloDespachoId, tiendaId, ordenParada, EstadoParada.PENDIENTE,
                 null, null);

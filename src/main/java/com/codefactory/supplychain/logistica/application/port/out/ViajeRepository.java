@@ -15,6 +15,12 @@ public interface ViajeRepository {
 
     Optional<Viaje> buscarPorId(UUID viajeId);
 
+    /**
+     * Como {@link #buscarPorId} pero sube la versión del viaje al confirmar aunque solo cambie una
+     * parada: dos llegadas simultáneas chocan y una reintenta (HU-48).
+     */
+    Optional<Viaje> buscarParaActualizar(UUID viajeId);
+
     Page<Viaje> listar(EstadoViaje estado, Pageable pageable);
 
     boolean cicloEnViaje(UUID cicloDespachoId);

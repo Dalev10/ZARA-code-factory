@@ -34,6 +34,11 @@ public class ViajePersistenceAdapter implements ViajeRepository {
     }
 
     @Override
+    public Optional<Viaje> buscarParaActualizar(UUID viajeId) {
+        return jpaRepository.buscarConIncrementoDeVersion(viajeId).map(ViajePersistenceAdapter::aDominio);
+    }
+
+    @Override
     public Page<Viaje> listar(EstadoViaje estado, Pageable pageable) {
         return (estado == null ? jpaRepository.findAll(pageable) : jpaRepository.findByEstado(estado, pageable))
                 .map(ViajePersistenceAdapter::aDominio);

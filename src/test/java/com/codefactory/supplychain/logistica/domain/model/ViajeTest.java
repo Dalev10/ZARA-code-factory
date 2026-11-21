@@ -57,4 +57,66 @@ class ViajeTest {
         assertThatThrownBy(() -> Viaje.armar(cdId, "Camión", List.of(new NuevaParada(ciclo, tienda, 0)), ahora))
                 .isInstanceOf(ViajeInvalidoException.class);
     }
+
+    @Test
+    void laSalidaPoneEnCursoYLasParadasEnTransito() {
+        Viaje viaje = viajeDeDosParadas();
+        Instant salida = ahora.plusSeconds(60);
+
+        viaje.registrarSalida(salida, ahora);
+
+        assertThat(viaje.getEstado()).isEqualTo(EstadoViaje.EN_CURSO);
+        assertThat(viaje.getFechaSalida()).isEqualTo(salida);
+        assertThat(viaje.getParadas()).allMatch(p -> p.getEstado() == EstadoParada.EN_TRANSITO
+                && salida.equals(p.getFechaSalidaCd()));
+        assertThatThrownBy(() -> viaje.registrarSalida(salida, ahora))
+                .isInstanceOf(com.codefactory.supplychain.logistica.domain.exception.ViajeEstadoInvalidoException.class);
+    }
+
+    @Test
+    void noSalgoAntesDelDespacho() {
+        Viaje viaje = viajeDeDosParadas();
+
+        assertThatThrownBy(() -> viaje.registrarSalida(ahora.minusSeconds(1), ahora))
+                .isInstanceOf(com.codefactory.supplychain.logistica.domain.exception.CronologiaViajeInvalidaException.class);
+        assertThat(viaje.getEstado()).isEqualTo(EstadoViaje.ARMADO);
+    }
+
+    @Test
+    void conLaUltimaLlegadaElViajeSeCierraConLaMasTardia() {
+        Viaje viaje = viajeDeDosParadas();
+        viaje.registrarSalida(ahora, ahora);
+        ParadaViaje primera = viaje.getParadas().get(0);
+        ParadaViaje segunda = viaje.getParadas().get(1);
+
+        viaje.registrarLlegada(segunda.getId(), ahora.plusSeconds(7200));
+        assertThat(viaje.getEstado()).isEqualTo(EstadoViaje.EN_CURSO);
+        viaje.registrarLlegada(primera.getId(), ahora.plusSeconds(3600));
+
+        assertThat(viaje.getEstado()).isEqualTo(EstadoViaje.CERRADO);
+        assertThat(viaje.getFechaCierre()).isEqualTo(ahora.plusSeconds(7200));
+        assertThat(viaje.getParadas()).allMatch(p -> p.getEstado() == EstadoParada.ENTREGADO);
+    }
+
+    @Test
+    void lasLlegadasInvalidas() {
+        Viaje viaje = viajeDeDosParadas();
+        UUID parada = viaje.getParadas().get(0).getId();
+
+        assertThatThrownBy(() -> viaje.registrarLlegada(parada, ahora))
+                .isInstanceOf(com.codefactory.supplychain.logistica.domain.exception.ViajeEstadoInvalidoException.class);
+        viaje.registrarSalida(ahora, ahora);
+        assertThatThrownBy(() -> viaje.registrarLlegada(UUID.randomUUID(), ahora))
+                .isInstanceOf(com.codefactory.supplychain.logistica.domain.exception.ParadaDeViajeNoEncontradaException.class);
+        assertThatThrownBy(() -> viaje.registrarLlegada(parada, ahora.minusSeconds(1)))
+                .isInstanceOf(com.codefactory.supplychain.logistica.domain.exception.CronologiaViajeInvalidaException.class);
+        viaje.registrarLlegada(parada, ahora);
+        assertThatThrownBy(() -> viaje.registrarLlegada(parada, ahora))
+                .isInstanceOf(com.codefactory.supplychain.logistica.domain.exception.ViajeEstadoInvalidoException.class);
+    }
+
+    private Viaje viajeDeDosParadas() {
+        return Viaje.armar(cdId, "Camión", List.of(new NuevaParada(UUID.randomUUID(), UUID.randomUUID(), null),
+                new NuevaParada(UUID.randomUUID(), UUID.randomUUID(), null)), ahora);
+    }
 }
