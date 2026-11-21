@@ -58,7 +58,8 @@ public class OpenApiConfig {
             vencido, o usuario no activo. 403: sin el scope requerido.
 
             **Paginación.** Los listados paginados reciben `page` (desde 0), `size` y `sort` \
-            (`campo,asc|desc`), y responden con `content`, `totalElements` y `totalPages`.
+            (`campo,asc|desc`), y responden con `content`, `totalElements` y `totalPages`. \
+            `size` vale 20 por defecto y como máximo 100: un valor mayor se reduce a 100.
 
             **Idempotencia.** Registrar una venta o una solicitud no satisfecha con la misma \
             clave devuelve 200 con el registro original en lugar de duplicarlo.

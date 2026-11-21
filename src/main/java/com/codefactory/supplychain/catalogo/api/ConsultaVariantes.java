@@ -15,7 +15,8 @@ import java.util.UUID;
  * <ul>
  *   <li>reposicion: {@link #buscar(UUID)}, para conocer la categoría de una variante.</li>
  *   <li>ventas: {@link #buscarPorSku(String)}, para resolver el SKU de una venta.</li>
- *   <li>inventario: {@link #buscarPorSkus(Set)}, para resolver los SKU de la carga inicial (HU-37).</li>
+ *   <li>inventario: {@link #buscarPorSkus(Set)}, para resolver los SKU de la carga inicial (HU-37),
+ *       y {@link #buscarPorIds(Set)}, para mostrar el SKU en las existencias (HD-07).</li>
  * </ul>
  */
 public interface ConsultaVariantes {
@@ -35,4 +36,9 @@ public interface ConsultaVariantes {
      * solo las que existen: un SKU ausente del resultado no está en el catálogo.
      */
     List<VarianteResumen> buscarPorSkus(Set<String> skus);
+
+    /**
+     * Busca en una sola consulta las variantes de los ids recibidos. Devuelve solo las que existen.
+     */
+    List<VarianteResumen> buscarPorIds(Set<UUID> ids);
 }

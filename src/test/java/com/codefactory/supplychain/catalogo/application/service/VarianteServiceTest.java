@@ -102,7 +102,18 @@ class VarianteServiceTest {
         Pageable pageable = Pageable.unpaged();
         when(varianteRepository.findAll(pageable)).thenReturn(new PageImpl<>(List.of(variante)));
 
-        assertThat(servicio.listar(pageable)).containsExactly(variante);
+        assertThat(servicio.listar(null, pageable)).containsExactly(variante);
+        assertThat(servicio.listar("  ", pageable)).containsExactly(variante);
+    }
+
+    @Test
+    void listarConSkuFiltraPorElTextoSinEspacios() {
+        Variante variante = new Variante("CAM-OXF-AZ-M", template(), "M", "Azul");
+        Pageable pageable = Pageable.unpaged();
+        when(varianteRepository.findBySkuContaining("oxf", pageable)).thenReturn(new PageImpl<>(List.of(variante)));
+
+        assertThat(servicio.listar(" oxf ", pageable)).containsExactly(variante);
+        verify(varianteRepository, never()).findAll(any(Pageable.class));
     }
 
     @Test

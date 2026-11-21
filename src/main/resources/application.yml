@@ -53,6 +53,13 @@ spring:
         jdbc:
           time_zone: UTC
 
+  data:
+    web:
+      pageable:
+        # HD-07: tope de "size" en todos los listados paginados. Un valor mayor se
+        # reduce a 100 sin error (Spring traía 2000), para acotar el costo de una página.
+        max-page-size: 100
+
   flyway:
     enabled: true
     locations: classpath:db/migration

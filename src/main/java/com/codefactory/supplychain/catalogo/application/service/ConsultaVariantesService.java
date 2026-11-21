@@ -48,6 +48,16 @@ public class ConsultaVariantesService implements ConsultaVariantes {
                 .toList();
     }
 
+    @Override
+    public List<VarianteResumen> buscarPorIds(Set<UUID> ids) {
+        if (ids.isEmpty()) {
+            return List.of();
+        }
+        return varianteRepository.findByIdIn(ids).stream()
+                .map(ConsultaVariantesService::traducir)
+                .toList();
+    }
+
     private static VarianteResumen traducir(Variante variante) {
         return new VarianteResumen(
                 variante.getId(),

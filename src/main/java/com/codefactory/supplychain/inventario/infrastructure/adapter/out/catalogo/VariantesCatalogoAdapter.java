@@ -26,4 +26,10 @@ public class VariantesCatalogoAdapter implements VariantesCatalogoPort {
         return consultaVariantes.buscarPorSkus(skus).stream()
                 .collect(Collectors.toMap(VarianteResumen::sku, VarianteResumen::id));
     }
+
+    @Override
+    public Map<UUID, String> skusPorId(Set<UUID> varianteIds) {
+        return consultaVariantes.buscarPorIds(varianteIds).stream()
+                .collect(Collectors.toMap(VarianteResumen::id, VarianteResumen::sku));
+    }
 }

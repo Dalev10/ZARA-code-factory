@@ -1,7 +1,6 @@
 package com.codefactory.supplychain.inventario.application.port.in;
 
 import com.codefactory.supplychain.inventario.application.dto.BodegaTiendaConsulta;
-import com.codefactory.supplychain.inventario.domain.model.Nodo;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
@@ -18,5 +17,5 @@ public interface BodegaTiendaUseCase {
 
     BodegaTiendaConsulta consultarPorTiendaId(UUID tiendaId);
 
-    Page<Nodo> listarTodas(Pageable pageable);
+    Page<BodegaTiendaConsulta> listarTodas(Pageable pageable);
 }

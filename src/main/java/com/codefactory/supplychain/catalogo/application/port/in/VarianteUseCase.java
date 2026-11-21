@@ -43,9 +43,10 @@ public interface VarianteUseCase {
     Variante obtenerPorSku(String sku);
 
     /**
-     * Lista las Variantes existentes, paginadas.
+     * Lista las Variantes existentes, paginadas. Con {@code sku} no vacío, solo las que lo
+     * contienen, sin distinguir mayúsculas (HD-07).
      */
-    Page<Variante> listar(Pageable pageable);
+    Page<Variante> listar(String sku, Pageable pageable);
 
     /**
      * Modifica el sku, el Template, la talla y/o el color de una
