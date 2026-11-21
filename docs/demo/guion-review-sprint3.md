@@ -11,7 +11,7 @@ Recorre en unos 10 minutos los siete pasos del ciclo con un usuario por rol. Cad
    python3 tools/demo/sembrar_demo.py --api <URL de la API> --email <email del admin> --salida demo.json
    ```
 
-   El script pide la contraseña por consola (y el código MFA si aplica). Crea todo por la API, con nombres únicos por corrida:
+   El script pide por consola la contraseña del admin (y el código MFA si aplica) y la contraseña que tendrán los usuarios de demo. Crea todo por la API, con nombres únicos por corrida:
 
    | Qué | Detalle |
    | :--- | :--- |
@@ -21,7 +21,7 @@ Recorre en unos 10 minutos los siete pasos del ciclo con un usuario por rol. Cad
    | Niveles | Umbral interno 3/6 (Almacén) y nivel al CD 5/20 (Bodega) por variante |
    | 6 usuarios | VENDEDOR, SUPERVISOR_TIENDA, PLANIFICADOR_ABASTECIMIENTO y ENCARGADO_BODEGA (en las dos tiendas), OPERADOR_CD y COORDINADOR_TRANSPORTE |
 
-3. `demo.json` trae los ids y las credenciales generadas. No se sube al repositorio; se comparte solo con el equipo.
+3. `demo.json` trae los ids y los emails creados, sin contraseñas. La contraseña de demo se comparte con el equipo por otro medio.
 4. Iniciar sesión con cada usuario (`POST /api/v1/auth/login`) y tener los seis tokens a mano. Duran 15 minutos.
 
 ## 1. Recomendar (HU-43): la venta dispara todo

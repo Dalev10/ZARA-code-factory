@@ -8,17 +8,19 @@ Crea, con nombres únicos por corrida (sufijo de fecha y hora):
     con su Almacén y su Bodega, con prioridad CD-sin-stock -> CD-principal;
   * inventario inicial en CDs, Almacenes y Bodegas;
   * umbral de reposición interna (3/6) y nivel de reposición al CD (5/20) por variante;
-  * un usuario por rol operativo, con contraseña aleatoria.
+  * un usuario por rol operativo, todos con la contraseña de demo que se indique.
 
 Todo pasa por los endpoints reales, con las mismas reglas que un usuario. No usa la base
 de datos directamente ni crea nada que la API no permita. Solo la biblioteca estándar.
 
 Uso:
     python3 tools/demo/sembrar_demo.py --api http://localhost:8080 --email admin@...
-La contraseña se pide por consola (no queda en el historial). Si el admin tiene MFA,
-se pide el código. También acepta un access token ya emitido en la variable TOKEN.
+Las contraseñas (la del admin y la de los usuarios de demo) se piden por consola y no
+quedan en el historial. Si el admin tiene MFA, se pide el código. También se aceptan
+las variables TOKEN (un access token ya emitido) y DEMO_PASSWORD.
 
-Al final imprime los ids y las credenciales creadas: compártelas solo con el equipo.
+Al final imprime los ids y los emails creados. Ninguna contraseña se imprime ni se
+guarda: quien siembra comparte la contraseña de demo con el equipo por otro medio.
 """
 from __future__ import annotations
 
@@ -26,8 +28,6 @@ import argparse
 import getpass
 import json
 import os
-import secrets
-import string
 import sys
 import urllib.error
 import urllib.request
@@ -86,13 +86,19 @@ def iniciar_sesion(api: Api, email: str) -> str:
     return respuesta["accessToken"]
 
 
-def contrasena_aleatoria() -> str:
-    # 20 caracteres de letras, dígitos y símbolos: cumple la política (12+) y no está filtrada (HIBP).
-    alfabeto = string.ascii_letters + string.digits + "!#%&*+-_"
-    return "".join(secrets.choice(alfabeto) for _ in range(20))
+def contrasena_demo() -> str:
+    """La pide dos veces por consola, o la toma de DEMO_PASSWORD. La API exige 12+ caracteres y no filtrada."""
+    password = os.environ.get("DEMO_PASSWORD")
+    if not password:
+        password = getpass.getpass("Contraseña para los usuarios de demo (12+ caracteres): ")
+        if getpass.getpass("Repítela: ") != password:
+            sys.exit("Las contraseñas no coinciden")
+    if len(password) < 12:
+        sys.exit("La contraseña de demo debe tener al menos 12 caracteres")
+    return password
 
 
-def sembrar(api: Api, sufijo: str) -> dict:
+def sembrar(api: Api, sufijo: str, password: str) -> dict:
     s = {"sufijo": sufijo}
 
     categoria = api.post("/api/v1/categorias", {"nombre": f"Camisas demo {sufijo}"})
@@ -145,14 +151,13 @@ def sembrar(api: Api, sufijo: str) -> dict:
         if nombre_rol not in roles:
             sys.exit(f"Falta el rol {nombre_rol}: ¿está aplicada la migración V34?")
         email = f"demo.{nombre_rol.lower().replace('_', '.')}.{sufijo}@supplychain.local"
-        password = contrasena_aleatoria()
         usuario = api.post("/api/v1/usuarios", {"email": email, "nombreCompleto": f"Demo {nombre_rol.title()}",
                                                 "password": password})
         api.post(f"/api/v1/usuarios/{usuario['id']}/roles", {"rolId": roles[nombre_rol]})
         if por_tienda:
             for tienda in s["tiendas"]:
                 api.post(f"/api/v1/usuarios/{usuario['id']}/tiendas", {"tiendaId": tienda["id"]})
-        s["usuarios"].append({"rol": nombre_rol, "email": email, "password": password})
+        s["usuarios"].append({"rol": nombre_rol, "email": email})
     return s
 
 
@@ -160,7 +165,7 @@ def main():
     parser = argparse.ArgumentParser(description="Siembra los datos de demostración por la API (HD-06).")
     parser.add_argument("--api", default="http://localhost:8080", help="URL base de la API")
     parser.add_argument("--email", help="Email de un ADMIN (si no se define la variable TOKEN)")
-    parser.add_argument("--salida", help="Archivo JSON donde guardar lo creado (por defecto, solo consola)")
+    parser.add_argument("--salida", help="Archivo JSON donde guardar los ids y emails (por defecto, solo consola)")
     args = parser.parse_args()
 
     api = Api(args.api, os.environ.get("TOKEN"))
@@ -168,13 +173,14 @@ def main():
         if not args.email:
             parser.error("indica --email de un ADMIN o define TOKEN")
         api.token = iniciar_sesion(api, args.email)
+    password = contrasena_demo()
 
-    sembrado = sembrar(api, datetime.now().strftime("%m%d%H%M%S"))
+    sembrado = sembrar(api, datetime.now().strftime("%m%d%H%M%S"), password)
     texto = json.dumps(sembrado, indent=2, ensure_ascii=False)
     if args.salida:
         with open(args.salida, "w", encoding="utf-8") as archivo:
             archivo.write(texto + "\n")
-        print(f"Datos sembrados; detalle y credenciales en {args.salida}")
+        print(f"Datos sembrados; ids y emails en {args.salida}")
     else:
         print(texto)
 
