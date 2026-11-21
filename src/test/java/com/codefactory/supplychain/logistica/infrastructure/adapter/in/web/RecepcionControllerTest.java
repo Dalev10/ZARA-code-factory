@@ -443,8 +443,9 @@ class RecepcionControllerTest {
         tx.executeWithoutResult(estado -> {
             OrdenParaDespacho orden = transiciones.iniciarDespacho(ordenId);
             jdbc.update("""
-                    INSERT INTO ciclo_despacho (id, orden_id, numero_ciclo, cantidad_despachada, resultado)
-                    VALUES (?, ?, ?, ?, ?)""", cicloId, ordenId, numeroCiclo, cantidad,
+                    INSERT INTO ciclo_despacho (id, orden_id, numero_ciclo, cantidad_solicitada, cantidad_despachada,
+                                                resultado)
+                    VALUES (?, ?, ?, ?, ?, ?)""", cicloId, ordenId, numeroCiclo, orden.cantidadSolicitadaCiclo(), cantidad,
                     cantidad < orden.cantidadSolicitadaCiclo() ? "PARCIAL" : "COMPLETO");
             movimientos.registrarDespacho(orden.cdId(), orden.varianteId(), cantidad,
                     Math.min(cantidad, orden.reservaRestante()), cicloId);
