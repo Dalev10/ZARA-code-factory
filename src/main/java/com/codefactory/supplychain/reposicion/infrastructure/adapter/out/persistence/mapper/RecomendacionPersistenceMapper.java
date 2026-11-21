@@ -21,6 +21,10 @@ public class RecomendacionPersistenceMapper {
                 .cantidadSugerida(recomendacion.getCantidadSugerida())
                 .estado(recomendacion.getEstado())
                 .fechaCreacion(recomendacion.getFechaCreacion())
+                .cantidadAprobada(recomendacion.getCantidadAprobada())
+                .aprobadoPor(recomendacion.getAprobadoPor())
+                .fechaAprobacion(recomendacion.getFechaAprobacion())
+                .version(recomendacion.getVersion())
                 .build();
     }
 
@@ -32,6 +36,10 @@ public class RecomendacionPersistenceMapper {
                 entity.getCdSugeridoId(),
                 entity.getCantidadSugerida(),
                 entity.getEstado(),
-                entity.getFechaCreacion());
+                entity.getFechaCreacion(),
+                entity.getCantidadAprobada(),
+                entity.getAprobadoPor(),
+                entity.getFechaAprobacion(),
+                entity.getVersion());
     }
 }
