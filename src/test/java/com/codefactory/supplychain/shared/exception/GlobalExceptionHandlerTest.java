@@ -23,6 +23,17 @@ class GlobalExceptionHandlerTest {
     }
 
     @Test
+    void unaReglaNoProcesableExceptionDeCualquierModuloSeTraduceA422ConSuMensaje() {
+        ReglaNoProcesableException excepcion = new ReglaNoProcesableException("Se recibió más de lo despachado") {
+        };
+
+        ResponseEntity<ErrorResponse> respuesta = handler.handleReglaNoProcesable(excepcion);
+
+        assertThat(respuesta.getStatusCode()).isEqualTo(HttpStatus.UNPROCESSABLE_CONTENT);
+        assertThat(respuesta.getBody()).isEqualTo(new ErrorResponse("Se recibió más de lo despachado"));
+    }
+
+    @Test
     void unaRecursoEnUsoExceptionSeTraduceA409ConSuMensaje() {
         RecursoEnUsoException excepcion = new RecursoEnUsoException("El CD tiene prioridades asignadas") {
         };
