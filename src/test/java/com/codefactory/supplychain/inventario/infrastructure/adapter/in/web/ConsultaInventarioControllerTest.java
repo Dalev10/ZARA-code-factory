@@ -70,14 +70,15 @@ class ConsultaInventarioControllerTest {
             Escenario: el stock de un nodo se consulta con paginación
               Dado un Almacén con la variante X con 5 unidades
               Cuando un vendedor de la tienda consulta el inventario del Almacén
-              Entonces la respuesta es 200 con a_la_mano 5 para X""")
+              Entonces la respuesta es 200 con a_la_mano 5 y el SKU de X (HD-07)""")
     void elStockDeUnNodoSeConsulta() throws Exception {
         String x = crearVarianteCargada(almacenId, 5);
 
         consultarStock(almacenId, vendedor)
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content[0].aLaMano").value(5))
-                .andExpect(jsonPath("$.content[0].varianteId").value(varianteId(x).toString()));
+                .andExpect(jsonPath("$.content[0].varianteId").value(varianteId(x).toString()))
+                .andExpect(jsonPath("$.content[0].sku").value(x));
     }
 
     @Test
@@ -112,7 +113,8 @@ class ConsultaInventarioControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(1))
                 .andExpect(jsonPath("$[0].nodoId").value(almacenId.toString()))
-                .andExpect(jsonPath("$[0].aLaMano").value(4));
+                .andExpect(jsonPath("$[0].aLaMano").value(4))
+                .andExpect(jsonPath("$[0].sku").value(x));
     }
 
     @Test

@@ -2,6 +2,8 @@ package com.codefactory.supplychain.catalogo.infrastructure.adapter.out.persiste
 
 import java.util.UUID;
 import com.codefactory.supplychain.catalogo.infrastructure.adapter.out.persistence.entity.VarianteEntity;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Collection;
@@ -20,6 +22,9 @@ public interface VarianteJpaRepository extends JpaRepository<VarianteEntity, UUI
     Optional<VarianteEntity> findBySku(String sku);
 
     List<VarianteEntity> findBySkuIn(Collection<String> skus);
+
+    /** Spring Data escapa los comodines de LIKE ({@code %}, {@code _}) del texto recibido. */
+    Page<VarianteEntity> findBySkuContainingIgnoreCase(String sku, Pageable pageable);
 
     boolean existsBySku(String sku);
 }

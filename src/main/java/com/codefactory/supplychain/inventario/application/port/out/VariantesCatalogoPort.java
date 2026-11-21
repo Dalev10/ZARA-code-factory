@@ -11,4 +11,7 @@ import java.util.UUID;
 public interface VariantesCatalogoPort {
 
     Map<String, UUID> resolverIdsPorSku(Set<String> skus);
+
+    /** SKU de cada variante recibida. Una variante ausente del resultado no está en el catálogo. */
+    Map<UUID, String> skusPorId(Set<UUID> varianteIds);
 }

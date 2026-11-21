@@ -140,6 +140,20 @@ class BodegaTiendaControllerTest {
     }
 
     @Test
+    void elListadoDeBodegasTraeElNombreYLaUbicacionDeSuTienda() throws Exception {
+        String token = loguearComoAdmin("admin-lista-bodegas@ejemplo.com");
+        String tiendaId = crearTienda(token, "Tienda Listada");
+
+        mockMvc.perform(get("/api/v1/bodegas-tienda").param("size", "100")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content[?(@.tiendaId == '%s')].tiendaNombre".formatted(tiendaId))
+                        .value("Tienda Listada"))
+                .andExpect(jsonPath("$.content[?(@.tiendaId == '%s')].tiendaUbicacion".formatted(tiendaId))
+                        .value("Bogotá"));
+    }
+
+    @Test
     void lasBodegasSoloSeConsultanNoSeEscriben() throws Exception {
         String token = loguearComoAdmin("admin-bodega-solo-lectura@ejemplo.com");
         String tiendaId = crearTienda(token, "Tienda Bodega Solo Lectura");

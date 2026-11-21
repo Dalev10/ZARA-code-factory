@@ -5,6 +5,7 @@ import com.codefactory.supplychain.inventario.application.dto.BodegaTiendaConsul
 import com.codefactory.supplychain.inventario.application.port.out.ExistenciasRepositoryPort;
 import com.codefactory.supplychain.inventario.application.port.out.NodoRepositoryPort;
 import com.codefactory.supplychain.inventario.application.port.out.TiendaRepositoryPort;
+import com.codefactory.supplychain.inventario.application.port.out.VariantesCatalogoPort;
 import com.codefactory.supplychain.inventario.domain.exception.BodegaTiendaNoEncontradaException;
 import com.codefactory.supplychain.inventario.domain.model.EstadoTienda;
 import com.codefactory.supplychain.inventario.domain.model.Nodo;
@@ -17,7 +18,9 @@ import org.springframework.data.domain.Pageable;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -30,6 +33,7 @@ class BodegaTiendaServiceTest {
     private NodoRepositoryPort nodoRepositoryPort;
     private TiendaRepositoryPort tiendaRepositoryPort;
     private ExistenciasRepositoryPort existencias;
+    private VariantesCatalogoPort variantesCatalogo;
     private BodegaTiendaService servicio;
 
     @BeforeEach
@@ -37,7 +41,8 @@ class BodegaTiendaServiceTest {
         nodoRepositoryPort = mock(NodoRepositoryPort.class);
         tiendaRepositoryPort = mock(TiendaRepositoryPort.class);
         existencias = mock(ExistenciasRepositoryPort.class);
-        servicio = new BodegaTiendaService(nodoRepositoryPort, tiendaRepositoryPort, existencias);
+        variantesCatalogo = mock(VariantesCatalogoPort.class);
+        servicio = new BodegaTiendaService(nodoRepositoryPort, tiendaRepositoryPort, existencias, variantesCatalogo);
     }
 
     private static Tienda tiendaActiva(UUID id) {
@@ -71,22 +76,28 @@ class BodegaTiendaServiceTest {
         when(nodoRepositoryPort.buscarPorId(nodo.getId())).thenReturn(Optional.of(nodo));
         when(tiendaRepositoryPort.buscarPorId(tiendaId)).thenReturn(Optional.of(tienda));
         when(existencias.listarPorNodo(nodo.getId())).thenReturn(List.of(resumen));
+        when(variantesCatalogo.skusPorId(Set.of(resumen.varianteId()))).thenReturn(Map.of(resumen.varianteId(), "SKU-1"));
 
         BodegaTiendaConsulta consulta = servicio.consultarPorId(nodo.getId());
 
         assertThat(consulta.nodo()).isEqualTo(nodo);
         assertThat(consulta.tienda()).isEqualTo(tienda);
         assertThat(consulta.inventario()).containsExactly(resumen);
+        assertThat(consulta.skus()).containsExactly(Map.entry(resumen.varianteId(), "SKU-1"));
     }
 
     @Test
-    void listarTodasDelegaAlPuertoFiltrandoPorTipo() {
-        Nodo nodo = Nodo.crearParaTienda(UUID.randomUUID(), TipoNodo.BODEGA_TIENDA);
+    void listarTodasTraeLaTiendaDeCadaBodegaEnUnaSolaConsulta() {
+        UUID tiendaId = UUID.randomUUID();
+        Tienda tienda = tiendaActiva(tiendaId);
+        Nodo nodo = Nodo.crearParaTienda(tiendaId, TipoNodo.BODEGA_TIENDA);
         Pageable pageable = Pageable.unpaged();
         when(nodoRepositoryPort.listarPorTipo(TipoNodo.BODEGA_TIENDA, pageable))
                 .thenReturn(new PageImpl<>(List.of(nodo)));
+        when(tiendaRepositoryPort.buscarPorIds(Set.of(tiendaId))).thenReturn(List.of(tienda));
 
-        assertThat(servicio.listarTodas(pageable)).containsExactly(nodo);
+        assertThat(servicio.listarTodas(pageable))
+                .containsExactly(new BodegaTiendaConsulta(nodo, tienda, List.of(), Map.of()));
     }
 
 }

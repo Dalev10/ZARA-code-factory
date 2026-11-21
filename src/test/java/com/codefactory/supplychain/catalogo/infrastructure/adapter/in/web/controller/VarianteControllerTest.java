@@ -212,4 +212,42 @@ class VarianteControllerTest {
                         .header(HttpHeaders.AUTHORIZATION, "Bearer " + token))
                 .andExpect(status().isNotFound());
     }
+
+    @Test
+    void listarConSkuFiltraPorCoincidenciaParcialYTraeElTemplate() throws Exception {
+        String token = loguearComoAdmin("usuario-variante-filtro-sku@ejemplo.com");
+        String categoriaId = crearCategoria(token, "Categoria Filtro Sku");
+        String templateId = crearTemplate(token, "Template Filtro Sku", categoriaId);
+        for (String sku : new String[] {"FILTRO-OXF-AZ-M", "FILTRO_100%", "OTRO-SKU-FILTRO"}) {
+            mockMvc.perform(post("/api/v1/variantes")
+                            .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content("""
+                                    {"sku": "%s", "templateId": "%s"}
+                                    """.formatted(sku, templateId)))
+                    .andExpect(status().isCreated());
+        }
+
+        mockMvc.perform(get("/api/v1/variantes").param("sku", "filtro-oxf")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalElements").value(1))
+                .andExpect(jsonPath("$.content[0].sku").value("FILTRO-OXF-AZ-M"))
+                .andExpect(jsonPath("$.content[0].templateNombre").value("Template Filtro Sku"));
+        // "%" y "_" se buscan como texto, no como comodines de LIKE.
+        mockMvc.perform(get("/api/v1/variantes").param("sku", "_100%")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + token))
+                .andExpect(jsonPath("$.totalElements").value(1))
+                .andExpect(jsonPath("$.content[0].sku").value("FILTRO_100%"));
+    }
+
+    @Test
+    void unSizeMayorQueCienSeReduceACien() throws Exception {
+        String token = loguearComoAdmin("usuario-variante-size-maximo@ejemplo.com");
+
+        mockMvc.perform(get("/api/v1/variantes").param("size", "500")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.size").value(100));
+    }
 }

@@ -1,10 +1,12 @@
 package com.codefactory.supplychain.inventario.application.service;
 
+import com.codefactory.supplychain.inventario.api.StockResumen;
 import com.codefactory.supplychain.inventario.application.dto.BodegaTiendaConsulta;
 import com.codefactory.supplychain.inventario.application.port.in.BodegaTiendaUseCase;
 import com.codefactory.supplychain.inventario.application.port.out.ExistenciasRepositoryPort;
 import com.codefactory.supplychain.inventario.application.port.out.NodoRepositoryPort;
 import com.codefactory.supplychain.inventario.application.port.out.TiendaRepositoryPort;
+import com.codefactory.supplychain.inventario.application.port.out.VariantesCatalogoPort;
 import com.codefactory.supplychain.inventario.domain.exception.BodegaTiendaNoEncontradaException;
 import com.codefactory.supplychain.inventario.domain.model.Nodo;
 import com.codefactory.supplychain.inventario.domain.model.Tienda;
@@ -15,7 +17,11 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  * BodegaTienda no tiene tabla ni entidad propia: ES un {@link Nodo} de tipo
@@ -32,6 +38,7 @@ public class BodegaTiendaService implements BodegaTiendaUseCase {
     private final NodoRepositoryPort nodoRepositoryPort;
     private final TiendaRepositoryPort tiendaRepositoryPort;
     private final ExistenciasRepositoryPort existenciasRepositoryPort;
+    private final VariantesCatalogoPort variantesCatalogoPort;
 
     @Override
     public BodegaTiendaConsulta consultarPorId(UUID id) {
@@ -49,12 +56,21 @@ public class BodegaTiendaService implements BodegaTiendaUseCase {
     }
 
     @Override
-    public Page<Nodo> listarTodas(Pageable pageable) {
-        return nodoRepositoryPort.listarPorTipo(TipoNodo.BODEGA_TIENDA, pageable);
+    public Page<BodegaTiendaConsulta> listarTodas(Pageable pageable) {
+        Page<Nodo> bodegas = nodoRepositoryPort.listarPorTipo(TipoNodo.BODEGA_TIENDA, pageable);
+        // El listado lleva la tienda (HD-07) pero no las existencias: esas van en la consulta por id.
+        Map<UUID, Tienda> tiendas = bodegas.isEmpty() ? Map.of()
+                : tiendaRepositoryPort.buscarPorIds(bodegas.map(Nodo::getTiendaId).toSet()).stream()
+                        .collect(Collectors.toMap(Tienda::getId, Function.identity()));
+        return bodegas.map(nodo -> new BodegaTiendaConsulta(nodo, tiendas.get(nodo.getTiendaId()), List.of(), Map.of()));
     }
 
     private BodegaTiendaConsulta enriquecer(Nodo nodo) {
         Tienda tienda = tiendaRepositoryPort.buscarPorId(nodo.getTiendaId()).orElse(null);
-        return new BodegaTiendaConsulta(nodo, tienda, existenciasRepositoryPort.listarPorNodo(nodo.getId()));
+        List<StockResumen> inventario = existenciasRepositoryPort.listarPorNodo(nodo.getId());
+        Map<UUID, String> skus = inventario.isEmpty() ? Map.of()
+                : variantesCatalogoPort.skusPorId(
+                        inventario.stream().map(StockResumen::varianteId).collect(Collectors.toSet()));
+        return new BodegaTiendaConsulta(nodo, tienda, inventario, skus);
     }
 }

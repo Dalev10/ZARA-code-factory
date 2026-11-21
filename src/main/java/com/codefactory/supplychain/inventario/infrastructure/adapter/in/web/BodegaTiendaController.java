@@ -33,7 +33,8 @@ public class BodegaTiendaController {
     private final BodegaTiendaUseCase bodegaTiendaUseCase;
 
     @GetMapping
-    @Operation(summary = "Listar bodegas de tienda", description = "Paginado. FEAT-03, HU-34.")
+    @Operation(summary = "Listar bodegas de tienda", description = "Paginado. Cada bodega trae el nombre "
+            + "y la ubicación de su tienda; las existencias van solo en la consulta por id. FEAT-03, HU-34, HD-07.")
     @ApiResponse(responseCode = "200", description = "Página de bodegas")
     public Page<BodegaTiendaResponse> listarTodas(@ParameterObject Pageable pageable) {
         return bodegaTiendaUseCase.listarTodas(pageable).map(BodegaTiendaResponse::from);

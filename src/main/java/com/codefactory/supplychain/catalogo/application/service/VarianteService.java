@@ -67,8 +67,11 @@ public class VarianteService implements VarianteUseCase {
 
 
     @Override
-    public Page<Variante> listar(Pageable pageable) {
-        return varianteRepository.findAll(pageable);
+    public Page<Variante> listar(String sku, Pageable pageable) {
+        if (sku == null || sku.isBlank()) {
+            return varianteRepository.findAll(pageable);
+        }
+        return varianteRepository.findBySkuContaining(sku.strip(), pageable);
     }
 
     @Override

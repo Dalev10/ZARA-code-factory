@@ -45,6 +45,16 @@ public interface VarianteRepository {
     List<Variante> findBySkuIn(Collection<String> skus);
 
     /**
+     * Busca las Variantes cuyos ids estén en la colección dada.
+     */
+    List<Variante> findByIdIn(Collection<UUID> ids);
+
+    /**
+     * Obtiene, paginadas, las Variantes cuyo SKU contiene el texto dado, sin distinguir mayúsculas.
+     */
+    Page<Variante> findBySkuContaining(String sku, Pageable pageable);
+
+    /**
      * Obtiene las Variantes existentes, paginadas.
      */
     Page<Variante> findAll(Pageable pageable);
