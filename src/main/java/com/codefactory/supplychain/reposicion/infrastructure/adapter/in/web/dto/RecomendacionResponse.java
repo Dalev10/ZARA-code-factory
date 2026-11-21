@@ -19,5 +19,6 @@ public record RecomendacionResponse(
         int cantidadSugerida,
         @Schema(example = "BORRADOR")
         EstadoRecomendacion estado,
+        @Schema(example = "2026-11-12T15:30:00Z")
         Instant fechaCreacion) {
 }

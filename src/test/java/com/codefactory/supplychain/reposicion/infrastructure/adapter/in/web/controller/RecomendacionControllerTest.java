@@ -43,9 +43,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 /**
  * Criterios de HU-43 de extremo a extremo contra PostgreSQL real.
  * <p>
- * El nivel de reposición (HD-04) aún no está en {@code develop}: se usa un doble de
- * {@link ResolverNivelPort}. El scope {@code reposicion:planificar} lo siembra HD-03
- * (V30); mientras tanto la prueba lo inserta si falta.
+ * Usa un doble de {@link ResolverNivelPort} para fijar niveles y simular fallas por variante.
+ * Los mismos criterios contra el nivel real (V35) están en {@link RecomendacionNivelRealTest}.
+ * El scope {@code reposicion:planificar} lo siembra V34 (HD-03).
  *
  * Módulo: reposicion.
  */
@@ -80,9 +80,6 @@ class RecomendacionControllerTest {
 
     @BeforeEach
     void setUp() {
-        jdbc.update("""
-                INSERT INTO scope (codigo, descripcion, sensible) VALUES (?, 'Planificar reposición al CD', false)
-                ON CONFLICT (codigo) DO NOTHING""", PLANIFICAR);
         tiendaId = UUID.randomUUID();
         jdbc.update("INSERT INTO tienda (id, nombre, ubicacion) VALUES (?, ?, 'Medellín')",
                 tiendaId, "Tienda " + tiendaId);
