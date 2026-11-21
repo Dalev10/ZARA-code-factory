@@ -7,6 +7,7 @@ import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import jakarta.persistence.Version;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
@@ -17,7 +18,7 @@ import java.time.Instant;
 import java.util.UUID;
 
 /**
- * Entidad JPA de la tabla {@code recomendacion} (V1, ajustada en V32).
+ * Entidad JPA de la tabla {@code recomendacion} (V1, ajustada en V32 y V37).
  * Las columnas de aprobación ({@code cantidad_aprobada}, {@code aprobado_por},
  * {@code fecha_aprobacion}).
  *
@@ -54,4 +55,16 @@ public class RecomendacionEntity {
 
     @Column(name = "fecha_creacion", nullable = false)
     private Instant fechaCreacion;
+
+    @Column(name = "cantidad_aprobada")
+    private Integer cantidadAprobada;
+
+    @Column(name = "aprobado_por")
+    private UUID aprobadoPor;
+
+    @Column(name = "fecha_aprobacion")
+    private Instant fechaAprobacion;
+
+    @Version
+    private Long version;
 }
