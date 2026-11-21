@@ -26,4 +26,9 @@ public class ReservarStockCdAdapter implements ReservarStockCdPort {
         ResultadoReserva resultado = reservasInventario.reservar(cdId, tiendaId, varianteId, cantidad, ordenId);
         return new Reserva(resultado.asignada(), resultado.disponibleActual());
     }
+
+    @Override
+    public void liberar(UUID cdId, UUID tiendaId, UUID varianteId, int reservaCd, int entranteBodega, UUID ordenId) {
+        reservasInventario.liberar(cdId, tiendaId, varianteId, reservaCd, entranteBodega, ordenId);
+    }
 }

@@ -27,7 +27,10 @@ public class OrdenReabastecimientoWebMapper {
                 orden.getCantidadDespachadaAcumulada(),
                 orden.getEstado(),
                 orden.getFechaCreacion(),
-                orden.getIntentos().stream().map(OrdenReabastecimientoWebMapper::toResponse).toList());
+                orden.getIntentos().stream().map(OrdenReabastecimientoWebMapper::toResponse).toList(),
+                orden.getMotivoCierre(),
+                orden.getCerradaPor(),
+                orden.getFechaCierre());
     }
 
     private static IntentoCdResponse toResponse(IntentoCd intento) {

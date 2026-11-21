@@ -51,13 +51,17 @@ public final class OrdenReabastecimiento {
     private final Instant fechaCreacion;
     private final Long version;
     private final List<IntentoCd> intentos;
+    private String motivoCierre;
+    private UUID cerradaPor;
+    private Instant fechaCierre;
     /** Solo mientras corre el fallback; una orden reconstruida está cerrada. */
     private transient boolean enFallback;
 
     private OrdenReabastecimiento(UUID id, UUID recomendacionId, UUID tiendaId, UUID varianteId,
                                   UUID cdAsignadoId, String motivoAsignacion, int cantidadTotalSolicitada,
                                   int cantidadPendiente, int cantidadDespachadaAcumulada, EstadoOrden estado,
-                                  Instant fechaCreacion, Long version, List<IntentoCd> intentos) {
+                                  Instant fechaCreacion, Long version, List<IntentoCd> intentos,
+                                  Cierre cierre) {
         this.id = Objects.requireNonNull(id, "id");
         this.recomendacionId = recomendacionId;
         this.tiendaId = Objects.requireNonNull(tiendaId, "tiendaId");
@@ -71,6 +75,11 @@ public final class OrdenReabastecimiento {
         this.fechaCreacion = Objects.requireNonNull(fechaCreacion, "fechaCreacion");
         this.version = version;
         this.intentos = new ArrayList<>(intentos);
+        if (cierre != null) {
+            this.motivoCierre = cierre.motivo();
+            this.cerradaPor = cierre.usuarioId();
+            this.fechaCierre = cierre.fecha();
+        }
         if (cantidadTotalSolicitada <= 0) {
             throw new OrdenInvalidaException("La cantidad solicitada debe ser mayor que cero");
         }
@@ -80,7 +89,7 @@ public final class OrdenReabastecimiento {
     public static OrdenReabastecimiento iniciar(UUID recomendacionId, UUID tiendaId, UUID varianteId,
                                                int cantidad, Instant ahora) {
         var orden = new OrdenReabastecimiento(UUID.randomUUID(), recomendacionId, tiendaId, varianteId,
-                null, null, cantidad, cantidad, 0, EstadoOrden.GENERADA, ahora, null, List.of());
+                null, null, cantidad, cantidad, 0, EstadoOrden.GENERADA, ahora, null, List.of(), null);
         orden.enFallback = true;
         return orden;
     }
@@ -89,10 +98,50 @@ public final class OrdenReabastecimiento {
                                                     UUID cdAsignadoId, String motivoAsignacion,
                                                     int cantidadTotalSolicitada, int cantidadPendiente,
                                                     int cantidadDespachadaAcumulada, EstadoOrden estado,
-                                                    Instant fechaCreacion, Long version, List<IntentoCd> intentos) {
+                                                    Instant fechaCreacion, Long version, List<IntentoCd> intentos,
+                                                    Cierre cierre) {
         return new OrdenReabastecimiento(id, recomendacionId, tiendaId, varianteId, cdAsignadoId, motivoAsignacion,
                 cantidadTotalSolicitada, cantidadPendiente, cantidadDespachadaAcumulada, estado, fechaCreacion,
-                version, intentos);
+                version, intentos, cierre);
+    }
+
+    /** Quién terminó la orden antes de recibirla completa, cuándo y por qué (HU-53). */
+    public record Cierre(String motivo, UUID usuarioId, Instant fecha) {
+    }
+
+    /** Lo que hay que devolver al inventario al terminar la orden (HU-53). */
+    public record Liberacion(int reservaCd, int entranteBodega) {
+    }
+
+    /**
+     * REABIERTA → CERRADA aceptando el faltante. El pendiente se conserva como registro de lo que
+     * no llegó; lo que se libera es la reserva viva del CD, {@code max(S − ΣD, 0)}, y el
+     * {@code entrante} pendiente de la Bodega, P (sección 2.4).
+     */
+    public Liberacion cerrarConFaltante(String motivo, UUID usuarioId, Instant ahora) {
+        exigirEstado("cerrar con faltante", EstadoOrden.REABIERTA);
+        Liberacion liberacion = new Liberacion(reservaRestante(), cantidadPendiente);
+        terminar(EstadoOrden.CERRADA, motivo, usuarioId, ahora);
+        return liberacion;
+    }
+
+    /** GENERADA (sin CD) → CANCELADA. Sin CD nunca reservó ni sumó entrante: no hay nada que liberar. */
+    public void cancelar(String motivo, UUID usuarioId, Instant ahora) {
+        exigirEstado("cancelar", EstadoOrden.GENERADA);
+        terminar(EstadoOrden.CANCELADA, motivo, usuarioId, ahora);
+    }
+
+    private void terminar(EstadoOrden estadoFinal, String motivo, UUID usuarioId, Instant ahora) {
+        if (motivo == null || motivo.isBlank()) {
+            throw new OrdenInvalidaException("El motivo es obligatorio");
+        }
+        if (motivo.strip().length() > 500) {
+            throw new OrdenInvalidaException("El motivo no puede superar 500 caracteres");
+        }
+        this.estado = estadoFinal;
+        this.motivoCierre = motivo.strip();
+        this.cerradaPor = Objects.requireNonNull(usuarioId, "usuarioId");
+        this.fechaCierre = ahora;
     }
 
     /** El CD en la posición {@code ordenEvaluado} no cubre toda la cantidad: se descarta y se sigue. */

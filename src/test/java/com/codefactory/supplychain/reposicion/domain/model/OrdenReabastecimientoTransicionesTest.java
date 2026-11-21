@@ -22,7 +22,7 @@ class OrdenReabastecimientoTransicionesTest {
     private static OrdenReabastecimiento enEstado(EstadoOrden estado, int s, int pendiente, int despachada) {
         UUID cd = estado == EstadoOrden.GENERADA ? null : UUID.randomUUID();
         return OrdenReabastecimiento.reconstruir(UUID.randomUUID(), null, UUID.randomUUID(), UUID.randomUUID(),
-                cd, null, s, pendiente, despachada, estado, AHORA, 0L, List.of());
+                cd, null, s, pendiente, despachada, estado, AHORA, 0L, List.of(), null);
     }
 
     // ---------------------------------------------------------------- válidas
