@@ -73,6 +73,15 @@ public class OrdenReabastecimientoEntity {
     @Column(name = "fecha_creacion", nullable = false)
     private Instant fechaCreacion;
 
+    @Column(name = "motivo_cierre", length = 500)
+    private String motivoCierre;
+
+    @Column(name = "cerrada_por")
+    private UUID cerradaPor;
+
+    @Column(name = "fecha_cierre")
+    private Instant fechaCierre;
+
     @Version
     private Long version;
 

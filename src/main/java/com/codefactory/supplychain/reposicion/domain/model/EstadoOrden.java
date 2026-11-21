@@ -14,5 +14,7 @@ public enum EstadoOrden {
     RECIBIDA_TOTAL,
     RECIBIDA_PARCIAL,
     REABIERTA,
-    CERRADA
+    CERRADA,
+    /** GENERADA sin CD que se descartó (HU-53). */
+    CANCELADA
 }

@@ -27,5 +27,11 @@ public record OrdenReabastecimientoResponse(
         @Schema(example = "APROBADA")
         EstadoOrden estado,
         Instant fechaCreacion,
-        List<IntentoCdResponse> intentos) {
+        List<IntentoCdResponse> intentos,
+        @Schema(description = "Motivo con el que se cerró con faltante o se canceló; nulo en otro caso (HU-53)")
+        String motivoCierre,
+        @Schema(description = "Usuario que la cerró con faltante o la canceló (HU-53)")
+        UUID cerradaPor,
+        @Schema(description = "Cuándo se cerró con faltante o se canceló (HU-53)")
+        Instant fechaCierre) {
 }

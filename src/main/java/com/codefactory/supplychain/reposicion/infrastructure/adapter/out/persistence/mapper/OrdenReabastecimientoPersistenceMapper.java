@@ -29,6 +29,9 @@ public class OrdenReabastecimientoPersistenceMapper {
                 .cantidadDespachadaAcumulada(orden.getCantidadDespachadaAcumulada())
                 .estado(orden.getEstado())
                 .fechaCreacion(orden.getFechaCreacion())
+                .motivoCierre(orden.getMotivoCierre())
+                .cerradaPor(orden.getCerradaPor())
+                .fechaCierre(orden.getFechaCierre())
                 .version(orden.getVersion())
                 .intentos(new ArrayList<>(orden.getIntentos().stream().map(this::toEntity).toList()))
                 .build();
@@ -48,7 +51,10 @@ public class OrdenReabastecimientoPersistenceMapper {
                 entity.getEstado(),
                 entity.getFechaCreacion(),
                 entity.getVersion(),
-                entity.getIntentos().stream().map(this::toDomain).toList());
+                entity.getIntentos().stream().map(this::toDomain).toList(),
+                entity.getMotivoCierre() == null ? null
+                        : new OrdenReabastecimiento.Cierre(entity.getMotivoCierre(), entity.getCerradaPor(),
+                                entity.getFechaCierre()));
     }
 
     private IntentoCdEntity toEntity(IntentoCd intento) {
