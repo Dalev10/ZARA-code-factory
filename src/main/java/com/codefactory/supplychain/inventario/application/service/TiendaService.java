@@ -116,6 +116,11 @@ public class TiendaService implements TiendaUseCase, ConsultaTiendas, ConsultaNo
         return nodoRepositoryPort.buscarPorTiendaYTipo(tiendaId, TipoNodo.BODEGA_TIENDA).map(Nodo::getId);
     }
 
+    @Override
+    public Optional<UUID> buscarNodoCd(UUID cdId) {
+        return nodoRepositoryPort.buscarPorCdId(cdId).map(Nodo::getId);
+    }
+
     private static TiendaResumen resumir(Tienda tienda) {
         return new TiendaResumen(tienda.getId(), tienda.getNombre(), tienda.estaActiva());
     }
