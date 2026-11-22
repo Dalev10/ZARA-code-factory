@@ -160,8 +160,10 @@ public class VentaController {
     @PostMapping("/{id}/anular")
     @PreAuthorize("hasAuthority('ventas:anular')")
     @Operation(summary = "Anular una línea de venta",
-            description = "Marca la línea como ANULADA con el motivo y repone su cantidad al Almacén. Idempotente: "
-                    + "si ya estaba anulada, devuelve 200 sin reponer de nuevo. Scope: ventas:anular. HU-41.")
+            description = "Marca la línea como ANULADA con el motivo y repone su cantidad al Almacén con un "
+                    + "movimiento ANULACION_VENTA en el kardex. Si el Almacén estaba en 0 con una ventana de quiebre "
+                    + "abierta, la ventana se cierra con motivo REPOSICION. Idempotente: si ya estaba anulada, "
+                    + "devuelve 200 sin reponer de nuevo. Scope: ventas:anular. HU-41, HD-08.")
     @ApiResponse(responseCode = "200", description = "Línea anulada")
     @ApiResponse(responseCode = "400", description = "Motivo vacío o de más de 500 caracteres")
     @ApiResponse(responseCode = "404", description = "No existe o es de una tienda en la que el usuario no opera")
@@ -175,8 +177,9 @@ public class VentaController {
     @PostMapping("/transacciones/{transaccionId}/anular")
     @PreAuthorize("hasAuthority('ventas:anular')")
     @Operation(summary = "Anular una transacción completa",
-            description = "Anula y repone todas las líneas aún vigentes de la transacción, en una sola operación. "
-                    + "Idempotente. Scope: ventas:anular. HU-41.")
+            description = "Anula y repone todas las líneas aún vigentes de la transacción, en una sola operación, "
+                    + "con el mismo efecto en kardex y ventanas que anular una línea. Idempotente. "
+                    + "Scope: ventas:anular. HU-41, HD-08.")
     @ApiResponse(responseCode = "200", description = "Transacción anulada")
     @ApiResponse(responseCode = "400", description = "Motivo vacío o de más de 500 caracteres")
     @ApiResponse(responseCode = "404", description = "No existe o es de una tienda en la que el usuario no opera")

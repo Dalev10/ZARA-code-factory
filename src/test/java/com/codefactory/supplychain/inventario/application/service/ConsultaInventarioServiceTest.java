@@ -3,14 +3,18 @@ package com.codefactory.supplychain.inventario.application.service;
 import com.codefactory.supplychain.inventario.application.port.in.ConsultaKardexComando;
 import com.codefactory.supplychain.inventario.application.port.out.InventarioRepositoryPort;
 import com.codefactory.supplychain.inventario.application.port.out.MovimientoInventarioRepositoryPort;
+import com.codefactory.supplychain.inventario.application.port.out.VariantesCatalogoPort;
+import com.codefactory.supplychain.inventario.domain.model.Inventario;
 import com.codefactory.supplychain.inventario.domain.exception.NodoNoEncontradoException;
 import com.codefactory.supplychain.shared.security.UsuarioActual;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
@@ -29,6 +33,7 @@ class ConsultaInventarioServiceTest {
     private AccesoNodoInventario acceso;
     private InventarioRepositoryPort inventario;
     private MovimientoInventarioRepositoryPort movimientos;
+    private VariantesCatalogoPort variantesCatalogo;
     private ConsultaInventarioService servicio;
 
     private final UUID nodoId = UUID.randomUUID();
@@ -40,7 +45,8 @@ class ConsultaInventarioServiceTest {
         acceso = mock(AccesoNodoInventario.class);
         inventario = mock(InventarioRepositoryPort.class);
         movimientos = mock(MovimientoInventarioRepositoryPort.class);
-        servicio = new ConsultaInventarioService(acceso, inventario, movimientos);
+        variantesCatalogo = mock(VariantesCatalogoPort.class);
+        servicio = new ConsultaInventarioService(acceso, inventario, movimientos, variantesCatalogo);
     }
 
     @Test
@@ -54,11 +60,27 @@ class ConsultaInventarioServiceTest {
     }
 
     @Test
+    void stockDeUnNodoTraeElSkuDeCadaVarianteEnUnaSolaConsulta() {
+        UsuarioActual usuario = new UsuarioActual(UUID.randomUUID(), Set.of("inventario:consultar"), Set.of(tiendaId));
+        UUID otraVariante = UUID.randomUUID();
+        PageRequest pagina = PageRequest.of(0, 20);
+        when(inventario.buscarPorNodo(nodoId, pagina)).thenReturn(new PageImpl<>(
+                List.of(Inventario.crear(nodoId, varianteId), Inventario.crear(nodoId, otraVariante)), pagina, 42));
+        when(variantesCatalogo.skusPorId(Set.of(varianteId, otraVariante)))
+                .thenReturn(Map.of(varianteId, "SKU-1", otraVariante, "SKU-2"));
+
+        var resultado = servicio.stockDeNodo(nodoId, usuario, pagina);
+
+        assertThat(resultado.getContent()).extracting(e -> e.sku()).containsExactly("SKU-1", "SKU-2");
+        assertThat(resultado.getTotalElements()).isEqualTo(42);
+    }
+
+    @Test
     void stockDeVarianteSinTiendasNoConsultaNada() {
         UsuarioActual usuario = new UsuarioActual(UUID.randomUUID(), Set.of("inventario:consultar"), Set.of());
 
         assertThat(servicio.stockDeVariante(varianteId, usuario)).isEmpty();
-        verifyNoInteractions(inventario);
+        verifyNoInteractions(inventario, variantesCatalogo);
     }
 
     @Test

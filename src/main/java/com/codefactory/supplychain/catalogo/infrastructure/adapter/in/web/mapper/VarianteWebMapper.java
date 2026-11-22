@@ -1,6 +1,5 @@
 package com.codefactory.supplychain.catalogo.infrastructure.adapter.in.web.mapper;
 
-import java.util.UUID;
 import com.codefactory.supplychain.catalogo.domain.model.Template;
 import com.codefactory.supplychain.catalogo.domain.model.Variante;
 import com.codefactory.supplychain.catalogo.infrastructure.adapter.in.web.dto.VarianteResponse;
@@ -15,14 +14,14 @@ public class VarianteWebMapper {
 
     public VarianteResponse toResponse(Variante variante) {
         Template template = variante.getTemplate();
-        UUID templateId = template != null ? template.getId() : null;
-
         return new VarianteResponse(
                 variante.getId(),
                 variante.getSku(),
                 variante.getTalla(),
                 variante.getColor(),
-                templateId
+                template != null ? template.getId() : null,
+                template != null ? template.getNombre() : null,
+                template != null ? template.getPrecioBase() : null
         );
     }
 }

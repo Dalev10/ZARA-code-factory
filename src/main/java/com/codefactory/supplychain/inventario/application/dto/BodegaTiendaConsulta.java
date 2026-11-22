@@ -5,9 +5,11 @@ import com.codefactory.supplychain.inventario.domain.model.Nodo;
 import com.codefactory.supplychain.inventario.domain.model.Tienda;
 
 import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 
 /**
  * Módulo: inventario — Red de nodos (CD, Tienda/Almacén, Bodega_Tienda) e inventario polimórfico sobre ellos.
  */
-public record BodegaTiendaConsulta(Nodo nodo, Tienda tienda, List<StockResumen> inventario) {
+public record BodegaTiendaConsulta(Nodo nodo, Tienda tienda, List<StockResumen> inventario, Map<UUID, String> skus) {
 }

@@ -27,4 +27,16 @@ class VariantesCatalogoAdapterTest {
 
         assertThat(resultado).containsExactly(Map.entry("SKU-1", id));
     }
+
+    @Test
+    void traduceLasVariantesEncontradasAUnMapaIdSku() {
+        ConsultaVariantes consulta = mock(ConsultaVariantes.class);
+        UUID id = UUID.randomUUID();
+        UUID falta = UUID.randomUUID();
+        when(consulta.buscarPorIds(Set.of(id, falta)))
+                .thenReturn(List.of(new VarianteResumen(id, "SKU-1", UUID.randomUUID())));
+
+        assertThat(new VariantesCatalogoAdapter(consulta).skusPorId(Set.of(id, falta)))
+                .containsExactly(Map.entry(id, "SKU-1"));
+    }
 }

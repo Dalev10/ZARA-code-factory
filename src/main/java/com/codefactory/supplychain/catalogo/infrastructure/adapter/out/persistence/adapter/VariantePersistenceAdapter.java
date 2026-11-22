@@ -64,6 +64,19 @@ public class VariantePersistenceAdapter implements VarianteRepository {
     }
 
     @Override
+    public List<Variante> findByIdIn(Collection<UUID> ids) {
+        return varianteJpaRepository.findAllById(ids).stream()
+                .map(variantePersistenceMapper::toDomain)
+                .toList();
+    }
+
+    @Override
+    public Page<Variante> findBySkuContaining(String sku, Pageable pageable) {
+        return varianteJpaRepository.findBySkuContainingIgnoreCase(sku, pageable)
+                .map(variantePersistenceMapper::toDomain);
+    }
+
+    @Override
     public Page<Variante> findAll(Pageable pageable) {
         return varianteJpaRepository.findAll(pageable).map(variantePersistenceMapper::toDomain);
     }

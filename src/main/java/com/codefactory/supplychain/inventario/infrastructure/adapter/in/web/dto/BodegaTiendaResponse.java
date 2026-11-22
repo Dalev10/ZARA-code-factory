@@ -1,7 +1,6 @@
 package com.codefactory.supplychain.inventario.infrastructure.adapter.in.web.dto;
 
 import com.codefactory.supplychain.inventario.application.dto.BodegaTiendaConsulta;
-import com.codefactory.supplychain.inventario.domain.model.Nodo;
 import com.codefactory.supplychain.inventario.domain.model.Tienda;
 
 import java.util.List;
@@ -18,13 +17,10 @@ public record BodegaTiendaResponse(
         List<Existencia> inventario) {
 
     /** Existencias de una variante en la Bodega. */
-    public record Existencia(UUID varianteId, int aLaMano, int disponibleParaUso) {
+    public record Existencia(UUID varianteId, String sku, int aLaMano, int disponibleParaUso) {
     }
 
 
-    public static BodegaTiendaResponse from(Nodo nodo) {
-        return new BodegaTiendaResponse(nodo.getId(), nodo.getTiendaId(), null, null, List.of());
-    }
 
     public static BodegaTiendaResponse from(BodegaTiendaConsulta consulta) {
         Tienda tienda = consulta.tienda();
@@ -34,7 +30,7 @@ public record BodegaTiendaResponse(
                 tienda == null ? null : tienda.getNombre(),
                 tienda == null ? null : tienda.getUbicacion(),
                 consulta.inventario().stream()
-                        .map(s -> new Existencia(s.varianteId(), s.aLaMano(), s.disponibleParaUso()))
+                        .map(s -> new Existencia(s.varianteId(), consulta.skus().get(s.varianteId()), s.aLaMano(), s.disponibleParaUso()))
                         .toList());
     }
 }

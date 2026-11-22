@@ -72,6 +72,22 @@ class ConsultaVariantesServiceTest {
     }
 
     @Test
+    void buscarPorIdsDevuelveLosResumenesDeLasExistentes() {
+        Variante variante = new Variante("SKU-001", template, null, null);
+        UUID falta = UUID.randomUUID();
+        when(varianteRepository.findByIdIn(Set.of(variante.getId(), falta))).thenReturn(List.of(variante));
+
+        assertThat(servicio.buscarPorIds(Set.of(variante.getId(), falta)))
+                .containsExactly(new VarianteResumen(variante.getId(), "SKU-001", categoria.getId()));
+    }
+
+    @Test
+    void buscarPorIdsSinIdsNoConsultaElRepositorio() {
+        assertThat(servicio.buscarPorIds(Set.of())).isEmpty();
+        verify(varianteRepository, never()).findByIdIn(any());
+    }
+
+    @Test
     void buscarPorSkusSinSkusNoConsultaElRepositorio() {
         assertThat(servicio.buscarPorSkus(Set.of())).isEmpty();
         verify(varianteRepository, never()).findBySkuIn(any());

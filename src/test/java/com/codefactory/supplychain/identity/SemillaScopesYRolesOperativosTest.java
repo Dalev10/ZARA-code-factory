@@ -46,8 +46,9 @@ class SemillaScopesYRolesOperativosTest {
         assertThat(scopesDe("SUPERVISOR_TIENDA")).containsExactlyInAnyOrder(
                 "ventas:registrar", "ventas:consultar", "inventario:consultar", "ventas:forzar-sin-stock",
                 "ventas:anular", "inventario:administrar");
+        // V34 (HD-03) le suma despacho:operar.
         assertThat(scopesDe("OPERADOR_CD")).containsExactlyInAnyOrder(
-                "inventario-cd:administrar", "inventario:consultar");
+                "inventario-cd:administrar", "inventario:consultar", "despacho:operar");
     }
 
     @Test
@@ -55,7 +56,7 @@ class SemillaScopesYRolesOperativosTest {
         assertThat(scopesDe("ADMIN"))
                 .containsAll(SCOPES_SPRINT_2)
                 .contains("usuarios:administrar", "tiendas:administrar", "catalogo:administrar")
-                .hasSize(15);
+                .hasSize(19); // 15 hasta V14, más los 4 de V34
     }
 
     @Test

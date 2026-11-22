@@ -307,12 +307,180 @@ class InventarioTest {
                 .isInstanceOf(InventarioInvalidoException.class);
     }
 
+    @Test
+    void reservarSalidaSumaSalienteYBajaElDisponibleSinTocarALaMano() {
+        Inventario inventario = Inventario.reconstruir(UUID.randomUUID(), nodoId, varianteId, 10, 0, 0);
+
+        inventario.reservarSalida(4);
+
+        assertThat(inventario.getALaMano()).isEqualTo(10);
+        assertThat(inventario.getSaliente()).isEqualTo(4);
+        assertThat(inventario.getDisponible()).isEqualTo(6);
+        assertThat(inventario.getPronosticado()).isEqualTo(6);
+    }
+
+    @Test
+    void cubreComparaContraElDisponibleYNoContraALaMano() {
+        Inventario inventario = Inventario.reconstruir(UUID.randomUUID(), nodoId, varianteId, 10, 0, 7);
+
+        assertThat(inventario.cubre(3)).isTrue();
+        assertThat(inventario.cubre(4)).isFalse();
+    }
+
+    @Test
+    void reservarSalidaRechazaLoQueElDisponibleNoCubre() {
+        Inventario inventario = Inventario.reconstruir(UUID.randomUUID(), nodoId, varianteId, 10, 0, 7);
+
+        assertThatThrownBy(() -> inventario.reservarSalida(4))
+                .isInstanceOf(StockInsuficienteException.class);
+        assertThat(inventario.getSaliente()).isEqualTo(7);
+    }
+
+    @Test
+    void sumarEntranteSubeElPronosticadoSinTocarElDisponible() {
+        Inventario inventario = Inventario.reconstruir(UUID.randomUUID(), nodoId, varianteId, 2, 0, 0);
+
+        inventario.sumarEntrante(5);
+
+        assertThat(inventario.getEntrante()).isEqualTo(5);
+        assertThat(inventario.getDisponible()).isEqualTo(2);
+        assertThat(inventario.getPronosticado()).isEqualTo(7);
+    }
+
+    @Test
+    void liberarNuncaDejaSalienteNiEntranteNegativos() {
+        Inventario inventario = Inventario.reconstruir(UUID.randomUUID(), nodoId, varianteId, 10, 3, 4);
+
+        inventario.liberarSalida(10);
+        inventario.liberarEntrante(10);
+
+        assertThat(inventario.getSaliente()).isZero();
+        assertThat(inventario.getEntrante()).isZero();
+        assertThat(inventario.getDisponible()).isEqualTo(10);
+        assertThat(inventario.getPronosticado()).isEqualTo(10);
+    }
+
+    @Test
+    void liberarCeroNoCambiaNadaYLiberarNegativoSeRechaza() {
+        Inventario inventario = Inventario.reconstruir(UUID.randomUUID(), nodoId, varianteId, 10, 3, 4);
+
+        inventario.liberarSalida(0);
+        inventario.liberarEntrante(0);
+
+        assertThat(inventario.getSaliente()).isEqualTo(4);
+        assertThat(inventario.getEntrante()).isEqualTo(3);
+        assertThatThrownBy(() -> inventario.liberarSalida(-1)).isInstanceOf(InventarioInvalidoException.class);
+        assertThatThrownBy(() -> inventario.liberarEntrante(-1)).isInstanceOf(InventarioInvalidoException.class);
+    }
+
+    @Test
+    void reservarYSumarEntranteExigenCantidadPositiva() {
+        Inventario inventario = Inventario.reconstruir(UUID.randomUUID(), nodoId, varianteId, 10, 0, 0);
+
+        assertThatThrownBy(() -> inventario.reservarSalida(0)).isInstanceOf(InventarioInvalidoException.class);
+        assertThatThrownBy(() -> inventario.sumarEntrante(0)).isInstanceOf(InventarioInvalidoException.class);
+    }
+
+    @Test
+    void unAjusteSobreStockReservadoPuedeDejarElDisponibleNegativo() {
+        Inventario inventario = Inventario.reconstruir(UUID.randomUUID(), nodoId, varianteId, 10, 0, 8);
+
+        inventario.aplicarAjuste(-5, MotivoAjuste.CONTEO_FISICO, null, UUID.randomUUID());
+
+        assertThat(inventario.getALaMano()).isEqualTo(5);
+        assertThat(inventario.getDisponible()).isEqualTo(-3);
+        assertThat(inventario.cubre(1)).isFalse();
+    }
+
+    @Test
+    void despacharAbastecimientoDescuentaALaManoYLiberaLaReserva() {
+        Inventario inventario = Inventario.reconstruir(UUID.randomUUID(), nodoId, varianteId, 10, 0, 6);
+        UUID ciclo = UUID.randomUUID();
+
+        MovimientoInventario movimiento = inventario.despacharAbastecimiento(4, 4, ciclo);
+
+        assertThat(movimiento.tipo()).isEqualTo(TipoMovimientoInventario.DESPACHO);
+        assertThat(movimiento.cantidad()).isEqualTo(-4);
+        assertThat(movimiento.referenciaId()).isEqualTo(ciclo);
+        assertThat(inventario.getALaMano()).isEqualTo(6);
+        assertThat(inventario.getSaliente()).isEqualTo(2);
+        verificarInvariantes(inventario, movimiento);
+    }
+
+    @Test
+    void despacharTrasReaperturaDescuentaALaManoSinLiberarReserva() {
+        Inventario inventario = Inventario.reconstruir(UUID.randomUUID(), nodoId, varianteId, 5, 0, 0);
+
+        MovimientoInventario movimiento = inventario.despacharAbastecimiento(2, 0, UUID.randomUUID());
+
+        assertThat(inventario.getALaMano()).isEqualTo(3);
+        assertThat(inventario.getSaliente()).isZero();
+        verificarInvariantes(inventario, movimiento);
+    }
+
+    @Test
+    void despacharAbastecimientoNuncaDejaSalienteNegativo() {
+        Inventario inventario = Inventario.reconstruir(UUID.randomUUID(), nodoId, varianteId, 10, 0, 1);
+
+        inventario.despacharAbastecimiento(3, 3, UUID.randomUUID());
+
+        assertThat(inventario.getSaliente()).isZero();
+        assertThat(inventario.getDisponible()).isEqualTo(7);
+    }
+
+    @Test
+    void despacharAbastecimientoRechazaMasDeLoQueHayALaMano() {
+        Inventario inventario = Inventario.reconstruir(UUID.randomUUID(), nodoId, varianteId, 3, 0, 3);
+
+        assertThatThrownBy(() -> inventario.despacharAbastecimiento(4, 3, UUID.randomUUID()))
+                .isInstanceOf(StockInsuficienteException.class);
+        assertThat(inventario.getALaMano()).isEqualTo(3);
+        assertThat(inventario.getSaliente()).isEqualTo(3);
+    }
+
+    @Test
+    void despacharAbastecimientoValidaLasCantidades() {
+        Inventario inventario = Inventario.reconstruir(UUID.randomUUID(), nodoId, varianteId, 10, 0, 0);
+
+        assertThatThrownBy(() -> inventario.despacharAbastecimiento(0, 0, UUID.randomUUID()))
+                .isInstanceOf(InventarioInvalidoException.class);
+        assertThatThrownBy(() -> inventario.despacharAbastecimiento(1, -1, UUID.randomUUID()))
+                .isInstanceOf(InventarioInvalidoException.class);
+    }
+
+    @Test
+    void recibirAbastecimientoSumaALaManoYRestaElEntrante() {
+        Inventario inventario = Inventario.reconstruir(UUID.randomUUID(), nodoId, varianteId, 2, 6, 0);
+        UUID recepcion = UUID.randomUUID();
+
+        MovimientoInventario movimiento = inventario.recibirAbastecimiento(4, recepcion);
+
+        assertThat(movimiento.tipo()).isEqualTo(TipoMovimientoInventario.RECEPCION);
+        assertThat(movimiento.cantidad()).isEqualTo(4);
+        assertThat(movimiento.referenciaId()).isEqualTo(recepcion);
+        assertThat(inventario.getALaMano()).isEqualTo(6);
+        assertThat(inventario.getEntrante()).isEqualTo(2);
+        assertThat(inventario.getPronosticado()).isEqualTo(8);
+        verificarInvariantes(inventario, movimiento);
+    }
+
+    @Test
+    void recibirAbastecimientoNuncaDejaEntranteNegativo() {
+        Inventario inventario = Inventario.crear(nodoId, varianteId);
+
+        MovimientoInventario movimiento = inventario.recibirAbastecimiento(3, UUID.randomUUID());
+
+        assertThat(inventario.getEntrante()).isZero();
+        assertThat(inventario.getALaMano()).isEqualTo(3);
+        verificarInvariantes(inventario, movimiento);
+        assertThatThrownBy(() -> inventario.recibirAbastecimiento(0, UUID.randomUUID()))
+                .isInstanceOf(InventarioInvalidoException.class);
+    }
+
     private static void verificarInvariantes(Inventario inventario, MovimientoInventario movimiento) {
-        assertThat(inventario.getDisponible()).isEqualTo(inventario.getALaMano());
+        assertThat(inventario.getDisponible()).isEqualTo(inventario.getALaMano() - inventario.getSaliente());
         assertThat(inventario.getPronosticado()).isEqualTo(
                 inventario.getALaMano() + inventario.getEntrante() - inventario.getSaliente());
-        assertThat(inventario.getEntrante()).isZero();
-        assertThat(inventario.getSaliente()).isZero();
         assertThat(movimiento.saldoResultante()).isEqualTo(inventario.getALaMano());
     }
 }

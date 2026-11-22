@@ -146,6 +146,27 @@ class VentaControllerTest {
     }
 
     @Test
+    @DisplayName("""
+            Escenario: el traspaso cierra la ventana abierta por una venta que agota el Almacén
+              Dado un Almacén con 1 unidad, una Bodega con 10 y un umbral de mínimo 3 y objetivo 6
+              Cuando se vende la última unidad
+              Entonces el traspaso repone el Almacén y no queda ninguna ventana abierta""")
+    void ventaQueAgotaElAlmacenYSeReponeNoDejaVentanaAbierta() throws Exception {
+        inventario.cargar(almacenId, varianteId, 1, null);
+        inventario.cargar(bodegaId, varianteId, 10, null);
+        crearUmbral(3, 6);
+
+        vender(vendedor, UUID.randomUUID(), 1, false).andExpect(status().isCreated());
+
+        assertThat(aLaMano(almacenId)).isEqualTo(6);
+        assertThat(aLaMano(bodegaId)).isEqualTo(4);
+        assertThat(jdbc.queryForList("SELECT motivo_cierre FROM ventana_quiebre WHERE tienda_id = ? AND variante_id = ?",
+                String.class, tiendaId, varianteId)).containsExactly("REPOSICION");
+        assertThat(jdbc.queryForObject("SELECT count(*) FROM ventana_quiebre WHERE tienda_id = ? AND variante_id = ? AND fecha_fin IS NULL",
+                Integer.class, tiendaId, varianteId)).isZero();
+    }
+
+    @Test
     @DisplayName("Al desactivar la tienda, sus ventanas abiertas se cierran con TIENDA_DESACTIVADA (D-50)")
     void desactivarLaTiendaCierraSusVentanas() throws Exception {
         inventario.cargar(almacenId, varianteId, 1, null);
@@ -265,6 +286,30 @@ class VentaControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.lineas[0].motivoAnulacion").value("Error de digitación"));
         assertThat(aLaMano(almacenId)).isEqualTo(5);
+    }
+
+    @Test
+    @DisplayName("""
+            Escenario: anular la venta que agotó el Almacén repone, deja kardex y cierra la ventana (HD-08)
+              Dado un Almacén con 1 unidad, sin Bodega ni umbral
+              Y una venta de esa unidad que abre una ventana de quiebre
+              Cuando el supervisor anula la venta
+              Entonces el Almacén vuelve a 1 con un movimiento ANULACION_VENTA en el kardex
+              Y la ventana se cierra con REPOSICION (D-99)""")
+    void anularLaVentaQueAgotoElAlmacenCierraLaVentana() throws Exception {
+        inventario.cargar(almacenId, varianteId, 1, null);
+        String ventaId = idDeLinea(vender(vendedor, UUID.randomUUID(), 1, false));
+        assertThat(jdbc.queryForObject("SELECT count(*) FROM ventana_quiebre WHERE tienda_id = ? AND variante_id = ? AND fecha_fin IS NULL",
+                Integer.class, tiendaId, varianteId)).isEqualTo(1);
+
+        anular("/api/v1/ventas/" + ventaId + "/anular", usuarios.conRol("SUPERVISOR_TIENDA", tiendaId), "Devolución")
+                .andExpect(status().isOk());
+
+        assertThat(aLaMano(almacenId)).isEqualTo(1);
+        assertThat(jdbc.queryForList("SELECT tipo FROM movimiento_inventario WHERE nodo_id = ? AND variante_id = ? ORDER BY ocurrido_en",
+                String.class, almacenId, varianteId)).endsWith("VENTA", "ANULACION_VENTA");
+        assertThat(jdbc.queryForList("SELECT motivo_cierre FROM ventana_quiebre WHERE tienda_id = ? AND variante_id = ?",
+                String.class, tiendaId, varianteId)).containsExactly("REPOSICION");
     }
 
     @Test

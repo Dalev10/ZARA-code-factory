@@ -4,6 +4,7 @@ import com.codefactory.supplychain.ventas.application.port.in.GestionarVentanasQ
 import com.codefactory.supplychain.ventas.application.port.in.GestionarVentanasQuiebreUseCase.ExistenciasCambiadas;
 import com.codefactory.supplychain.inventario.api.ExistenciasActualizadas;
 import com.codefactory.supplychain.inventario.api.TipoNodoInventario;
+import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -29,6 +30,7 @@ public class ExistenciasActualizadasListener {
 
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     @Transactional(propagation = Propagation.REQUIRES_NEW)
+    @Order(10)
     public void alActualizarExistencias(ExistenciasActualizadas evento) {
         UUID tiendaId = evento.tipoNodo() == TipoNodoInventario.ALMACEN ? evento.tiendaId() : null;
         ventanas.alCambiarExistencias(new ExistenciasCambiadas(tiendaId, evento.varianteId(), evento.forzado(),

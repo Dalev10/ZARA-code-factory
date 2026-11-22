@@ -1,6 +1,7 @@
 package com.codefactory.supplychain.catalogo.infrastructure.adapter.in.web.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.UUID;
@@ -23,6 +24,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
@@ -62,10 +64,15 @@ public class VarianteController {
     }
 
     @GetMapping
-    @Operation(summary = "Listar variantes", description = "Paginado. FEAT-05.")
+    @Operation(summary = "Listar variantes", description = "Paginado. Con `sku`, solo las variantes cuyo SKU "
+            + "contiene ese texto, sin distinguir mayúsculas; para el SKU exacto, GET /variantes/sku/{sku}. "
+            + "FEAT-05, HD-07.")
     @ApiResponse(responseCode = "200", description = "Página de variantes")
-    public ResponseEntity<Page<VarianteResponse>> listar(@ParameterObject Pageable pageable) {
-        return ResponseEntity.ok(varianteUseCase.listar(pageable).map(varianteWebMapper::toResponse));
+    public ResponseEntity<Page<VarianteResponse>> listar(
+            @Parameter(description = "Texto que debe contener el SKU", example = "CAM-OXF")
+            @RequestParam(required = false) String sku,
+            @ParameterObject Pageable pageable) {
+        return ResponseEntity.ok(varianteUseCase.listar(sku, pageable).map(varianteWebMapper::toResponse));
     }
 
     @GetMapping("/{id}")

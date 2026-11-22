@@ -123,5 +123,6 @@ extienden el esquema de negocio a medida que se desarrollan las features.
   `usuarios.conScopes(Set.of("ventas:anular"))` devuelven el usuario y su token
   (`bearer()`), sin copiar en cada test el armado de usuario, rol y login.
 - Los roles y scopes sembrados por las migraciones (`ADMIN`, `VENDEDOR`,
-  `SUPERVISOR_TIENDA`, `OPERADOR_CD` y sus scopes) son nombres reservados: no
-  usarlos como datos de prueba nuevos.
+  `SUPERVISOR_TIENDA`, `OPERADOR_CD`, `PLANIFICADOR_ABASTECIMIENTO`,
+  `COORDINADOR_TRANSPORTE`, `ENCARGADO_BODEGA` y sus scopes) son nombres
+  reservados: no usarlos como datos de prueba nuevos.

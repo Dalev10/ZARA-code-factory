@@ -1,5 +1,6 @@
 package com.codefactory.supplychain.catalogo.infrastructure.adapter.in.web.dto;
 
+import java.math.BigDecimal;
 import java.util.UUID;
 
 /**
@@ -10,6 +11,8 @@ public record VarianteResponse(
         String sku,
         String talla,
         String color,
-        UUID templateId
+        UUID templateId,
+        String templateNombre,
+        BigDecimal precioBase
 ) {
 }

@@ -84,6 +84,24 @@ public class InventarioService {
         ejecutar(nodoDestinoId, varianteId, inventario -> inventario.recibirTraspaso(cantidad, traspasoId));
     }
 
+    /** Salida física del CD por un despacho (HU-46): descuenta a_la_mano y libera reserva. */
+    @Transactional
+    public MovimientoInventario despacharAbastecimiento(
+            UUID nodoId,
+            UUID varianteId,
+            int cantidadQueSale,
+            int reservaALiberar,
+            UUID cicloDespachoId) {
+        return ejecutar(nodoId, varianteId,
+                inventario -> inventario.despacharAbastecimiento(cantidadQueSale, reservaALiberar, cicloDespachoId));
+    }
+
+    /** Entrada en la Bodega_Tienda por una recepción (HU-49); crea la fila si falta (D-104). */
+    @Transactional
+    public MovimientoInventario recibirAbastecimiento(UUID nodoId, UUID varianteId, int cantidad, UUID recepcionId) {
+        return ejecutar(nodoId, varianteId, inventario -> inventario.recibirAbastecimiento(cantidad, recepcionId));
+    }
+
     private MovimientoInventario ejecutar(
             UUID nodoId,
             UUID varianteId,

@@ -4,6 +4,7 @@ import com.codefactory.supplychain.inventario.api.ExistenciasActualizadas;
 import com.codefactory.supplychain.inventario.api.TipoMovimientoKardex;
 import com.codefactory.supplychain.inventario.api.TipoNodoInventario;
 import com.codefactory.supplychain.reposicion.application.port.in.TraspasoAutomaticoUseCase;
+import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -38,6 +39,7 @@ public class ExistenciasActualizadasListener {
 
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     @Transactional(propagation = Propagation.REQUIRES_NEW)
+    @Order(20)
     public void onExistenciasActualizadas(ExistenciasActualizadas evento) {
         if (evento.tipoMovimiento() == TipoMovimientoKardex.TRASPASO_SALIDA
                 || evento.tipoMovimiento() == TipoMovimientoKardex.TRASPASO_ENTRADA) {
