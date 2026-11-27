@@ -9,8 +9,8 @@ import jakarta.validation.constraints.Size;
 import java.math.BigDecimal;
 
 /**
- * DTO de entrada para crear o modificar un Template a través de la capa
- * REST.
+ * DTO de entrada para crear un Template a través de la capa REST; para
+ * modificarlo se usa {@link TemplateModificacionRequest}.
  * <p>
  * Los tamaños máximos de {@code nombre} (200), {@code temporada} (50) y
  * {@code proveedor} (150) son compatibles con las columnas

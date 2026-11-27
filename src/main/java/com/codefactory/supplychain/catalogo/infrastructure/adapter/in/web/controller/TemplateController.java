@@ -6,6 +6,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.UUID;
 import com.codefactory.supplychain.catalogo.application.port.in.TemplateUseCase;
 import com.codefactory.supplychain.catalogo.domain.model.Template;
+import com.codefactory.supplychain.catalogo.infrastructure.adapter.in.web.dto.TemplateModificacionRequest;
 import com.codefactory.supplychain.catalogo.infrastructure.adapter.in.web.dto.TemplateRequest;
 import com.codefactory.supplychain.catalogo.infrastructure.adapter.in.web.dto.TemplateResponse;
 import com.codefactory.supplychain.catalogo.infrastructure.adapter.in.web.mapper.TemplateWebMapper;
@@ -86,12 +87,12 @@ public class TemplateController {
 
     @PutMapping("/{id}")
     @Operation(summary = "Modificar un template",
-            description = "Cambia nombre, temporada, proveedor y precio base. El cuerpo exige categoriaId, pero "
-                    + "la categoría del template no cambia. FEAT-05.")
+            description = "Cambia nombre, temporada, proveedor y precio base. La categoría de un template no "
+                    + "cambia: si el cuerpo trae categoriaId, se ignora. FEAT-05.")
     @ApiResponse(responseCode = "200", description = "Template modificado")
     @ApiResponse(responseCode = "404", description = "Template inexistente")
     public ResponseEntity<TemplateResponse> modificar(@PathVariable UUID id,
-                                                        @Valid @RequestBody TemplateRequest request) {
+                                                        @Valid @RequestBody TemplateModificacionRequest request) {
         Template template = templateUseCase.modificar(
                 id,
                 request.nombre(),

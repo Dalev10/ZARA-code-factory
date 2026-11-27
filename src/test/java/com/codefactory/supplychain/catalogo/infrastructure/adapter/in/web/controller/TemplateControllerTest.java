@@ -203,6 +203,30 @@ class TemplateControllerTest {
     }
 
     @Test
+    void modificarSinCategoriaConservaLaCategoriaDelTemplate() throws Exception {
+        String token = loguearComoAdmin("usuario-modifica-sin-categoria@ejemplo.com");
+        String categoriaId = crearCategoria(token, "Categoria Que No Cambia");
+        MvcResult creado = mockMvc.perform(post("/api/v1/templates")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"nombre": "Template Sin Categoria En PUT", "categoriaId": "%s"}
+                                """.formatted(categoriaId)))
+                .andExpect(status().isCreated())
+                .andReturn();
+        String id = new ObjectMapper().readTree(creado.getResponse().getContentAsString()).get("id").asText();
+
+        mockMvc.perform(put("/api/v1/templates/" + id)
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"nombre": "Template Renombrado Sin Categoria"}
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.categoriaId").value(categoriaId));
+    }
+
+    @Test
     void obtenerUnTemplateInexistenteDevuelve404() throws Exception {
         String token = loguearComoAdmin("usuario-template-404@ejemplo.com");
 
