@@ -19,7 +19,7 @@ las diez categorías de la edición 2025.
 | A03 Software Supply Chain Failures | Dependabot, CodeQL, SonarCloud, Actions por SHA | H-06 | 🟢 Corregido |
 | A04 Cryptographic Failures | BCrypt, AES-GCM, JWT con clave validada, tokens con hash | H-11 | ⚪ Falso positivo |
 | A05 Injection | JPA parametrizado, Bean Validation, entradas acotadas | H-12 | ⚪ Informativo |
-| A06 Insecure Design | Bloqueo progresivo, idempotencia, guardas de negocio | H-08 | 🟢 Corregido |
+| A06 Insecure Design | Bloqueo progresivo, idempotencia, guardas de negocio | H-08 | 🟡 Pendiente |
 | A07 Authentication Failures | Política de contraseña, MFA, rotación de refresh, respuesta uniforme | H-01, H-03, H-10 | 🟢 H-01 corregido · 🟡 H-03 pendiente · ⚪ H-10 aceptado |
 | A08 Software or Data Integrity Failures | Checksums de Flyway, despliegue solo desde el pipeline | — | 🟢 Sin hallazgos |
 | A09 Security Logging and Alerting Failures | Logger `seguridad` para autenticación | H-05 | 🟡 Parcial |
@@ -191,16 +191,16 @@ cuesta del orden de 65 000 pasos, sin riesgo de denegación de servicio.
   (`UsuarioService.java:74`).
 - El inventario nunca queda negativo; los ajustes exigen un motivo de una lista cerrada.
 
-**H-08 · El listado de traspasos de una tienda no estaba paginado** · Baja · 🟢 Corregido
+**H-08 · El listado de traspasos de una tienda no está paginado** · Baja · 🟡 90 días
 
 `GET /api/v1/tiendas/{tiendaId}/traspasos-internos` (`TraspasoInternoController.java:74`)
 devuelve todos los traspasos de la tienda. Crecen con cada reposición automática, así que
 la respuesta y la memoria crecen sin límite. Los otros siete listados sin paginar (usuarios,
 roles, scopes y sus asignaciones, y prioridad de CD) son listas acotadas por naturaleza.
 
-*Corrección*: se pagina con `Pageable` como el resto de los listados (20 por defecto, el más
-reciente primero). Pruebas: `TraspasoInternoPersistenceAdapterTest` y
-`TraspasoInternoControllerTest`.
+*Remediación*: paginar con `Pageable`, como el resto de los listados. Cambia el contrato
+(la respuesta pasa de una lista a una página), así que se aplaza hasta coordinarlo con el
+frontend.
 
 ---
 
@@ -328,7 +328,7 @@ desaparece.
 | H-03 | Sin límite de intentos por IP | A07 | Media | 🟡 Pendiente | 30 días |
 | H-05 | Registro de eventos de seguridad incompleto | A09 | Media | 🟡 Parcial | 30 días |
 | H-04 | CSRF en refresh y logout por cookie `SameSite=None` | A01 | Baja | 🟡 Pendiente | 90 días |
-| H-08 | Traspasos de una tienda sin paginación | A06 | Baja | 🟢 Corregido | — |
+| H-08 | Traspasos de una tienda sin paginación | A06 | Baja | 🟡 Pendiente | 90 días |
 | H-09 | Errores 500 fuera del contrato `ErrorResponse` | A10 | Baja | 🟢 Corregido | — |
 | H-13 | Posible NPE en `VarianteWebMapper` (Sonar S2259) | A10 | Baja | 🟢 Corregido | — |
 | H-06 | jjwt desactualizado y Actions por tag | A03 | Baja | 🟢 Corregido | — |
@@ -337,7 +337,7 @@ desaparece.
 | H-11 | SHA-1 en Have I Been Pwned (Sonar S4790) | A04 | Informativa | ⚪ Falso positivo | — |
 | H-12 | Expresión regular del email (Sonar S8786) | A05 | Informativa | ⚪ Sin acción | — |
 
-De 13 hallazgos, 6 están corregidos (entre ellos el único crítico y el único alto), 1 está
-corregido en parte y 2 tienen remediación propuesta con plazo. Los otros 4 son decisiones
+De 13 hallazgos, 5 están corregidos (entre ellos el único crítico y el único alto), 1 está
+corregido en parte y 3 tienen remediación propuesta con plazo. Los otros 4 son decisiones
 documentadas: un riesgo aceptado, un falso positivo, uno informativo sin acción y un
 comportamiento aceptado (H-10).
