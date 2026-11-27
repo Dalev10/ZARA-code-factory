@@ -22,6 +22,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.method.HandlerMethod;
 
 import java.util.Arrays;
+import java.util.List;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 /**
  * Contrato OpenAPI de la API, publicado en /v3/api-docs y Swagger UI (también en producción).
@@ -38,6 +41,7 @@ public class OpenApiConfig {
 
     private static final String ESQUEMA_BEARER = "bearerAuth";
     private static final String ESQUEMA_ERROR = "ErrorResponse";
+    private static final Pattern ENTRE_COMILLAS = Pattern.compile("'([^']+)'");
 
     private static final String DESCRIPCION = """
             Sistema de planificación de cadena de suministro retail: catálogo, red de tiendas y \
@@ -49,7 +53,7 @@ public class OpenApiConfig {
             devuelve un token de desafío que se completa en `POST /api/v1/auth/login/mfa`. Para \
             probar en esta página: hacer login, copiar el `accessToken` y pegarlo en **Authorize**.
 
-            **Autorización.** Cada operación exige un scope (se indica en su descripción). Las \
+            **Autorización.** Cada operación exige un scope, que se indica en su respuesta 403. Las \
             operaciones sobre una tienda exigen además que el usuario pueda operar en ella; si \
             no puede, el recurso se trata como inexistente (404).
 
@@ -97,8 +101,10 @@ public class OpenApiConfig {
             if (!publico) {
                 agregarError(operation, "401", "No autenticado: sin token, token inválido o vencido, o usuario no activo");
             }
-            if (exigeScope(handlerMethod)) {
-                agregarError(operation, "403", "El usuario no tiene el scope que exige la operación");
+            List<String> scopes = scopesExigidos(handlerMethod);
+            if (!scopes.isEmpty()) {
+                agregarError(operation, "403", "El usuario no tiene el scope que exige la operación: "
+                        + scopes.stream().map(scope -> "`" + scope + "`").collect(Collectors.joining(" o ")));
             }
             if (recibeCuerpo(handlerMethod)) {
                 agregarError(operation, "400", "Cuerpo ilegible o con campos que no cumplen las validaciones");
@@ -114,9 +120,17 @@ public class OpenApiConfig {
         };
     }
 
-    private static boolean exigeScope(HandlerMethod handlerMethod) {
-        return AnnotatedElementUtils.hasAnnotation(handlerMethod.getMethod(), PreAuthorize.class)
-                || AnnotatedElementUtils.hasAnnotation(handlerMethod.getBeanType(), PreAuthorize.class);
+    /**
+     * Los scopes del {@code @PreAuthorize} del método o, si no tiene, del controlador; así el
+     * contrato no puede desalinearse del permiso que realmente se exige.
+     */
+    static List<String> scopesExigidos(HandlerMethod handlerMethod) {
+        PreAuthorize regla = AnnotatedElementUtils.findMergedAnnotation(handlerMethod.getMethod(), PreAuthorize.class);
+        if (regla == null) {
+            regla = AnnotatedElementUtils.findMergedAnnotation(handlerMethod.getBeanType(), PreAuthorize.class);
+        }
+        return regla == null ? List.of() : ENTRE_COMILLAS.matcher(regla.value()).results()
+                .map(coincidencia -> coincidencia.group(1)).toList();
     }
 
     private static boolean recibeCuerpo(HandlerMethod handlerMethod) {
