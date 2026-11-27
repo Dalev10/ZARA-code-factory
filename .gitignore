@@ -25,3 +25,6 @@ Thumbs.db
 docs/*.pdf
 docs/*.drawio
 demo.json
+
+# Caché de Python de tools/
+__pycache__/
