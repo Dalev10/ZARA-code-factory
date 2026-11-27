@@ -1,10 +1,14 @@
 package com.codefactory.supplychain.shared.exception;
 
 import com.codefactory.supplychain.shared.dto.ErrorResponse;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.TypeMismatchException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.InvalidDataAccessApiUsageException;
 import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.access.AccessDeniedException;
@@ -23,6 +27,8 @@ import java.util.stream.Collectors;
  */
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+    private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
     @ExceptionHandler(ReglaDeNegocioException.class)
     public ResponseEntity<ErrorResponse> handleReglaDeNegocio(ReglaDeNegocioException ex) {
@@ -103,5 +109,39 @@ public class GlobalExceptionHandler {
                 .map(error -> error.getField() + ": " + error.getDefaultMessage())
                 .collect(Collectors.joining("; "));
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ErrorResponse(mensaje));
+    }
+
+    /**
+     * Lo que ningún manejador anterior previó (H-09). Las excepciones propias de Spring MVC
+     * (ruta inexistente, método no permitido, parámetro faltante…) traen su estado y lo
+     * conservan; el resto es un error interno: se registra con su traza y el cliente solo
+     * recibe un mensaje genérico, sin detalles de la implementación.
+     */
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<ErrorResponse> handleNoPrevisto(Exception ex) {
+        if (ex instanceof org.springframework.web.ErrorResponse deSpring) {
+            return respuestaPara(deSpring.getStatusCode());
+        }
+        if (ex instanceof TypeMismatchException) {
+            return respuestaPara(HttpStatus.BAD_REQUEST);
+        }
+        log.error("Error no controlado", ex);
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(new ErrorResponse("Ocurrió un error interno; intente de nuevo más tarde"));
+    }
+
+    private static ResponseEntity<ErrorResponse> respuestaPara(HttpStatusCode estado) {
+        // 406: el cliente no acepta JSON, así que cualquier cuerpo fallaría al escribirse.
+        if (estado.value() == HttpStatus.NOT_ACCEPTABLE.value()) {
+            return ResponseEntity.status(estado).build();
+        }
+        String mensaje = switch (estado.value()) {
+            case 400 -> "La solicitud tiene parámetros faltantes o con un formato inválido";
+            case 404 -> "El recurso solicitado no existe";
+            case 405 -> "Este recurso no admite el método HTTP usado";
+            case 415 -> "El tipo de contenido de la solicitud no es compatible; use application/json";
+            default -> "No se pudo procesar la solicitud";
+        };
+        return ResponseEntity.status(estado).body(new ErrorResponse(mensaje));
     }
 }
