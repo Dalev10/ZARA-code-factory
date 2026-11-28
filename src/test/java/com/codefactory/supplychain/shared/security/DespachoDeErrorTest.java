@@ -49,6 +49,18 @@ class DespachoDeErrorTest {
     }
 
     @Test
+    void lasRespuestasDeErrorDeSpringUsanElCuerpoErrorResponse() throws Exception {
+        HttpRequest request = HttpRequest.newBuilder(URI.create("http://localhost:" + puerto + "/api/v1/ventas/no-es-uuid"))
+                .header("Authorization", usuarios.conRol("ADMIN").bearer()).GET().build();
+        try (HttpClient cliente = HttpClient.newHttpClient()) {
+            HttpResponse<String> respuesta = cliente.send(request, HttpResponse.BodyHandlers.ofString());
+
+            assertThat(respuesta.statusCode()).isEqualTo(400);
+            assertThat(respuesta.body()).contains("\"mensaje\"");
+        }
+    }
+
+    @Test
     void sinTokenSigueRespondiendo401() throws Exception {
         assertThat(enviar("GET", "/api/v1/ruta-inexistente", null)).isEqualTo(401);
     }

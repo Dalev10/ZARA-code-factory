@@ -23,7 +23,7 @@ las diez categorías de la edición 2025.
 | A07 Authentication Failures | Política de contraseña, MFA, rotación de refresh, respuesta uniforme | H-01, H-03, H-10 | 🟢 H-01 corregido · 🟡 H-03 pendiente · ⚪ H-10 aceptado |
 | A08 Software or Data Integrity Failures | Checksums de Flyway, despliegue solo desde el pipeline | — | 🟢 Sin hallazgos |
 | A09 Security Logging and Alerting Failures | Logger `seguridad` para autenticación | H-05 | 🟡 Parcial |
-| A10 Mishandling of Exceptional Conditions | Manejador global con cuerpo uniforme | H-09, H-13 | 🟡 Pendiente |
+| A10 Mishandling of Exceptional Conditions | Manejador global con cuerpo uniforme, también para lo no previsto | H-09, H-13 | 🟢 Corregido |
 
 **Severidad y plazo de corrección**
 
@@ -108,8 +108,8 @@ entregable pide compartir la documentación desplegada, y además:
 - toda operación sigue exigiendo JWT y scope;
 - la API no depende de que sus rutas sean secretas.
 
-Revisión: al cerrar el curso, restringirlo con `springdoc.api-docs.enabled=false` en el
-perfil de producción.
+Revisión: al cerrar el curso, apagarlo con la variable `SWAGGER_ENABLED=false` en Render;
+la bandera ya existe y no requiere desplegar código.
 
 ---
 
@@ -198,7 +198,9 @@ devuelve todos los traspasos de la tienda. Crecen con cada reposición automáti
 la respuesta y la memoria crecen sin límite. Los otros siete listados sin paginar (usuarios,
 roles, scopes y sus asignaciones, y prioridad de CD) son listas acotadas por naturaleza.
 
-*Remediación*: paginar con `Pageable`, como el resto de los listados.
+*Remediación*: paginar con `Pageable`, como el resto de los listados. Cambia el contrato
+(la respuesta pasa de una lista a una página), así que se aplaza hasta coordinarlo con el
+frontend.
 
 ---
 
@@ -297,19 +299,23 @@ Desde el commit `be5c3c2` se registra la autenticación. Falta:
 - Las violaciones de restricciones de la base responden 409, sin filtrar el SQL.
 - En la evaluación masiva, la falla de una variante se registra y no detiene al resto.
 
-**H-09 · Los errores no previstos no usan el cuerpo de error de la API** · Baja · 🟡 90 días
+**H-09 · Los errores no previstos no usaban el cuerpo de error de la API** · Baja · 🟢 Corregido
 
 Una excepción sin manejador cae en la respuesta por defecto de Spring Boot: 500 con
 `timestamp`, `status`, `error` y `path`. No filtra la traza, pero no sigue el contrato
 `ErrorResponse`, y el error no queda registrado con el contexto de la petición.
 
-*Remediación*: un `@ExceptionHandler(Exception.class)` que registre el error y responda 500
-con un `ErrorResponse` genérico.
+*Corrección*: `GlobalExceptionHandler.handleNoPrevisto` registra el error con su traza y
+responde 500 con un `ErrorResponse` genérico. Las excepciones propias de Spring MVC
+(ruta inexistente, método no permitido, parámetro con formato inválido) conservan su estado
+y también usan `ErrorResponse`. Pruebas: `GlobalExceptionHandlerTest` y `DespachoDeErrorTest`.
 
-**H-13 · SonarCloud S2259: posible `NullPointerException` en `VarianteWebMapper`** · Baja · 🟡 90 días
+**H-13 · SonarCloud S2259: posible `NullPointerException` en `VarianteWebMapper`** · Baja · 🟢 Corregido
 
-`VarianteWebMapper.java:17` desreferencia la variante sin comprobar `null`. Hoy siempre
-llega una variante válida, pero conviene validarla o anotar el contrato.
+SonarCloud señalaba que la variante podía llegar `null` al mapper web. El origen era
+`VariantePersistenceMapper`, que convertía `null` en `null`; ningún llamador le pasa `null`
+(`Optional.map` y `save` de JPA nunca lo hacen), así que se eliminó esa rama y el camino
+desaparece.
 
 ---
 
@@ -323,15 +329,15 @@ llega una variante válida, pero conviene validarla o anotar el contrato.
 | H-05 | Registro de eventos de seguridad incompleto | A09 | Media | 🟡 Parcial | 30 días |
 | H-04 | CSRF en refresh y logout por cookie `SameSite=None` | A01 | Baja | 🟡 Pendiente | 90 días |
 | H-08 | Traspasos de una tienda sin paginación | A06 | Baja | 🟡 Pendiente | 90 días |
-| H-09 | Errores 500 fuera del contrato `ErrorResponse` | A10 | Baja | 🟡 Pendiente | 90 días |
-| H-13 | Posible NPE en `VarianteWebMapper` (Sonar S2259) | A10 | Baja | 🟡 Pendiente | 90 días |
+| H-09 | Errores 500 fuera del contrato `ErrorResponse` | A10 | Baja | 🟢 Corregido | — |
+| H-13 | Posible NPE en `VarianteWebMapper` (Sonar S2259) | A10 | Baja | 🟢 Corregido | — |
 | H-06 | jjwt desactualizado y Actions por tag | A03 | Baja | 🟢 Corregido | — |
 | H-10 | Verificación contra filtraciones fail-open | A07 | Baja | ⚪ Aceptado | — |
 | H-07 | Swagger público en producción | A02 | Informativa | ⚪ Riesgo aceptado | — |
 | H-11 | SHA-1 en Have I Been Pwned (Sonar S4790) | A04 | Informativa | ⚪ Falso positivo | — |
 | H-12 | Expresión regular del email (Sonar S8786) | A05 | Informativa | ⚪ Sin acción | — |
 
-De 13 hallazgos, 3 están corregidos (entre ellos el único crítico y el único alto), 1 está
-corregido en parte y 5 tienen remediación propuesta con plazo. Los otros 4 son decisiones
+De 13 hallazgos, 5 están corregidos (entre ellos el único crítico y el único alto), 1 está
+corregido en parte y 3 tienen remediación propuesta con plazo. Los otros 4 son decisiones
 documentadas: un riesgo aceptado, un falso positivo, uno informativo sin acción y un
 comportamiento aceptado (H-10).

@@ -23,9 +23,6 @@ public class VariantePersistenceMapper {
     }
 
     public VarianteEntity toEntity(Variante variante) {
-        if (variante == null) {
-            return null;
-        }
         TemplateEntity templateEntity = templatePersistenceMapper.toEntity(variante.getTemplate());
         return new VarianteEntity(
                 variante.getId(),
@@ -37,9 +34,6 @@ public class VariantePersistenceMapper {
     }
 
     public Variante toDomain(VarianteEntity entity) {
-        if (entity == null) {
-            return null;
-        }
         Template template = templatePersistenceMapper.toDomain(entity.getTemplate());
         return new Variante(entity.getId(), entity.getSku(), template, entity.getTalla(), entity.getColor());
     }

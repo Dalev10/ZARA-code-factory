@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.Matchers.endsWith;
 import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.hasItems;
 import static org.hamcrest.Matchers.not;
@@ -59,6 +60,16 @@ class OpenApiConfigTest {
                 .andExpect(jsonPath(respuestas + "['400'].content['application/json'].schema['$ref']").value(REF_ERROR))
                 .andExpect(jsonPath(respuestas + "['401'].content['application/json'].schema['$ref']").value(REF_ERROR))
                 .andExpect(jsonPath(respuestas + "['403'].content['application/json'].schema['$ref']").value(REF_ERROR));
+    }
+
+    @Test
+    @DisplayName("el 403 nombra el scope que exige el @PreAuthorize de la operación")
+    void el403NombraElScopeExigido() throws Exception {
+        mockMvc.perform(get("/v3/api-docs"))
+                .andExpect(jsonPath("$.paths['/api/v1/ventas'].get.responses['403'].description")
+                        .value(endsWith("`ventas:consultar`")))
+                .andExpect(jsonPath("$.paths['/api/v1/ciclos-despacho'].get.responses['403'].description")
+                        .value(endsWith("`despacho:operar` o `transporte:operar`")));
     }
 
     @Test

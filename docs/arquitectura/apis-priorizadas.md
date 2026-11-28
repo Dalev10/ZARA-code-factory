@@ -14,9 +14,10 @@ errores) está en Swagger y no se repite aquí.
   resuelven contra la base en cada petición, así que quitar un scope aplica de inmediato.
   Las operaciones sobre una tienda exigen además poder operar en ella (asignación
   usuario-tienda, HU-32, o el scope `tiendas:operar-todas`).
-- **Errores:** cuerpo uniforme `ErrorResponse` desde `GlobalExceptionHandler`.
-- **Estado:** 1 de noviembre de 2026, sobre `develop` (igual a `main`): **89 endpoints en
-  21 controladores y 5 módulos** (`logistica` todavía no expone endpoints).
+- **Errores:** cuerpo uniforme `ErrorResponse` desde `GlobalExceptionHandler`, también en los
+  errores no previstos (500) y en los de Spring MVC (404, 405, 415).
+- **Estado:** 27 de noviembre de 2026, sobre `develop` (igual a `main`): **113 endpoints en
+  30 controladores y 6 módulos**.
 
 ## Criterio de prioridad
 
@@ -35,10 +36,10 @@ fijado por el camino crítico del informe de arquitectura v2
 | Prioridad | Endpoints | Módulos |
 |---|---:|---|
 | P1 | 6 | `identity` |
-| P2 | 14 | `ventas`, `inventario` |
-| P3 | 13 | `inventario`, `ventas`, `reposicion` |
-| P4 | 56 | `catalogo`, `inventario`, `identity` |
-| **Total** | **89** | |
+| P2 | 24 | `ventas`, `inventario`, `logistica` |
+| P3 | 22 | `inventario`, `ventas`, `reposicion` |
+| P4 | 61 | `catalogo`, `inventario`, `identity`, `reposicion` |
+| **Total** | **113** | |
 
 ## Las tres APIs REST principales
 
@@ -67,7 +68,7 @@ operar en la tienda del recurso; si no puede, el recurso se trata como inexisten
 | `POST /api/v1/mfa/activar` | Genera el secreto TOTP del usuario, cifrado en reposo, para registrarlo en su app autenticadora | Autenticado | HU-07 | `MfaControllerTest` |
 | `POST /api/v1/mfa/confirmar` | Confirma el primer código TOTP, habilita MFA y genera los códigos de respaldo | Autenticado | HU-07 | `MfaControllerTest` |
 
-### P2 — Operación diaria · `ventas`, `inventario`
+### P2 — Operación diaria · `ventas`, `inventario`, `logistica`
 
 | Método y ruta | Qué hace | Acceso | HU | Pruebas |
 |---|---|---|---|---|
@@ -85,6 +86,14 @@ operar en la tienda del recurso; si no puede, el recurso se trata como inexisten
 | `GET /api/v1/nodos/{nodoId}/inventario` | Stock de un nodo (Almacén, Bodega o CD), paginado | `inventario:consultar` · por tienda | HU-39 | `ConsultaInventarioControllerTest` |
 | `GET /api/v1/variantes/{varianteId}/inventario` | Stock de una variante en los nodos visibles para el usuario | `inventario:consultar` · por tienda | HU-39 | `ConsultaInventarioControllerTest` |
 | `GET /api/v1/nodos/{nodoId}/inventario/movimientos` | Kardex del nodo con saldo resultante, filtrable por tipo y fechas | `inventario:consultar` · por tienda | HU-39 | `ConsultaInventarioControllerTest` |
+| `POST /api/v1/ordenes-reabastecimiento/{ordenId}/despachos` | Despacha una orden aprobada o reabierta con lo que el CD tiene realmente; deja el ciclo COMPLETO o PARCIAL con su fill rate | `despacho:operar` | HU-46 | `DespachoControllerTest` |
+| `GET /api/v1/ciclos-despacho`, `/{id}` | Ciclos de despacho; con `sinViaje=true`, los que aún no van en un viaje | `despacho:operar` o `transporte:operar` | HU-46 | `DespachoControllerTest` |
+| `POST /api/v1/viajes` | Arma un viaje desde un CD con una parada por ciclo de despacho | `transporte:operar` | HU-47 | `ViajeControllerTest` |
+| `GET /api/v1/viajes`, `/{id}` | Viajes con sus paradas, filtrables por estado | `transporte:operar` | HU-47 | `ViajeControllerTest` |
+| `POST /api/v1/viajes/{id}/salida` | Registra la salida: el viaje, sus paradas y sus órdenes pasan a tránsito | `transporte:operar` | HU-48 | `ViajeControllerTest` |
+| `POST /api/v1/viajes/{id}/paradas/{paradaId}/llegada` | Registra la llegada a una parada; el viaje se cierra con la última | `transporte:operar` | HU-48 | `ViajeControllerTest` |
+| `POST /api/v1/viajes/{viajeId}/paradas/{paradaId}/recepcion` | Recibe la mercancía en la Bodega y registra la discrepancia como pérdida en tránsito | `recepcion:registrar` · por tienda | HU-49 | `RecepcionControllerTest` |
+| `GET /api/v1/paradas-por-recibir` | Paradas entregadas que aún no tienen recepción | `recepcion:registrar` · por tienda | HU-49 | `RecepcionControllerTest` |
 
 ### P3 — Control y reposición · `inventario`, `ventas`, `reposicion`
 
@@ -103,11 +112,18 @@ operar en la tienda del recurso; si no puede, el recurso se trata como inexisten
 | `GET /api/v1/traspasos-internos/{id}` | Un traspaso | `reposicion:administrar` · por tienda | HU-49 | `TraspasoInternoControllerTest` |
 | `POST /api/v1/reposicion-interna/evaluar` | Evalúa la reposición de las tiendas activas en las que opera el usuario | `reposicion:administrar` · por tienda | HU-50 | `EvaluacionMasivaControllerTest` |
 | `POST /api/v1/reposicion-interna/tiendas/{tiendaId}/evaluar` | Evalúa la reposición de una tienda; una tienda ajena responde 403 | `reposicion:administrar` · por tienda | HU-50 | `EvaluacionMasivaControllerTest` |
+| `POST /api/v1/recomendaciones/evaluar` | Genera recomendaciones BORRADOR de abastecimiento desde el CD cuando el pronosticado de la Bodega queda bajo su nivel | `reposicion:planificar` · por tienda | HU-43 | `RecomendacionControllerTest` |
+| `GET /api/v1/recomendaciones`, `/{id}` | Recomendaciones, filtrables por estado, tienda y variante | `reposicion:planificar` · por tienda | HU-43 | `RecomendacionControllerTest` |
+| `POST /api/v1/recomendaciones/{id}/aprobar` | Aprueba y crea la orden con el primer CD de la prioridad que cubra la cantidad | `reposicion:planificar` · por tienda | HU-44 | `AprobacionRecomendacionControllerTest` |
+| `POST /api/v1/recomendaciones/{id}/rechazar` | Rechaza sin generar orden | `reposicion:planificar` · por tienda | HU-44 | `AprobacionRecomendacionControllerTest` |
+| `GET /api/v1/ordenes-reabastecimiento`, `/{id}` | Órdenes con sus intentos de CD, filtrables por estado y tienda | `reposicion:planificar` · por tienda | HU-45 | `OrdenReabastecimientoControllerTest` |
+| `POST /api/v1/ordenes-reabastecimiento/{id}/cerrar` | Cierra una orden reabierta aceptando el faltante y libera lo reservado | `reposicion:planificar` · por tienda | HU-53 | `CierreOrdenControllerTest` |
+| `POST /api/v1/ordenes-reabastecimiento/{id}/cancelar` | Cancela una orden que ningún CD pudo cubrir | `reposicion:planificar` · por tienda | HU-53 | `CierreOrdenControllerTest` |
 
 El traspaso automático Bodega → Almacén (HU-48) no tiene endpoint: lo dispara el evento
 `ExistenciasActualizadas` después de cada venta o ajuste.
 
-### P4 — Configuración y administración · `catalogo`, `inventario`, `identity`
+### P4 — Configuración y administración · `catalogo`, `inventario`, `identity`, `reposicion`
 
 **Catálogo** (FEAT-05) · `catalogo:administrar` · pruebas: `CategoriaControllerTest`,
 `TemplateControllerTest`, `VarianteControllerTest` y las `*ProductoIT` de QA.
@@ -149,6 +165,14 @@ El traspaso automático Bodega → Almacén (HU-48) no tiene endpoint: lo dispar
 | `GET`, `POST /api/v1/roles/{id}/scopes`, `DELETE …/scopes/{scopeId}` | Consulta, asigna y quita scopes de un rol | `roles:administrar` | HU-09, HU-11 |
 | `POST`, `GET /api/v1/scopes`, `GET`, `PUT`, `DELETE /api/v1/scopes/{id}` | CRUD de scopes | `scopes:administrar` | HU-09 |
 
+**Niveles de reposición al CD** (HD-04) · `reposicion:administrar` · pruebas:
+`NivelReposicionCdControllerTest`.
+
+| Método y ruta | Qué hace |
+|---|---|
+| `POST`, `GET /api/v1/niveles-reposicion-cd` | Crea y lista los niveles mínimo y objetivo por variante o categoría que disparan las recomendaciones |
+| `GET`, `PUT`, `DELETE /api/v1/niveles-reposicion-cd/{id}` | Obtiene, modifica las cantidades y elimina un nivel |
+
 Fuera de `/api/v1`, `GET /actuator/health` es público: lo usa Render para saber si el
 servicio está vivo.
 
@@ -156,10 +180,10 @@ servicio está vivo.
 
 | Requisito | Cumplimiento |
 |---|---|
-| Al menos tres APIs REST | Tres principales (Autenticación, Ventas y demanda, Inventario) y 89 endpoints en total |
-| Endpoints de distintos módulos | Cinco módulos: `identity`, `catalogo`, `inventario`, `ventas`, `reposicion` |
+| Al menos tres APIs REST | Tres principales (Autenticación, Ventas y demanda, Inventario) y 113 endpoints en total |
+| Endpoints de distintos módulos | Seis módulos: `identity`, `catalogo`, `inventario`, `ventas`, `reposicion`, `logistica` |
 | Diseño orientado a recursos | Sustantivos en plural; filtros como parámetros sobre la colección; transiciones de estado como sub-recursos de acción (`/anular`, `/activar`, `/desactivar`, `/evaluar`) |
 | Autorización por endpoint | Scope en cada endpoint con `@PreAuthorize`; restricción por tienda en el caso de uso |
 | Idempotencia | Registrar venta y solicitud, anular solicitud, logout y reconciliación |
-| Paginación | Los listados de catálogo, tiendas, CD, bodegas, umbrales, inventario, kardex, ventas, solicitudes y ventanas son paginados (HU-26). **Ocho no lo están**: usuarios, roles, scopes, scopes de un rol, roles y tiendas de un usuario, traspasos de una tienda y prioridad de CD. Los seis de `identity` y la prioridad de CD son listas acotadas; los traspasos de una tienda crecen sin límite y quedan registrados como hallazgo en el análisis OWASP |
+| Paginación | Todo listado que crece con la operación es paginado (HU-26): catálogo, tiendas, CD, bodegas, umbrales, niveles, inventario, kardex, ventas, solicitudes, ventanas, recomendaciones, órdenes, ciclos y viajes. **Nueve no lo están** y son acotados por naturaleza: usuarios, roles, scopes, scopes de un rol, roles y tiendas de un usuario, prioridad de CD, existencias de una variante por nodo y paradas por recibir. La excepción son los traspasos de una tienda, que sí crecen y quedan pendientes (H-08) |
 | Contrato publicado | OpenAPI 3.1 en `/v3/api-docs` y Swagger UI en producción |

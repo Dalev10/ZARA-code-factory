@@ -87,5 +87,9 @@ app:
 springdoc:
   # Sin esto springdoc publica las respuestas como */*; la API solo responde JSON.
   default-produces-media-type: application/json
+  # Público en producción como riesgo aceptado (H-07); SWAGGER_ENABLED=false lo apaga sin desplegar código.
+  api-docs:
+    enabled: ${SWAGGER_ENABLED:true}
   swagger-ui:
+    enabled: ${SWAGGER_ENABLED:true}
     tags-sorter: alpha
